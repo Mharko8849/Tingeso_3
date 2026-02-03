@@ -1,0 +1,34 @@
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: toolrent
+
+build:
+  local:
+    push: false
+  artifacts:
+    - image: mharko/toolrent-service
+      context: Backend/demo
+      jib:
+        type: gradle
+
+    - image: mharko/frontend
+      context: Frontend/my-app
+      docker:
+        dockerfile: Dockerfile
+
+manifests:
+  rawYaml:
+    - Kubernetes-Config/**/*.yaml
+
+deploy:
+  kubectl: {}
+
+profiles:
+  - name: prod
+    build:
+      local:
+        push: true
+    manifests:
+      rawYaml:
+        - Kubernetes-Config-Prod/**/*.yaml

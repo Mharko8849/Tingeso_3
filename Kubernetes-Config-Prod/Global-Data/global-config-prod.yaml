@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-config-prod
+data:
+  POSTGRES_USER: "mharko"
+  DB_PORT: "5432"
+
+  KEYCLOAK_URL: "http://54.207.116.60:31000"
+  KEYCLOAK_ISSUER_URL: "http://54.207.116.60:31000"
+  KEYCLOAK_REALM: "ToolRent"
+  KEYCLOAK_CLIENT_ID: "toolrent-backend"
+  KEYCLOAK_CLIENT_SECRET: "f82wFht8ZajhLtOdpjWhoJCXgKy9QJcZ"
+
+  BACKEND_URL: "https://toolrent.54.207.116.60.nip.io"

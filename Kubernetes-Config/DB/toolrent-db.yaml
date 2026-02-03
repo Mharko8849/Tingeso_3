@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: toolrent-db
+
+spec:
+  serviceName: "toolrent-db"
+
+  replicas: 1
+  
+  selector:
+    matchLabels:
+      app: toolrent-db
+  
+  template:
+    metadata:
+      labels:
+        app: toolrent-db
+  
+    spec:
+      containers:
+      - name: toolrent-db 
+        image: postgres:15-alpine
+  
+        ports:
+        - containerPort: 5432
+  
+        env:
+        - name: POSTGRES_DB
+          value: toolrent_db
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: POSTGRES_USER
+
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: POSTGRES_PASSWORD
+
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "50m"
+          limits: 
+            memory: "768Mi"
+            cpu: "1000m"
+
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+
+--- 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: toolrent-db
+spec:
+  ports:
+  - port: 5432
+  selector:
+    app: toolrent-db
