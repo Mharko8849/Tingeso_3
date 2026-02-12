@@ -21,7 +21,7 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            find /usr/share/nginx/html -name '*.js' -exec sed -i "s|http://192.168.49.2:31000|${KEYCLOAK_URL}|g" {} + && find /usr/share/nginx/html -name '*.js' -exec sed -i "s|http://localhost:8090|${BACKEND_URL}|g" {} + && nginx -g "daemon off;"
+            find /usr/share/nginx/html -name '*.js' -exec sed -i "s|http://192.168.39.45:31000|${KEYCLOAK_URL}|g" {} + && find /usr/share/nginx/html -name '*.js' -exec sed -i "s|http://localhost:8090|${BACKEND_URL}|g" {} + && nginx -g "daemon off;"
         env:
         - name: KEYCLOAK_URL
           valueFrom:

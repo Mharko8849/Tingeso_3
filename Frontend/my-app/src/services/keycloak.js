@@ -1,6 +1,6 @@
 import Keycloak from "keycloak-js";
 
-const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || "http://192.168.49.2:31000";
+const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || "http://192.168.39.45:31000";
 
 const keycloak = new Keycloak({
   url: keycloakUrl,

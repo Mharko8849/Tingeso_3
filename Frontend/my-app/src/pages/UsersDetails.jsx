@@ -15,7 +15,7 @@ const UsersDetails = () => {
 
   const fetchUser = async () => {
     try {
-      const res = await api.get('/api/user/me');
+      const res = await api.get('/user/me');
       setUser(res.data);
     } catch (err) {
       console.error(err);
@@ -49,7 +49,7 @@ const UsersDetails = () => {
         delete updatedUser.password;
       }
 
-      await api.put('/api/user/', updatedUser);
+      await api.put('/user/', updatedUser);
       alert('Información actualizada correctamente.');
       // Refresh user data
       fetchUser();

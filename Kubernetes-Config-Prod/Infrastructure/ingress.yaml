@@ -21,7 +21,56 @@ spec:
                 name: frontend
                 port:
                   number: 80
-          - path: /api
+          - path: /images
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service-prod
+                port:
+                  number: 80
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service-prod
+                port:
+                  number: 80
+          - path: /user
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service-prod
+                port:
+                  number: 80
+          - path: /tool
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service-prod
+                port:
+                  number: 80
+          - path: /inventory
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service-prod
+                port:
+                  number: 80
+          - path: /loan
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service-prod
+                port:
+                  number: 80
+          - path: /loantool
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service-prod
+                port:
+                  number: 80
+          - path: /kardex
             pathType: Prefix
             backend:
               service:

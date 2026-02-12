@@ -16,7 +16,12 @@ public class FileStorageService {
     private final Path fileStorageLocation;
 
     public FileStorageService(@Value("${file.upload-dir:images}") String uploadDir) {
-        this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
+        String envPath = System.getenv("IMAGES_PATH");
+        String finalPath = (envPath != null && !envPath.isBlank()) 
+                ? envPath.replace("file:", "") 
+                : uploadDir;
+
+        this.fileStorageLocation = Paths.get(finalPath).toAbsolutePath().normalize();
         try {
             Files.createDirectories(this.fileStorageLocation);
         } catch (IOException ex) {

@@ -32,7 +32,7 @@ export const cancelOrderDraft = async () => {
   }
 
   try {
-    await api.delete(`/api/loan/${loanId}`);
+    await api.delete(`/loan/${loanId}`);
   } catch (e) {
     // swallow error: if delete fails we still clear local draft
     // console.warn('Could not delete draft loan on navigation', e?.response?.data || e.message || e);

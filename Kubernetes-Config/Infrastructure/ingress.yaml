@@ -9,10 +9,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - toolrent.192.168.49.2.nip.io
+        - toolrent.192.168.39.45.nip.io
       secretName: toolrent-local-tls
   rules:
-    - host: toolrent.192.168.49.2.nip.io
+    - host: toolrent.192.168.39.45.nip.io
       http:
         paths:
           - path: /
@@ -22,7 +22,56 @@ spec:
                 name: frontend
                 port:
                   number: 80
-          - path: /api
+          - path: /images
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /user
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /tool
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /api/inventory
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /loan
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /loantool
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /kardex
             pathType: Prefix
             backend:
               service:

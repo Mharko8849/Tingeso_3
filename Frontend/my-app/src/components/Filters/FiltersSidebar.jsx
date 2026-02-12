@@ -22,6 +22,7 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
   // Stores the current sort order. Empty string means 'no specific order'.
   const [sort, setSort] = useState(initial.sort ?? '');
   const [category, setCategory] = useState(initial.category ?? '');
+  const [search, setSearch] = useState(initial.search ?? '');
 
   // Resets all filters to their default values and notifies the parent component.
   const resetFilters = () => {
@@ -29,6 +30,7 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
     setMaxPrice(BOUND_MAX);
     setSort('');
     setCategory('');
+    setSearch('');
     
     // Mirrors the shape returned by apply() to ensure consistency.
     const filters = {
@@ -36,6 +38,7 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
       maxPrice: BOUND_MAX,
       sort: '',
       category: '',
+      search: '',
       asc: false,
       desc: false,
       recent: false,
@@ -49,8 +52,9 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
     setMaxPrice(clamp(initial.maxPrice ?? BOUND_MAX));
     setSort(initial.sort ?? '');
     setCategory(initial.category ?? '');
+    setSearch(initial.search ?? '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initial.minPrice, initial.maxPrice, initial.sort, initial.category]);
+  }, [initial.minPrice, initial.maxPrice, initial.sort, initial.category, initial.search]);
 
   // Applies the selected filters and sorting options.
   const apply = () => {
@@ -64,6 +68,7 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
       maxPrice: maxPrice ? Number(maxPrice) : 0,
       sort,
       category,
+      search,
       asc: (recent || popular) ? false : asc,
       desc: (recent || popular) ? false : desc,
       recent,
@@ -78,6 +83,51 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
       <div className="filter-reset">
         <button className="reset-btn" onClick={resetFilters} type="button">Reiniciar filtros</button>
       </div>
+
+      <div className="filter-row">
+        <label>Buscar herramienta</label>
+        <div className="search-input-wrap" style={{ position: 'relative' }}>
+          <input
+            type="text"
+            placeholder="Buscar herramienta..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') apply();
+            }}
+            style={{
+              width: '100%',
+              padding: '8px 30px 8px 8px',
+              borderRadius: '6px',
+              border: '1px solid #e1e3e8',
+              marginTop: '4px'
+            }}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '60%',
+                transform: 'translateY(-50%)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#9ca3af',
+                fontSize: '18px',
+                lineHeight: 1,
+                padding: 0
+              }}
+              title="Borrar búsqueda"
+            >
+              &times;
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="filter-row">
         <label>Rango de precio</label>
         <div className="range-values">

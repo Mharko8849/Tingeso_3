@@ -1,11 +1,15 @@
 import axios from "axios";
 import keycloak from "./keycloak";
 
-const backendServer = import.meta.env.VITE_BACKEND_SERVER || "localhost";
-const backendPort = import.meta.env.VITE_BACKEND_PORT || "8090";
+const backendServer = import.meta.env.VITE_BACKEND_SERVER;
+const backendPort = import.meta.env.VITE_BACKEND_PORT;
+
+const baseURL = backendServer && backendPort 
+  ? `http://${backendServer}:${backendPort}` 
+  : '/';
 
 const api = axios.create({
-  baseURL: `http://${backendServer}:${backendPort}`,
+  baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -13,11 +17,20 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
+    // If the URL starts with /api/, remove it.
+    // This harmonizes frontend calls (e.g., /api/kardex/ranking) with backend endpoints (/kardex)
+    // as defined in the controllers and Ingress.
+    /*
+    if (config.url && config.url.startsWith('/api/')) {
+       config.url = config.url.substring(4);
+    }
+    */
+
     // Don't attach an Authorization header for the backend login/register endpoints
     // — if we attach an expired token the backend will immediately return 401.
     const url = config.url || '';
-    const isAuthEndpoint = url.includes('/api/auth/login') || url.includes('/api/auth/register');
-    const isPublicEndpoint = url.includes('/api/kardex/ranking') || url.includes('/images/');
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+    const isPublicEndpoint = url.includes('/kardex/ranking') || url.includes('/images/');
 
     if (isAuthEndpoint || isPublicEndpoint) {
       return config;
@@ -34,7 +47,7 @@ api.interceptors.request.use(
     else {
       // If the app performed a backend login (not Keycloak), the access
       // token is stored in localStorage under 'access_token' or 'app_token'.
-      // Attach it so authenticated endpoints (like /api/inventory) work.
+      // Attach it so authenticated endpoints (like /inventory) work.
       try {
         const localToken = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || localStorage.getItem('app_token')) : null;
         if (localToken) {

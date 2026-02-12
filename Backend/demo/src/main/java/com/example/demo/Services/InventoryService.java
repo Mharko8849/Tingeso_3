@@ -167,7 +167,7 @@ public class InventoryService {
 
     public List<InventoryEntity> filterInventory(String state, String category, Long idTool,
                                                  Integer minPrice, Integer maxPrice,
-                                                 Boolean asc, Boolean desc, Boolean recent) {
+                                                 Boolean asc, Boolean desc, Boolean recent, String search) {
 
         if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
             throw new RuntimeException("El precio mínimo no puede ser mayor que el precio máximo.");
@@ -234,6 +234,15 @@ public class InventoryService {
             inventoryList = inventoryList.stream()
                     .filter(inventory -> inventory.getIdTool() != null &&
                             inventory.getIdTool().getPriceRent() <= maxPrice)
+                    .toList();
+        }
+
+        if (search != null && !search.isBlank()) {
+            String searchLower = search.toLowerCase();
+            inventoryList = inventoryList.stream()
+                    .filter(inventory -> inventory.getIdTool() != null &&
+                            inventory.getIdTool().getToolName() != null &&
+                            inventory.getIdTool().getToolName().toLowerCase().contains(searchLower))
                     .toList();
         }
 

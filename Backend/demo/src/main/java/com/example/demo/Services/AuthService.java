@@ -118,50 +118,8 @@ public class AuthService {
      * Devuelve el token + datos del usuario local.
      */
     public Map<String, Object> login(String identifier, String password) {
-        Map token = null;
 
-        try {
-            token = keycloakAdminService.requestPasswordGrant(identifier, password);
-        } catch (Exception ex) {
-            logger.warn("Login directo falló, revisando alternativas...");
-
-            // Intento por username: probar directas y también comparando en minúsculas
-            UserEntity byUser = userService.getUserByUsername(identifier);
-            if (byUser == null && identifier != null) {
-                try {
-                    byUser = userService.getUserByUsername(identifier.toLowerCase());
-                } catch (Exception ignored) {}
-            }
-
-            if (byUser != null) {
-                try {
-                    token = keycloakAdminService.requestPasswordGrant(byUser.getEmail(), password);
-                } catch (Exception ignored) {}
-            }
-
-            // Si ya tenemos token, no seguimos buscando
-            if (token == null) {
-                // Intento por email: probar directas y también comparando en minúsculas
-                UserEntity byEmail = userService.getUserByEmail(identifier);
-                if (byEmail == null && identifier != null) {
-                    try {
-                        byEmail = userService.getUserByEmail(identifier.toLowerCase());
-                    } catch (Exception ignored) {}
-                }
-
-                if (byEmail != null) {
-                    try {
-                        token = keycloakAdminService.requestPasswordGrant(byEmail.getUsername(), password);
-                    } catch (Exception ignored) {}
-                }
-            }
-
-            if (token == null) {
-                throw new RuntimeException("Credenciales inválidas.");
-            }
-        }
-
-        // Buscar usuario local: probar email/username directos y también en minúsculas
+        // 1. Buscar usuario local primero: probar email/username directos y también en minúsculas
         UserEntity localUser = null;
         if (identifier != null) {
             localUser = userService.getUserByEmail(identifier);
@@ -176,8 +134,38 @@ public class AuthService {
             }
         }
 
-        if (localUser == null)
-            throw new RuntimeException("Usuario no encontrado.");
+        if (localUser == null) {
+            // Este mensaje será detectado por el Controller para retornar 404
+            throw new RuntimeException("Usuario no registrado");
+        }
+
+        // 2. Validar credenciales en Keycloak
+        Map token = null;
+
+        // Intentar loguear preferentemente con el email o username que encontró el sistema
+        // Primero intentamos con lo que el usuario escribió
+        try {
+            token = keycloakAdminService.requestPasswordGrant(identifier, password);
+        } catch (Exception ex) {
+            // Si falla, intentamos con las propiedades del usuario encontrado (email o username)
+            // Esto ayuda si Keycloak espera email pero el usuario puso username, o viceversa,
+            // o si hay temas de case-sensitivity.
+            try {
+                if (localUser.getEmail() != null)
+                   token = keycloakAdminService.requestPasswordGrant(localUser.getEmail(), password);
+            } catch (Exception ignored) {}
+
+            if (token == null) {
+                try {
+                    if (localUser.getUsername() != null)
+                        token = keycloakAdminService.requestPasswordGrant(localUser.getUsername(), password);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (token == null) {
+            throw new RuntimeException("Credenciales inválidas.");
+        }
 
         return Map.of(
                 "token", token,

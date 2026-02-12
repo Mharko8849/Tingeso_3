@@ -16,7 +16,7 @@ const ReturnsClientLoans = () => {
     if (!clientId) return;
 
     // fetch loans for this client
-    api.get(`/api/loan/user/${clientId}`)
+    api.get(`/loan/user/${clientId}`)
       .then(res => {
         setLoans(res.data || []);
         if (res.data && res.data.length > 0) setClient(res.data[0].idUser);

@@ -21,18 +21,15 @@ import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
-public class SecurityConfig implements WebMvcConfigurer {
+public class SecurityConfig {
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/images/**")
-                .addResourceLocations("file:images/");
-    }
 
+    /*
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().requestMatchers("/images/**");
     }
+    */
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -43,15 +40,16 @@ public class SecurityConfig implements WebMvcConfigurer {
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
             .requestMatchers("/public/**").permitAll()
-            // permitir endpoints de autenticación expuestos en /api/auth/**
-            .requestMatchers("/api/auth/**").permitAll()
+            // permitir endpoints de autenticación expuestos en /auth/**
+            .requestMatchers("/auth/**").permitAll()
             // inventario visible para cualquiera
             .requestMatchers("/api/inventory/**").permitAll()
+            .requestMatchers("/inventory/**").permitAll()
             // ranking visible para cualquiera
             .requestMatchers("/api/kardex/ranking").permitAll()
+            .requestMatchers("/kardex/ranking").permitAll()
             .requestMatchers("/images/**").permitAll()
-            .requestMatchers("/api/**").authenticated()
-                        .anyRequest().authenticated()
+            .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter()))
@@ -82,8 +80,9 @@ public class SecurityConfig implements WebMvcConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // permitir el frontend en desarrollo; ajustar en producción
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000", "http://localhost:8080"));
+        // permitir el frontend en desarrollo y producción
+        // IMPORTANTE: Permitir todo para evitar problemas de CORS con nip.io, localhost, etc.
+        configuration.setAllowedOriginPatterns(List.of("*")); 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

@@ -10,6 +10,9 @@ import { getUser } from "../services/auth";
 
 const InventoryPage = ({ category = null }) => {
   const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const searchQuery = queryParams.get('search');
+  
   // default maxPrice aligns with FiltersSidebar BOUND_MAX
   const [filters, setFilters] = useState(() => {
     const initial = location.state?.initialFilters || {};
@@ -17,6 +20,7 @@ const InventoryPage = ({ category = null }) => {
       minPrice: initial.minPrice || 0,
       maxPrice: initial.maxPrice || 500000,
       sort: initial.sort || '',
+      search: searchQuery || '', // Init from URL
       asc: initial.sort === 'price_asc',
       desc: initial.sort === 'price_desc',
       recent: initial.sort === 'newest',
@@ -41,6 +45,10 @@ const InventoryPage = ({ category = null }) => {
   const roles = rolesRaw.map((r) => String(r).toUpperCase());
   const canEdit = roles.includes("ADMIN") || roles.includes("SUPERADMIN");
 
+  // Removed redundant definition since we lifted it up
+  // const queryParams = new URLSearchParams(location.search);
+  // const searchQuery = queryParams.get('search');
+
   const fetchProducts = async (appliedFilters) => {
     setLoading(true);
     try {
@@ -50,6 +58,10 @@ const InventoryPage = ({ category = null }) => {
         // Use axios instance so interceptor adds Authorization header automatically
   const qs = {};
   if (category) qs.category = category;
+  
+  // Use filter state for search (defaults to URL param, but can be changed by sidebar)
+  if (appliedFilters?.search) qs.search = appliedFilters.search;
+
   if (appliedFilters?.minPrice) qs.minPrice = appliedFilters.minPrice;
   if (appliedFilters?.maxPrice) qs.maxPrice = appliedFilters.maxPrice;
   if (appliedFilters?.asc) qs.asc = true;
@@ -57,10 +69,10 @@ const InventoryPage = ({ category = null }) => {
   if (appliedFilters?.recent) qs.recent = true;
   // if (appliedFilters?.popular) qs.popular = true; // Removed as backend doesn't support it
 
-  const resp = await api.get('/api/inventory/filter', { params: qs });
+  const resp = await api.get('/inventory/filter', { params: qs });
   const inv = resp.data;
   // Debug: log server response so we can inspect its shape in the browser console
-  console.debug('[InventoryPage] /api/inventory/filter response:', inv);
+  console.debug('[InventoryPage] /inventory/filter response:', inv);
 
       // Group inventory entries by tool id and compute available stock
       const map = new Map();
@@ -73,7 +85,7 @@ const InventoryPage = ({ category = null }) => {
             name: t.toolName || t.name || '—',
             price: t.priceRent || t.price || 0,
             category: t.category || category,
-            image: t.imageUrl ? `/images/${t.imageUrl}` : 'http://localhost:8090/images/NoImage.png',
+            image: t.imageUrl ? `/images/${t.imageUrl}` : '/images/NoImage.png',
             stock: 0,
           });
         }
@@ -94,7 +106,7 @@ const InventoryPage = ({ category = null }) => {
       if (appliedFilters?.popular) {
         try {
           // Fetch ranking data to know which tools are popular
-          const rankingResp = await api.get("/api/kardex/ranking");
+          const rankingResp = await api.get("/kardex/ranking");
           const rankingList = rankingResp.data; // List of { tool: {...}, totalLoans: X }
           
           // Create a map of toolId -> totalLoans for quick lookup
@@ -128,7 +140,7 @@ const InventoryPage = ({ category = null }) => {
   useEffect(() => {
     fetchProducts(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [category, location.search]);
 
   const applyFilters = (newFilters) => {
     setFilters(newFilters);

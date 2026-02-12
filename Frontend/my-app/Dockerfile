@@ -2,6 +2,8 @@
 FROM public.ecr.aws/docker/library/node:22-alpine as build
 WORKDIR /app
 COPY package*.json ./
+# Update npm to latest version to avoid warnings
+RUN npm install -g npm@11.10.0
 RUN npm install
 COPY . .
 RUN npm run build

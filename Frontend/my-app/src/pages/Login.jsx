@@ -21,7 +21,7 @@ const Login = () => {
       setLoading(true);
       const body = { username: identifier, password };
       // Use axios instance which points to backend (VITE env vars or defaults)
-      const resp = await api.post('/api/auth/login', body);
+      const resp = await api.post('/auth/login', body);
       const data = resp.data;
       // store tokens locally (the backend returns a structure { token: { access_token, refresh_token }, user: {...} })
       // Support both old and new shapes for compatibility.
@@ -44,7 +44,14 @@ const Login = () => {
   window.history.pushState({}, '', '/');
   window.dispatchEvent(new PopStateEvent('popstate'));
     } catch (err) {
-      setMsg('Error iniciando sesión: ' + (err && err.message ? err.message : err));
+      console.error(err);
+      if (err.response && err.response.status === 401) {
+        setMsg('Credenciales incorrectas. Por favor verifica tu usuario y contraseña.');
+      } else if (err.response && err.response.status === 404) {
+        setMsg('El usuario ingresado no se encuentra registrado.\nCrea tu cuenta ahora mismo presionando el botón:\n"Crear cuenta".');
+      } else {
+        setMsg('Ocurrió un error al iniciar sesión. Inténtalo de nuevo más tarde.');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,7 +92,7 @@ const Login = () => {
             </div>
           </form>
 
-          {msg && <div className="form-message">{msg}</div>}
+          {msg && <div className="form-message" style={{ whiteSpace: 'pre-wrap' }}>{msg}</div>}
         </div>
       </main>
     </div>

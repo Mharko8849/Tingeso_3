@@ -15,7 +15,7 @@ import java.sql.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/loan")
+@RequestMapping("/loan")
 @CrossOrigin("*")
 public class LoanController {
 

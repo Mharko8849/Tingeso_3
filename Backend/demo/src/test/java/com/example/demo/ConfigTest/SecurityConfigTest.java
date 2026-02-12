@@ -1,8 +1,7 @@
 package com.example.demo.ConfigTest;
 
-import com.example.demo.config.SecurityConfig;
+import com.example.demo.Config.SecurityConfig;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,7 +13,6 @@ import java.time.Instant;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 public class SecurityConfigTest {
 

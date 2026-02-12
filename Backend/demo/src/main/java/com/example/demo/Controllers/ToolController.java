@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tool")
+@RequestMapping("/tool")
 @CrossOrigin("*")
 public class ToolController {
 

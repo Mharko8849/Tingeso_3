@@ -38,6 +38,30 @@ h1 {
   line-height: 1.1;
 }
 
+input, button, select, textarea {
+  font-family: inherit;
+  font-size: 1rem; /* Better base size */
+}
+
+/* Force form inputs to have light theme (readable text) */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="tel"],
+input[type="search"],
+select,
+textarea {
+  color: #1a202c; /* dark gray */
+  background-color: #ffffff;
+  color-scheme: light; /* tell browser this element supports light mode only */
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+/* Specific button styles (existing) */
 button {
   border-radius: 8px;
   border: 1px solid transparent;

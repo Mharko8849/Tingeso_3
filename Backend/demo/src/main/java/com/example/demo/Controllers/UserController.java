@@ -13,7 +13,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/user")
 @CrossOrigin("*")
 public class UserController {
 

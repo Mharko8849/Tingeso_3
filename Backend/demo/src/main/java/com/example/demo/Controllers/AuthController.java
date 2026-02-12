@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Locale;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @CrossOrigin("*")
 public class AuthController {
 
@@ -77,6 +77,14 @@ public class AuthController {
         try {
             java.util.Map<String,Object> result = authService.login(identifier, password);
             return ResponseEntity.ok(result);
+        } catch (RuntimeException ex) {
+            String msg = ex.getMessage();
+            if ("Usuario no registrado".equals(msg)) {
+                return ResponseEntity.status(404).body(java.util.Map.of("error", msg));
+            } else if ("Credenciales inválidas.".equals(msg)) {
+                return ResponseEntity.status(401).body(java.util.Map.of("error", msg));
+            }
+            return ResponseEntity.status(401).body(java.util.Map.of("error", msg));
         } catch (Exception ex) {
             return ResponseEntity.status(401).body(java.util.Map.of("error", ex.getMessage()));
         }

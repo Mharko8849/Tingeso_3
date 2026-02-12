@@ -72,7 +72,7 @@ const Home = () => {
         title: catName,
         subtitle: fallback ? fallback.subtitle : 'Tendencia en alquiler',
         image: tool ? tool.image : (fallback ? getImageUrl(fallback.image) : '/NoImage.png'),
-        href: '#',
+        href: `/inventory/${encodeURIComponent(catName)}`,
         color: '#2B7FFF'
       };
     });
@@ -86,7 +86,7 @@ const Home = () => {
           finalCats.push({
             ...fallback,
             image: getImageUrl(fallback.image),
-            href: '#',
+            href: `/inventory/${encodeURIComponent(fallback.title)}`,
             color: '#2B7FFF'
           });
         }

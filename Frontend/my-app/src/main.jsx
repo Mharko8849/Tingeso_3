@@ -12,6 +12,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     authClient={keycloak}
     initOptions={{
       onLoad: "check-sso",
+      silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
       checkLoginIframe: false,
     }}
   >

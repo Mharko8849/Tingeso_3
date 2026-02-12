@@ -16,7 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/inventory")
+@RequestMapping("/inventory")
 @CrossOrigin("*")
 public class InventoryController {
 
@@ -48,10 +48,11 @@ public class InventoryController {
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false) Boolean asc,
             @RequestParam(required = false) Boolean desc,
-            @RequestParam(required = false) Boolean recent) {
+            @RequestParam(required = false) Boolean recent,
+            @RequestParam(required = false) String search) {
 
         List<InventoryEntity> inventory = inventoryService.filterInventory(
-                state, category, idTool, minPrice, maxPrice, asc, desc,recent
+                state, category, idTool, minPrice, maxPrice, asc, desc, recent, search
         );
 
         return ResponseEntity.ok(inventory);

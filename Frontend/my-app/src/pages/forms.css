@@ -66,6 +66,7 @@
   padding: 10px 12px;
   background: transparent;
   outline: none;
+  color: #1f2937; /* Force dark text color to ensure readability on light background */
 }
 
 .input-with-icon:focus-within {
