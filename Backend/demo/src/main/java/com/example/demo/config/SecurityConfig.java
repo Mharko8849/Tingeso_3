@@ -24,12 +24,10 @@ import java.util.List;
 public class SecurityConfig {
 
 
-    /*
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().requestMatchers("/images/**");
     }
-    */
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -40,6 +38,7 @@ public class SecurityConfig {
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
             .requestMatchers("/public/**").permitAll()
+            .requestMatchers("/error").permitAll()
             // permitir endpoints de autenticación expuestos en /auth/**
             .requestMatchers("/auth/**").permitAll()
             // inventario visible para cualquiera

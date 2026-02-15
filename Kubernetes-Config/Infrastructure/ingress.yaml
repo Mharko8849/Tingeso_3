@@ -50,6 +50,63 @@ spec:
                 name: toolrent-service
                 port:
                   number: 80
+          - path: /categories
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /kardex
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+
+          - path: /loan
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /loantool
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /tool-states
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /realms
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak-service
+                port:
+                  number: 9090
+          - path: /resources
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak-service
+                port:
+                  number: 9090
+          - path: /js
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak-service
+                port:
+                  number: 9090
           - path: /api/inventory
             pathType: Prefix
             backend:

@@ -37,7 +37,7 @@ public class InventoryService {
     }
 
     public InventoryEntity getAvailableTools(ToolEntity toolEntity) {
-        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState(toolEntity, "DISPONIBLE");
+        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(toolEntity, "DISPONIBLE");
         if (inv == null) {
             throw new RuntimeException("Inventario DISPONIBLE no encontrado para la herramienta");
         }
@@ -45,7 +45,7 @@ public class InventoryService {
     }
 
     public InventoryEntity getLoanTools(ToolEntity toolEntity) {
-        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState(toolEntity, "PRESTADA");
+        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(toolEntity, "PRESTADA");
         if (inv == null) {
             throw new RuntimeException("Inventario PRESTADA no encontrado para la herramienta");
         }
@@ -53,7 +53,7 @@ public class InventoryService {
     }
 
     public InventoryEntity getReparationTools(ToolEntity toolEntity) {
-        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState(toolEntity, "EN REPARACION");
+        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(toolEntity, "EN REPARACION");
         if (inv == null) {
             throw new RuntimeException("Inventario EN REPARACION no encontrado para la herramienta");
         }
@@ -61,7 +61,7 @@ public class InventoryService {
     }
 
     public InventoryEntity getRemovedTools(ToolEntity toolEntity) {
-        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState(toolEntity, "DADA DE BAJA");
+        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(toolEntity, "DADA DE BAJA");
         if (inv == null) {
             throw new RuntimeException("Inventario DADA DE BAJA no encontrado para la herramienta");
         }
@@ -85,7 +85,7 @@ public class InventoryService {
     }
 
     public InventoryEntity getInventoryByIdToolAndToolState(ToolEntity idTool, String toolState) {
-        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState(idTool, toolState);
+        InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(idTool, toolState);
         if (inv == null) {
             throw new RuntimeException("Inventario no encontrado para la herramienta con estado: " + toolState);
         }
@@ -204,7 +204,7 @@ public class InventoryService {
         if (state != null && !state.isBlank()) {
             inventoryList = inventoryList.stream()
                     .filter(inventory -> inventory.getToolState() != null &&
-                            inventory.getToolState().equalsIgnoreCase(state))
+                            inventory.getToolState().getState().equalsIgnoreCase(state))
                     .toList();
         }
 
@@ -212,7 +212,7 @@ public class InventoryService {
             inventoryList = inventoryList.stream()
                     .filter(inventory -> inventory.getIdTool() != null &&
                             inventory.getIdTool().getCategory() != null &&
-                            inventory.getIdTool().getCategory().equalsIgnoreCase(category))
+                            inventory.getIdTool().getCategory().getName().equalsIgnoreCase(category))
                     .toList();
         }
 

@@ -19,6 +19,7 @@ const ToolDetail = (props) => {
   const [error, setError] = useState(null);
   const [invEntries, setInvEntries] = useState([]);
   const [stockSummary, setStockSummary] = useState({ DISPONIBLE: 0, PRESTADA: 0, EN_REPARACION: 0, DADA_DE_BAJA: 0 });
+  const [toolStates, setToolStates] = useState([]);
   const [showAddStock, setShowAddStock] = useState(false);
   const [showAddNewTool, setShowAddNewTool] = useState(false);
   const [showEditTool, setShowEditTool] = useState(false);
@@ -93,10 +94,28 @@ const ToolDetail = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    const fetchToolStates = async () => {
+      try {
+        const response = await api.get('/tool-states/');
+        setToolStates(response.data || []);
+      } catch (error) {
+        console.error('Error fetching tool states:', error);
+      }
+    };
+    fetchToolStates();
+  }, []);
+
   const priceLabel = tool && typeof tool.price === 'number' ? `$${tool.price.toLocaleString()}` : '';
   const categoryLabel = tool ? tool.category || '' : '';
   const fineValue = tool ? (typeof tool.priceFineAtDate === 'number' ? tool.priceFineAtDate : null) : null;
   const fineLabel = typeof fineValue === 'number' ? `$${fineValue.toLocaleString()}` : '—';
+
+  // Helper to get color for a state from backend
+  const getStateColor = (stateName) => {
+    const state = toolStates.find(s => s.state === stateName);
+    return state?.color || '#6b7280';
+  };
 
   const handleToolUpdated = (updated) => {
     if (!updated) {
@@ -192,7 +211,17 @@ const ToolDetail = (props) => {
                   <h4 className="mt-3 mb-1 text-lg font-semibold">Stock</h4>
                   <div className="td-stock-list">
                     <div className="td-stock-row">
-                      <Badge variant="green" />
+                      <span 
+                        style={{ 
+                          display: 'inline-block',
+                          width: '16px', 
+                          height: '16px', 
+                          borderRadius: '50%', 
+                          backgroundColor: getStateColor('DISPONIBLE'),
+                          boxShadow: `0 0 6px ${getStateColor('DISPONIBLE')}80`,
+                          verticalAlign: 'middle'
+                        }}
+                      />
                       <span className="ml-2">Disponible:</span>
                       <span className="ml-2 font-semibold">
                         {(stockSummary.DISPONIBLE || 0).toLocaleString()}
@@ -202,21 +231,51 @@ const ToolDetail = (props) => {
                     {isInternalUser && (
                       <>
                         <div className="td-stock-row">
-                          <Badge variant="blue" />
+                          <span 
+                            style={{ 
+                              display: 'inline-block',
+                              width: '16px', 
+                              height: '16px', 
+                              borderRadius: '50%', 
+                              backgroundColor: getStateColor('PRESTADA'),
+                              boxShadow: `0 0 6px ${getStateColor('PRESTADA')}80`,
+                              verticalAlign: 'middle'
+                            }}
+                          />
                           <span className="ml-2">Prestada:</span>
                           <span className="ml-2 font-semibold">
                             {(stockSummary.PRESTADA || 0).toLocaleString()}
                           </span>
                         </div>
                         <div className="td-stock-row">
-                          <Badge variant="yellow" />
+                          <span 
+                            style={{ 
+                              display: 'inline-block',
+                              width: '16px', 
+                              height: '16px', 
+                              borderRadius: '50%', 
+                              backgroundColor: getStateColor('EN_REPARACION'),
+                              boxShadow: `0 0 6px ${getStateColor('EN_REPARACION')}80`,
+                              verticalAlign: 'middle'
+                            }}
+                          />
                           <span className="ml-2">Reparación:</span>
                           <span className="ml-2 font-semibold">
                             {(stockSummary.EN_REPARACION || 0).toLocaleString()}
                           </span>
                         </div>
                         <div className="td-stock-row">
-                          <Badge variant="red" />
+                          <span 
+                            style={{ 
+                              display: 'inline-block',
+                              width: '16px', 
+                              height: '16px', 
+                              borderRadius: '50%', 
+                              backgroundColor: getStateColor('DADA_DE_BAJA'),
+                              boxShadow: `0 0 6px ${getStateColor('DADA_DE_BAJA')}80`,
+                              verticalAlign: 'middle'
+                            }}
+                          />
                           <span className="ml-2">Dada de Baja:</span>
                           <span className="ml-2 font-semibold">
                             {(stockSummary.DADA_DE_BAJA || 0).toLocaleString()}

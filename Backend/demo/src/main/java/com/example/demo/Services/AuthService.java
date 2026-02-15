@@ -173,6 +173,7 @@ public class AuthService {
                         "id", localUser.getId(),
                         "username", localUser.getUsername(),
                         "email", localUser.getEmail(),
+                        "name", localUser.getName() != null ? localUser.getName() : "",
                         "rol", localUser.getRol()
                 )
         );

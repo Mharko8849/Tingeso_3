@@ -5,6 +5,8 @@
   background: none;
   border: none;
   font-size: 0.95rem;
+  color: #1f2937;
+  /* Force dark text color */
   transition: background 0.2s;
 }
 
@@ -19,32 +21,40 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.7);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding-top: 80px;
   padding-bottom: 80px;
-  overflow: auto; /* allow scrolling when content is taller than viewport */
+  overflow: auto;
+  /* allow scrolling when content is taller than viewport */
   z-index: 2000;
   animation: fadeIn 0.25s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Contenido del mega menú */
 .tool-content {
   background-color: #fff;
   border-radius: 6px;
-  padding: 30px 5rem; /* margen desde los bordes */
+  padding: 30px 5rem;
+  /* margen desde los bordes */
   max-width: 1200px;
   width: 100%;
   box-sizing: border-box;
   position: relative;
-  max-height: calc(100vh - 160px); /* keep some space around and enable internal scroll */
+  max-height: calc(100vh - 160px);
+  /* keep some space around and enable internal scroll */
   overflow: auto;
 }
 
@@ -56,6 +66,8 @@
   background: none;
   border: none;
   font-size: 1.2rem;
+  color: #333;
+  /* Force dark close icon */
   cursor: pointer;
 }
 
@@ -82,7 +94,8 @@
 
 .tool-categories-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 columnas */
+  grid-template-columns: repeat(3, 1fr);
+  /* 3 columnas */
   gap: 12px;
 }
 
@@ -101,7 +114,7 @@
 }
 
 .category-item:hover {
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
   padding-left: 5px;
   color: #333;
 }
@@ -115,7 +128,7 @@
 }
 
 .category-item.all-categories:hover {
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
   padding-left: 5px;
 }
 
@@ -143,7 +156,7 @@
 }
 
 .tool-section a:hover {
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
   border-radius: 4px;
   padding-left: 5px;
 }
@@ -164,7 +177,7 @@
 }
 
 .link-as-anchor:hover {
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
   border-radius: 4px;
   padding-left: 5px;
 }

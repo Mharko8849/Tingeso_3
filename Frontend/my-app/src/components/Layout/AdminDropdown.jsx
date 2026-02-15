@@ -1,9 +1,14 @@
 import React, { useState } from "react";
 import "../Tools/ToolDropdown.css";
 import { cancelOrderDraft } from "../../services/orderDraft";
+import ModalManageCategories from "../Categories/ModalManageCategories";
+import ModalManageToolStates from "../Tools/ModalManageToolStates";
 
 const AdminDropdown = ({ isAdminOrSuper }) => {
   const [open, setOpen] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showStatesModal, setShowStatesModal] = useState(false);
+
   const toggleMenu = () => setOpen(!open);
   const closeMenu = () => setOpen(false);
 
@@ -12,6 +17,16 @@ const AdminDropdown = ({ isAdminOrSuper }) => {
     window.history.pushState({}, "", path);
     window.dispatchEvent(new PopStateEvent("popstate"));
     closeMenu();
+  };
+
+  const handleOpenCategoryModal = () => {
+    closeMenu();
+    setShowCategoryModal(true);
+  };
+
+  const handleOpenStatesModal = () => {
+    closeMenu();
+    setShowStatesModal(true);
   };
 
   return (
@@ -41,11 +56,31 @@ const AdminDropdown = ({ isAdminOrSuper }) => {
               <div className="tool-section">
                 <h4><strong>Herramientas</strong></h4>
                 <button type="button" className="link-as-anchor" onClick={() => navigate("/inventory")}>Ver inventario</button>
+                {isAdminOrSuper && (
+                  <>
+                    <button type="button" className="link-as-anchor" onClick={handleOpenCategoryModal}>
+                      Gestionar categorías
+                    </button>
+                    <button type="button" className="link-as-anchor" onClick={handleOpenStatesModal}>
+                      Gestionar estados de herramientas
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <ModalManageCategories
+        open={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+      />
+
+      <ModalManageToolStates
+        open={showStatesModal}
+        onClose={() => setShowStatesModal(false)}
+      />
     </>
   );
 };

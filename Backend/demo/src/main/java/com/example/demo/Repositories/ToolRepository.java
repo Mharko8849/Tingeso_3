@@ -11,17 +11,17 @@ public interface ToolRepository extends JpaRepository<ToolEntity,Long> {
 
     ToolEntity findByToolName(String toolName);
 
-    List<ToolEntity> findByCategory(String category);
+    List<ToolEntity> findByCategory_Name(String category);
 
     List<ToolEntity> findByPriceRentGreaterThanEqual(int priceRentIsGreaterThan);
 
     List<ToolEntity> findByPriceRentLessThanEqual(int priceRentIsLessThan);
 
-    List<ToolEntity> findAllByCategory(String category);
+    List<ToolEntity> findAllByCategory_Name(String category);
 
-    List<ToolEntity> findByPriceRentGreaterThanEqualAndCategory(int priceRentIsGreaterThan, String category);
+    List<ToolEntity> findByPriceRentGreaterThanEqualAndCategory_Name(int priceRentIsGreaterThan, String category);
 
-    List<ToolEntity> findByPriceRentLessThanEqualAndCategory(int priceRentIsLessThan, String category);
+    List<ToolEntity> findByPriceRentLessThanEqualAndCategory_Name(int priceRentIsLessThan, String category);
 
     List<ToolEntity> findAllByOrderByPriceRentDesc();
 

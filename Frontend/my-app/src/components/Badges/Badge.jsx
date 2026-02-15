@@ -48,16 +48,20 @@ const FALLBACK_BASE_STYLE = {
  *  - title: tooltip text
  *  - ariaLabel: accessibility label
  *  - style: inline style overrides
+ *  - useClasses: if false, only uses inline styles (default true)
  */
-const Badge = ({ variant = 'red', className = '', title = '', ariaLabel = '', style = {} }) => {
-  const cls = `badge badge--${variant} ${className}`.trim();
+const Badge = ({ variant = 'red', className = '', title = '', ariaLabel = '', style = {}, useClasses = true }) => {
+  // Cuando useClasses es false, no aplicamos ninguna clase CSS
+  const cls = useClasses ? `badge badge--${variant} ${className}`.trim() : '';
   
   // Determines the aria-label based on props or defaults to a descriptive text.
   const aLabel = ariaLabel || (title ? title : (variant === 'green' ? 'Activo' : (variant === 'red' ? 'Inactivo' : 'Estado')));
 
+  // Cuando useClasses es false, solo usamos FALLBACK_BASE_STYLE + style custom
+  // Cuando useClasses es true, usamos el flujo normal
   const mergedStyle = { 
     ...FALLBACK_BASE_STYLE, 
-    ...(VARIANT_DEFAULTS[variant] || VARIANT_DEFAULTS.green), 
+    ...(useClasses ? (VARIANT_DEFAULTS[variant] || VARIANT_DEFAULTS.green) : {}), 
     ...style 
   };
 

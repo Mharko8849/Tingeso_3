@@ -20,7 +20,7 @@ public interface LoanXToolsRepository extends JpaRepository<LoanXToolsEntity, Lo
 
     List<LoanXToolsEntity> findByIdEmployeeRec(UserEntity idEmployee);
 
-    List<LoanXToolsEntity> findByIdTool_CategoryAndIdLoan_IdUserAndIdLoan_RealReturnDateIsNull(String category, UserEntity user);
+    List<LoanXToolsEntity> findByIdTool_Category_NameAndIdLoan_IdUserAndIdLoan_RealReturnDateIsNull(String category, UserEntity user);
 
     List<LoanXToolsEntity> findByIdLoan_IdUserAndIdToolAndIdLoan_RealReturnDateIsNull(UserEntity user, ToolEntity tool);
 

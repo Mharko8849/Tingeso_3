@@ -1,0 +1,138 @@
+/* Loading and empty states */
+.states-loading,
+.states-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  font-size: 16px;
+}
+
+.states-empty {
+  font-style: italic;
+}
+
+/* States list */
+.states-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.state-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.state-item-row:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.state-name {
+  font-size: 16px;
+  color: #1e293b;
+  font-weight: 500;
+  flex: 1;
+}
+
+.state-edit-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #2b6cb0;
+  border-radius: 6px;
+  font-size: 16px;
+  background: white;
+  outline: none;
+}
+
+/* Action buttons container */
+.state-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.state-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Edit button - blue */
+.state-btn-edit {
+  background: #2B7FFF;
+  color: white;
+}
+
+.state-btn-edit:hover {
+  background: #1a5fd4;
+  transform: translateY(-1px);
+}
+
+/* Delete button - red */
+.state-btn-delete {
+  background: #e53e3e;
+  color: white;
+}
+
+.state-btn-delete:hover {
+  background: #c53030;
+  transform: translateY(-1px);
+}
+
+/* Save button (inline edit) - green */
+.state-btn-save {
+  background: #38a169;
+  color: white;
+  font-size: 18px;
+  padding: 6px 14px;
+}
+
+.state-btn-save:hover {
+  background: #2f855a;
+}
+
+/* Cancel button (inline edit) - red */
+.state-btn-cancel {
+  background: #e53e3e;
+  color: white;
+  font-size: 18px;
+  padding: 6px 14px;
+}
+
+.state-btn-cancel:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.mas-add-new {
+  background: #2b6cb0;
+  color: white;
+  border: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mas-add-new:hover {
+  background: #1e4e8c;
+}
+
+.add-icon {
+  font-size: 20px;
+  font-weight: bold;
+}

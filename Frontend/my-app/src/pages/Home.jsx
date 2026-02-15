@@ -4,7 +4,6 @@ import ToolCarousel from "../components/Tools/ToolCarousel";
 import CategoriesGrid from "../components/Categories/CategoriesGrid";
 import api from "../services/http-common";
 import { useNavigate } from "react-router-dom";
-import { TOOL_CATEGORIES } from "../constants/toolCategories";
 
 const getImageUrl = (imagePath) => {
   if (!imagePath) return "/NoImage.png"; // Fallback image
@@ -61,11 +60,17 @@ const Home = () => {
   // Calculate popular categories based on rankingTools
   useEffect(() => {
     // 1. Extract unique categories from ranking
-    const rankedCategoryNames = [...new Set(rankingTools.map(t => t.category).filter(Boolean))];
+    const rankedCategoryNames = [...new Set(rankingTools.map(t => {
+      if (!t.category) return null;
+      return typeof t.category === 'string' ? t.category : t.category.name;
+    }).filter(Boolean))];
     
     // 2. Build category objects from ranking data (using the first tool's image)
     let finalCats = rankedCategoryNames.map(catName => {
-      const tool = rankingTools.find(t => t.category === catName);
+      const tool = rankingTools.find(t => {
+        const cName = typeof t.category === 'string' ? t.category : t.category?.name;
+        return cName === catName;
+      });
       // Check if we have a fallback subtitle for this category, otherwise generic
       const fallback = FALLBACK_CATEGORIES.find(fc => fc.title === catName);
       return {

@@ -3,6 +3,7 @@ package com.example.demo.Services;
 import com.example.demo.Entities.InventoryEntity;
 import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
+import com.example.demo.Entities.ToolStateEntity;
 import com.example.demo.Repositories.InventoryRepository;
 import com.example.demo.Repositories.ToolRepository;
 import jakarta.transaction.Transactional;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ToolService {
@@ -29,6 +31,12 @@ public class ToolService {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private ToolStateService toolStateService;
+
+    @Autowired
+    private CategoryService categoryService;
 
     public ArrayList<ToolEntity> getAllTools() {
         return (ArrayList<ToolEntity>) toolRepository.findAll();
@@ -47,7 +55,7 @@ public class ToolService {
         if (toolEntity.getToolName() == null || toolEntity.getToolName().isBlank()) {
             errors.add("Debe ingresar un nombre para la herramienta.");
         }
-        if (toolEntity.getCategory() == null || toolEntity.getCategory().isBlank()) {
+        if (toolEntity.getCategory() == null) {
             errors.add("Debe ingresar una categoría para la herramienta.");
         }
         if (toolEntity.getRepoCost() <= 0) {
@@ -64,20 +72,22 @@ public class ToolService {
             throw new RuntimeException(String.join(" ", errors));
         }
 
+        if (toolEntity.getCategory() != null) {
+            toolEntity.setCategory(categoryService.createCategory(toolEntity.getCategory()));
+        }
+
         String imageName = fileStorageService.saveFile(image);
         toolEntity.setImageUrl(imageName);
 
         ToolEntity savedTool = toolRepository.save(toolEntity);
 
-        String[] estados = {"DISPONIBLE", "PRESTADA", "EN REPARACION", "DADA DE BAJA"};
-        int i = 0;
-        while (i < estados.length) {
+        List<ToolStateEntity> allStates = toolStateService.getAllStates();
+        for (ToolStateEntity state : allStates) {
             InventoryEntity inv = new InventoryEntity();
             inv.setIdTool(savedTool);
-            inv.setToolState(estados[i]);
+            inv.setToolState(state);
             inv.setStockTool(0);
             inventoryRepository.save(inv);
-            i++;
         }
 
         return savedTool;
@@ -92,8 +102,8 @@ public class ToolService {
         if (toolUpdate.getToolName() != null && !toolUpdate.getToolName().isBlank()) {
             tool.setToolName(toolUpdate.getToolName());
         }
-        if (toolUpdate.getCategory() != null && !toolUpdate.getCategory().isBlank()) {
-            tool.setCategory(toolUpdate.getCategory());
+        if (toolUpdate.getCategory() != null) {
+            tool.setCategory(categoryService.createCategory(toolUpdate.getCategory()));
         }
         if (toolUpdate.getRepoCost() > 0) {
             tool.setRepoCost(toolUpdate.getRepoCost());

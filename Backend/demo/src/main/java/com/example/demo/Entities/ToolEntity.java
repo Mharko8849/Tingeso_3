@@ -20,7 +20,9 @@ public class ToolEntity {
 
     private String toolName;
 
-    private String category;
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private CategoryEntity category;
 
     private int repoCost;
 

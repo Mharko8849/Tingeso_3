@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { TOOL_CATEGORIES } from '../../constants/toolCategories';
+import api from '../../services/http-common';
+// import { TOOL_CATEGORIES } from '../../constants/toolCategories';
 import './FiltersSidebar.css';
 
 /**
@@ -23,6 +24,17 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
   const [sort, setSort] = useState(initial.sort ?? '');
   const [category, setCategory] = useState(initial.category ?? '');
   const [search, setSearch] = useState(initial.search ?? '');
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCats = async () => {
+        try {
+            const res = await api.get('/categories/'); // Ensure trailing slash if controller has it
+            setCategories(res.data.map(c => c.name));
+        } catch(e) { console.error(e); }
+    };
+    fetchCats();
+  }, []);
 
   // Resets all filters to their default values and notifies the parent component.
   const resetFilters = () => {
@@ -179,7 +191,7 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
         <label>Filtrar por Categoría</label>
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="">Todas las categorías</option>
-          {TOOL_CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>

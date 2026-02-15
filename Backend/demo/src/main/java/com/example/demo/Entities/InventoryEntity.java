@@ -22,7 +22,9 @@ public class InventoryEntity {
     @JoinColumn(name = "idTool", referencedColumnName = "id",  nullable = false)
     private ToolEntity idTool;
 
-    private String toolState;
+    @ManyToOne
+    @JoinColumn(name = "tool_state_id")
+    private ToolStateEntity toolState;
 
     private int stockTool;
 

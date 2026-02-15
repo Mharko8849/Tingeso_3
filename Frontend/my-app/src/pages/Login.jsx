@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 // import { useKeycloak } from '@react-keycloak/web';
 import api from '../services/http-common';
 import NavBar from '../components/Layout/NavBar';
+import { useAlert } from '../components/Alerts/useAlert';
 import './forms.css';
 
 const Login = () => {
@@ -9,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null);
+  const { show } = useAlert();
   // const { keycloak } = useKeycloak();
 
   const submit = async (e) => {
@@ -23,6 +25,10 @@ const Login = () => {
       // Use axios instance which points to backend (VITE env vars or defaults)
       const resp = await api.post('/auth/login', body);
       const data = resp.data;
+      
+      // Extract user name for welcome message
+      const userName = data?.user?.name || data?.name || identifier;
+      
       // store tokens locally (the backend returns a structure { token: { access_token, refresh_token }, user: {...} })
       // Support both old and new shapes for compatibility.
       if (data) {
@@ -39,10 +45,25 @@ const Login = () => {
           // also keep alias used elsewhere
           localStorage.setItem('app_token', data.token.access_token);
         }
+        
+        // Store user data if available
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
       }
-  // redirect to home using History API (path-based routing)
-  window.history.pushState({}, '', '/');
-  window.dispatchEvent(new PopStateEvent('popstate'));
+
+      // Show success alert with user's name
+      show({ 
+        message: `¡Bienvenido ${userName}! Sesión iniciada correctamente`, 
+        severity: 'success',
+        autoHideMs: 3500 
+      });
+
+      // redirect to home using History API (path-based routing)
+      setTimeout(() => {
+        window.history.pushState({}, '', '/');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }, 500); // Small delay to show the alert before redirecting
     } catch (err) {
       console.error(err);
       if (err.response && err.response.status === 401) {

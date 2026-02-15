@@ -11,17 +11,18 @@ import { useKeycloak } from "@react-keycloak/web";
 import { getUser } from "../../services/auth";
 
 const NavBar = () => {
+  // Force rebuild comment: fixing dark mode text visibility take 3 (close button)
   const { keycloak, initialized } = useKeycloak();
   const user = getUser();
   const logged = (initialized && keycloak.authenticated) || !!user;
-  
+
   let roles = [];
   if (initialized && keycloak.authenticated && keycloak.tokenParsed && keycloak.tokenParsed.realm_access) {
     roles = keycloak.tokenParsed.realm_access.roles || [];
   } else if (user && user.realm_access && Array.isArray(user.realm_access.roles)) {
     roles = user.realm_access.roles;
   }
-  
+
   roles = roles.map((r) => String(r).toUpperCase());
   const isAdminOrSuper = roles.includes("ADMIN") || roles.includes("SUPERADMIN");
   const isEmployee = roles.includes("EMPLOYEE");

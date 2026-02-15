@@ -31,6 +31,7 @@ public class UserEntity {
 
     private String email;
 
+    @Transient
     private String password;
 
     private String stateClient;

@@ -49,13 +49,7 @@ spec:
                 name: toolrent-service-prod
                 port:
                   number: 80
-          - path: /inventory
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service-prod
-                port:
-                  number: 80
+
           - path: /loan
             pathType: Prefix
             backend:

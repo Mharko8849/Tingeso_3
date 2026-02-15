@@ -84,14 +84,17 @@ const InventoryPage = ({ category = null }) => {
             id: tid,
             name: t.toolName || t.name || '—',
             price: t.priceRent || t.price || 0,
-            category: t.category || category,
+            // Support both string (old) and object (new entity)
+            category: (typeof t.category === 'string' ? t.category : t.category?.name) || category,
             image: t.imageUrl ? `/images/${t.imageUrl}` : '/images/NoImage.png',
             stock: 0,
           });
         }
         const item = map.get(tid);
         // sum only available stock entries
-        if (entry.toolState === 'DISPONIBLE') {
+        // Support both string (old) and object (new entity)
+        const stateName = typeof entry.toolState === 'string' ? entry.toolState : entry.toolState?.state;
+        if (stateName === 'DISPONIBLE') {
           item.stock = (item.stock || 0) + (entry.stockTool || 0);
         }
       });

@@ -1,32 +1,94 @@
 .mas-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(2,6,23,0.4);
+  background: rgba(2, 6, 23, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 60;
 }
+
 .mas-modal {
   background: #fff;
   padding: 30px;
   padding-top: 40px;
   border-radius: 12px;
-  width: 620px;
-  max-width: 92vw;
-  max-height: 85%;
-  box-shadow: 0 18px 45px rgba(15,23,42,0.25);
+  width: 800px;
+  /* Increased from 620px */
+  max-width: 95vw;
+  max-height: 90vh;
+  /* Increased height allowance */
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.25);
   display: flex;
   flex-direction: column;
   font-family: inherit;
 }
-.mas-row { display:flex; flex-direction:column; gap:6px; margin: 10px 0; }
-.mas-row input { padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; }
-.mas-actions { display:flex; justify-content:space-between; gap:8px; margin-top:12px; }
-.mas-btn { padding: 8px 12px; border-radius:6px; border: none; cursor:pointer; }
-.mas-cancel { background: #f1f5f9; }
-.mas-confirm { background: #2b6cb0; color: white; }
-.mas-error { color: #b91c1c; margin-top:6px; }
+
+.mas-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+/* Explicitly force white background and dark text for inputs to override any dark mode defaults */
+.mas-row input,
+.mas-row select {
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+/* Input focus state - box shadow prevents clipping */
+.mas-row input:focus,
+.mas-row select:focus {
+  outline: none;
+  border-color: #2b6cb0;
+  box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.2);
+}
+
+.mas-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mas-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.mas-cancel {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #374151;
+}
+
+.mas-cancel:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.mas-confirm {
+  background: #2b6cb0;
+  color: white;
+}
+
+.mas-confirm:hover {
+  background: #1e4e8c;
+}
+
+.mas-error {
+  color: #b91c1c;
+  margin-top: 6px;
+}
 
 .mas-close {
   position: absolute;
@@ -50,8 +112,10 @@
   flex: 1 1 auto;
   overflow-y: auto;
   margin-top: 4px;
-  padding-right: 4px;
+  padding: 4px;
+  /* Padding all around to prevent focus ring clipping */
 }
+
 .mas-file-wrapper {
   display: flex;
   flex-direction: column;
@@ -82,4 +146,47 @@
 .mas-file-wrapper-dragging {
   border-color: #2563eb;
   background: #e0edff;
+}
+
+/* Cropper Styles */
+.cropper-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.cropper-wrap {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  background: #333;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zoom-range {
+  flex: 1;
+  cursor: pointer;
+}
+
+.mas-groups-row {
+  display: flex;
+  gap: 12px;
+}
+
+.small-btn {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  width: fit-content;
+  align-self: center;
 }

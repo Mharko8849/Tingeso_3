@@ -6,7 +6,7 @@ const backendPort = import.meta.env.VITE_BACKEND_PORT;
 
 const baseURL = backendServer && backendPort 
   ? `http://${backendServer}:${backendPort}` 
-  : '/';
+  : 'https://toolrent.192.168.39.45.nip.io';
 
 const api = axios.create({
   baseURL: baseURL,
@@ -20,11 +20,9 @@ api.interceptors.request.use(
     // If the URL starts with /api/, remove it.
     // This harmonizes frontend calls (e.g., /api/kardex/ranking) with backend endpoints (/kardex)
     // as defined in the controllers and Ingress.
-    /*
     if (config.url && config.url.startsWith('/api/')) {
        config.url = config.url.substring(4);
     }
-    */
 
     // Don't attach an Authorization header for the backend login/register endpoints
     // — if we attach an expired token the backend will immediately return 401.

@@ -1,5 +1,6 @@
 package com.example.demo.RepositoryTest;
 
+import com.example.demo.Entities.CategoryEntity;
 import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Repositories.ToolRepository;
 import org.junit.jupiter.api.Test;
@@ -20,11 +21,20 @@ public class ToolRepositoryTest {
     @Autowired
     private ToolRepository toolRepository;
 
+    private CategoryEntity createAndPersistCategory(String name) {
+        CategoryEntity category = new CategoryEntity();
+        category.setName(name);
+        entityManager.persist(category);
+        return category;
+    }
+
     @Test
     public void testFindByToolName() {
+        CategoryEntity cat = createAndPersistCategory("Construction");
+        
         ToolEntity tool = new ToolEntity();
         tool.setToolName("Hammer");
-        tool.setCategory("Construction");
+        tool.setCategory(cat);
         tool.setRepoCost(100);
         tool.setPriceRent(10);
         tool.setPriceFineAtDate(5);
@@ -38,26 +48,31 @@ public class ToolRepositoryTest {
 
     @Test
     public void testFindByCategory() {
+        CategoryEntity cat = createAndPersistCategory("Power Tools");
+        
         ToolEntity tool = new ToolEntity();
         tool.setToolName("Drill");
-        tool.setCategory("Power Tools");
+        tool.setCategory(cat);
         tool.setRepoCost(200);
         tool.setPriceRent(20);
         tool.setPriceFineAtDate(10);
         entityManager.persist(tool);
         entityManager.flush();
 
-        List<ToolEntity> found = toolRepository.findByCategory("Power Tools");
+        List<ToolEntity> found = toolRepository.findByCategory_Name("Power Tools");
 
         assertThat(found).hasSize(1);
-        assertThat(found.get(0).getCategory()).isEqualTo("Power Tools");
+        assertThat(found.get(0).getCategory().getName()).isEqualTo("Power Tools");
     }
 
     @Test
     public void testFindByPriceRentGreaterThanEqual() {
+        CategoryEntity cat1 = createAndPersistCategory("Construction");
+        CategoryEntity cat2 = createAndPersistCategory("Hand Tools");
+        
         ToolEntity tool1 = new ToolEntity();
         tool1.setToolName("Saw");
-        tool1.setCategory("Construction");
+        tool1.setCategory(cat1);
         tool1.setRepoCost(150);
         tool1.setPriceRent(15);
         tool1.setPriceFineAtDate(8);
@@ -65,7 +80,7 @@ public class ToolRepositoryTest {
 
         ToolEntity tool2 = new ToolEntity();
         tool2.setToolName("Screwdriver");
-        tool2.setCategory("Hand Tools");
+        tool2.setCategory(cat2);
         tool2.setRepoCost(50);
         tool2.setPriceRent(5);
         tool2.setPriceFineAtDate(2);
@@ -80,9 +95,12 @@ public class ToolRepositoryTest {
 
     @Test
     public void testFindByPriceRentLessThanEqual() {
+        CategoryEntity cat1 = createAndPersistCategory("Construction");
+        CategoryEntity cat2 = createAndPersistCategory("Hand Tools");
+        
         ToolEntity tool1 = new ToolEntity();
         tool1.setToolName("Saw");
-        tool1.setCategory("Construction");
+        tool1.setCategory(cat1);
         tool1.setRepoCost(150);
         tool1.setPriceRent(15);
         tool1.setPriceFineAtDate(8);
@@ -90,7 +108,7 @@ public class ToolRepositoryTest {
 
         ToolEntity tool2 = new ToolEntity();
         tool2.setToolName("Screwdriver");
-        tool2.setCategory("Hand Tools");
+        tool2.setCategory(cat2);
         tool2.setRepoCost(50);
         tool2.setPriceRent(5);
         tool2.setPriceFineAtDate(2);
@@ -105,49 +123,55 @@ public class ToolRepositoryTest {
 
     @Test
     public void testFindAllByCategory() {
+        CategoryEntity cat = createAndPersistCategory("Hand Tools");
+        
         ToolEntity tool = new ToolEntity();
         tool.setToolName("Wrench");
-        tool.setCategory("Hand Tools");
+        tool.setCategory(cat);
         tool.setRepoCost(80);
         tool.setPriceRent(8);
         tool.setPriceFineAtDate(4);
         entityManager.persist(tool);
         entityManager.flush();
 
-        List<ToolEntity> found = toolRepository.findAllByCategory("Hand Tools");
+        List<ToolEntity> found = toolRepository.findAllByCategory_Name("Hand Tools");
 
         assertThat(found).hasSize(1);
-        assertThat(found.get(0).getCategory()).isEqualTo("Hand Tools");
+        assertThat(found.get(0).getCategory().getName()).isEqualTo("Hand Tools");
     }
 
     @Test
     public void testFindByPriceRentGreaterThanEqualAndCategory() {
+        CategoryEntity cat = createAndPersistCategory("Power Tools");
+        
         ToolEntity tool = new ToolEntity();
         tool.setToolName("Heavy Drill");
-        tool.setCategory("Power Tools");
+        tool.setCategory(cat);
         tool.setPriceRent(50);
         tool.setRepoCost(500);
         tool.setPriceFineAtDate(25);
         entityManager.persist(tool);
         entityManager.flush();
 
-        List<ToolEntity> found = toolRepository.findByPriceRentGreaterThanEqualAndCategory(40, "Power Tools");
+        List<ToolEntity> found = toolRepository.findByPriceRentGreaterThanEqualAndCategory_Name(40, "Power Tools");
 
         assertThat(found).hasSize(1);
     }
 
     @Test
     public void testFindByPriceRentLessThanEqualAndCategory() {
+        CategoryEntity cat = createAndPersistCategory("Power Tools");
+        
         ToolEntity tool = new ToolEntity();
         tool.setToolName("Light Drill");
-        tool.setCategory("Power Tools");
+        tool.setCategory(cat);
         tool.setPriceRent(30);
         tool.setRepoCost(300);
         tool.setPriceFineAtDate(15);
         entityManager.persist(tool);
         entityManager.flush();
 
-        List<ToolEntity> found = toolRepository.findByPriceRentLessThanEqualAndCategory(40, "Power Tools");
+        List<ToolEntity> found = toolRepository.findByPriceRentLessThanEqualAndCategory_Name(40, "Power Tools");
 
         assertThat(found).hasSize(1);
     }

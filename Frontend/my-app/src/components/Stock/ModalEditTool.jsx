@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/http-common';
-import { TOOL_CATEGORIES } from '../../constants/toolCategories';
+// import { TOOL_CATEGORIES } from '../../constants/toolCategories';
 import './ModalAddStockTool.css';
 
 const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
@@ -9,12 +9,27 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [categoriesList, setCategoriesList] = useState([]);
+
+  useEffect(() => {
+      if (open) {
+        const fetchCategories = async () => {
+          try {
+            const response = await api.get('/categories/');
+            setCategoriesList(response.data.map(c => c.name)); 
+          } catch (error) {
+            console.error('Error fetching categories:', error);
+          }
+        };
+        fetchCategories();
+      }
+  }, [open]);
 
   useEffect(() => {
     if (tool) {
       setForm({
         toolName: tool.toolName || tool.name || '',
-        category: tool.category || '',
+        category: (typeof tool.category === 'string' ? tool.category : tool.category?.name) || '',
         repoCost: tool.repoCost ?? '',
         priceRent: tool.priceRent ?? tool.price ?? '',
         priceFineAtDate: tool.priceFineAtDate ?? '',
@@ -39,7 +54,7 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
 
       const toolPayload = {
         toolName: String(form.toolName).trim(),
-        category: form.category || '',
+        category: form.category ? { name: form.category } : null,
         repoCost: Math.round(repoCost),
         priceRent: Math.round(priceRent),
         priceFineAtDate: Math.round(priceFineAtDate),
@@ -116,7 +131,7 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
             >
               <option value="">Seleccionar categoría</option>
-              {TOOL_CATEGORIES.map((cat) => (
+              {categoriesList.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
