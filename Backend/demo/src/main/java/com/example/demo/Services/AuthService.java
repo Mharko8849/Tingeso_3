@@ -178,4 +178,21 @@ public class AuthService {
                 )
         );
     }
+
+    /**
+     * Refresh: usa el refresh_token para obtener un nuevo access_token.
+     */
+    public Map<String, Object> refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new RuntimeException("Refresh token requerido");
+        }
+
+        try {
+            Map token = keycloakAdminService.refreshToken(refreshToken);
+            return Map.of("token", token);
+        } catch (Exception ex) {
+            logger.error("Error refrescando token: {}", ex.getMessage());
+            throw new RuntimeException("No se pudo refrescar el token");
+        }
+    }
 }

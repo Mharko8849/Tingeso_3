@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import ClientSearch from '../components/Clients/ClientSearch';
@@ -8,6 +9,7 @@ import { useAlert } from '../components/Alerts/useAlert';
 import { useKeycloak } from '@react-keycloak/web';
 
 const OrdersCreateClient = () => {
+  const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
   const [clientListReload, setClientListReload] = useState(0);
@@ -39,38 +41,31 @@ const OrdersCreateClient = () => {
   const isAdmin = legacyRoles.includes('ADMIN');
 
   const goBack = () => {
-    window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate('/');
   };
 
   const handleNext = () => {
     if (!selected) return;
-    // create loan draft on the server for this selected client before navigating
+    // Save client and dates to sessionStorage (NO loan creation here)
     (async () => {
       setCreating(true);
       try {
-        const me = await api.get('/api/user/me');
-        const employeeId = me.data?.id;
-        if (!employeeId) throw new Error('No se pudo obtener el id del empleado');
-        // call create loan with init and return dates as request params
-        const resp = await api.post(`/api/loan/create/${employeeId}`, selected, { params: { initDate: initDate, returnDate: returnDate } });
-        const created = resp.data;
-        if (created && created.id) {
-          try { sessionStorage.setItem('order_loan_id', String(created.id)); } catch (e) { /* ignore */ }
-        }
-          // store selected client in session so next step can read it
-          try {
-            sessionStorage.setItem('order_selected_client', JSON.stringify(selected));
-            // clear any previous items/resume from earlier incomplete orders so this is a fresh order
-            sessionStorage.removeItem('order_items');
-            sessionStorage.removeItem('order_resume');
-          } catch (e) { console.warn('sessionStorage not available', e); }
-        // navigate to tools step
-        window.history.pushState({}, '', '/admin/orders/create/tools');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-        } catch (e) {
-        console.warn('No se pudo crear el borrador del pedido al presionar Siguiente', e?.response?.data || e.message || e);
-        show({ severity: 'error', message: 'No se pudo iniciar el pedido en el servidor. Intenta nuevamente.' });
+        // Store selected client and dates in session for next step
+        try {
+          sessionStorage.setItem('order_selected_client', JSON.stringify(selected));
+          sessionStorage.setItem('order_init_date', initDate);
+          sessionStorage.setItem('order_return_date', returnDate);
+          // Clear any previous items/resume from earlier incomplete orders
+          sessionStorage.removeItem('order_items');
+          sessionStorage.removeItem('order_resume');
+          sessionStorage.removeItem('order_loan_id'); // No loan ID yet
+        } catch (e) { console.warn('sessionStorage not available', e); }
+        
+        // Navigate to tools step
+        navigate('/admin/orders/create/tools');
+      } catch (e) {
+        console.warn('Error al preparar el pedido', e?.response?.data || e.message || e);
+        show({ severity: 'error', message: 'No se pudo preparar el pedido. Intenta nuevamente.' });
       } finally {
         setCreating(false);
       }

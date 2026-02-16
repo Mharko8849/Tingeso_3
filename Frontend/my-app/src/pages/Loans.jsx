@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import NavBar from '../components/Layout/NavBar';
+import React, { useEffect, useMemo, useState } from 'react';import { useNavigate } from 'react-router-dom';import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import api from '../services/http-common';
 import Badge from '../components/Badges/Badge';
@@ -7,6 +6,7 @@ import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
 import { ReportLoans } from '../components/Reports';
 
 const Loans = () => {
+  const navigate = useNavigate();
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -73,14 +73,12 @@ const Loans = () => {
   }, [status]);
 
   const goBack = () => {
-    window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate('/');
   };
 
   const openLoan = (id) => {
     // Navega al resumen de pedido de solo lectura
-    window.history.pushState({}, '', `/loans/loan/${id}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate(`/loans/loan/${id}`);
   };
 
   const today = useMemo(() => (new Date()).toISOString().slice(0, 10), []);

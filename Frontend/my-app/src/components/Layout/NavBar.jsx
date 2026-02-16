@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./NavBar.css";
 import Logo from "./Logo";
 import SearchBar from "../Common/SearchBar";
@@ -12,6 +13,7 @@ import { getUser } from "../../services/auth";
 
 const NavBar = () => {
   // Force rebuild comment: fixing dark mode text visibility take 3 (close button)
+  const navigate = useNavigate();
   const { keycloak, initialized } = useKeycloak();
   const user = getUser();
   const logged = (initialized && keycloak.authenticated) || !!user;
@@ -31,8 +33,7 @@ const NavBar = () => {
 
   const goHome = async () => {
     await cancelOrderDraft();
-    window.history.pushState({}, "", "/");
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    navigate('/');
   };
 
   return (

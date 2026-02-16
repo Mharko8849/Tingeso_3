@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 // import { useKeycloak } from '@react-keycloak/web';
 import api from '../services/http-common';
 import NavBar from '../components/Layout/NavBar';
@@ -6,6 +7,7 @@ import { useAlert } from '../components/Alerts/useAlert';
 import './forms.css';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,10 +61,9 @@ const Login = () => {
         autoHideMs: 3500 
       });
 
-      // redirect to home using History API (path-based routing)
+      // redirect to home using React Router
       setTimeout(() => {
-        window.history.pushState({}, '', '/');
-        window.dispatchEvent(new PopStateEvent('popstate'));
+        navigate('/');
       }, 500); // Small delay to show the alert before redirecting
     } catch (err) {
       console.error(err);
@@ -109,7 +110,7 @@ const Login = () => {
 
             <div className="actions">
                 <button className="primary-cta" type="submit" disabled={loading} style={{ width: '100%' , justifyContent: 'center' }}>{loading ? 'Entrando...' : 'Ingresar'}</button>
-         <button type="button" className="link" style={{ width: '100%' ,justifyContent: 'center'}} onClick={() => { window.history.pushState({}, '', '/register'); window.dispatchEvent(new PopStateEvent('popstate')); }}>Crear cuenta</button>
+         <button type="button" className="link" style={{ width: '100%' ,justifyContent: 'center'}} onClick={() => navigate('/register')}>Crear cuenta</button>
             </div>
           </form>
 

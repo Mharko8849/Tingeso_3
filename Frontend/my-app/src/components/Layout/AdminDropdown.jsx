@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../Tools/ToolDropdown.css";
 import { cancelOrderDraft } from "../../services/orderDraft";
 import ModalManageCategories from "../Categories/ModalManageCategories";
 import ModalManageToolStates from "../Tools/ModalManageToolStates";
 
 const AdminDropdown = ({ isAdminOrSuper }) => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showStatesModal, setShowStatesModal] = useState(false);
@@ -12,10 +14,9 @@ const AdminDropdown = ({ isAdminOrSuper }) => {
   const toggleMenu = () => setOpen(!open);
   const closeMenu = () => setOpen(false);
 
-  const navigate = async (path) => {
+  const navigateTo = async (path) => {
     await cancelOrderDraft();
-    window.history.pushState({}, "", path);
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    navigate(path);
     closeMenu();
   };
 
@@ -43,19 +44,19 @@ const AdminDropdown = ({ isAdminOrSuper }) => {
             <div className="tool-grid">
               <div className="tool-section">
                 <h4><strong>Pedidos</strong></h4>
-                <button type="button" className="link-as-anchor" onClick={() => navigate("/admin/orders/create")}>Crear un pedido</button>
-                <button type="button" className="link-as-anchor" onClick={() => navigate("/loans")}>Ver todos los pedidos</button>
-                <button type="button" className="link-as-anchor" onClick={() => navigate("/admin/returns")}>Devolver y/o pagar un pedido</button>
+                <button type="button" className="link-as-anchor" onClick={() => navigateTo("/admin/orders/create")}>Crear un pedido</button>
+                <button type="button" className="link-as-anchor" onClick={() => navigateTo("/loans")}>Ver todos los pedidos</button>
+                <button type="button" className="link-as-anchor" onClick={() => navigateTo("/admin/returns")}>Devolver y/o pagar un pedido</button>
               </div>
               <div className="tool-section">
                 <h4><strong>Administración</strong></h4>
-                {isAdminOrSuper && <button type="button" className="link-as-anchor" onClick={() => navigate("/employees")}>Empleados</button>}
-                {isAdminOrSuper && <button type="button" className="link-as-anchor" onClick={() => navigate("/clients")}>Clientes</button>}
-                <button type="button" className="link-as-anchor" onClick={() => navigate("/admin/kardex")}>Kardex</button>
+                {isAdminOrSuper && <button type="button" className="link-as-anchor" onClick={() => navigateTo("/employees")}>Empleados</button>}
+                {isAdminOrSuper && <button type="button" className="link-as-anchor" onClick={() => navigateTo("/clients")}>Clientes</button>}
+                <button type="button" className="link-as-anchor" onClick={() => navigateTo("/admin/kardex")}>Kardex</button>
               </div>
               <div className="tool-section">
                 <h4><strong>Herramientas</strong></h4>
-                <button type="button" className="link-as-anchor" onClick={() => navigate("/inventory")}>Ver inventario</button>
+                <button type="button" className="link-as-anchor" onClick={() => navigateTo("/inventory")}>Ver inventario</button>
                 {isAdminOrSuper && (
                   <>
                     <button type="button" className="link-as-anchor" onClick={handleOpenCategoryModal}>

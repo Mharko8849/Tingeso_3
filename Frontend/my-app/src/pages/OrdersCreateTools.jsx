@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import CategoryListing from '../components/Categories/CategoryListing';
@@ -7,13 +8,13 @@ import api from '../services/http-common';
 import TransitionAlert from '../components/Alerts/TransitionAlert';
 
 const OrdersCreateTools = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 500000 });
   const [tools, setTools] = useState([]);
   const [loadingTools, setLoadingTools] = useState(false);
 
   const [selectedClient, setSelectedClient] = useState(null);
   const [items, setItems] = useState([]);
-  const [loanId, setLoanId] = useState(null);
   const [creating, setCreating] = useState(false);
   const [alert, setAlert] = useState(null);
 
@@ -21,10 +22,7 @@ const OrdersCreateTools = () => {
     try {
       const raw = sessionStorage.getItem('order_selected_client');
       if (raw) setSelectedClient(JSON.parse(raw));
-      // restore loan id if present
-      const lid = sessionStorage.getItem('order_loan_id');
-      if (lid) setLoanId(Number(lid));
-      // restore any locally selected items (Option B: keep LoanXTools local until confirm)
+      // restore any locally selected items
       const its = sessionStorage.getItem('order_items');
       if (its) {
         try { setItems(JSON.parse(its)); } catch (e) { /* ignore parse errors */ }
@@ -33,10 +31,6 @@ const OrdersCreateTools = () => {
     fetchTools(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    // Loan draft creation moved to the client-selection step (Next button). Do not auto-create here.
-  }, [selectedClient]);
 
   const fetchTools = async (f) => {
     setLoadingTools(true);
@@ -120,39 +114,23 @@ const OrdersCreateTools = () => {
   };
 
   const goBackSelectClient = async () => {
-    // Attempt to delete any draft loan and clear local/session state before navigating back
-    try {
-      const lid = loanId || sessionStorage.getItem('order_loan_id');
-      if (lid) {
-        try {
-          const me = await api.get('/api/user/me');
-          const employeeId = me.data?.id;
-          if (employeeId) {
-            await api.delete(`/api/loan/${lid}`);
-          }
-        } catch (e) {
-          console.warn('Could not delete loan draft on goBackSelectClient', e?.response?.data || e.message || e);
-        }
-      }
-    } catch (e) { /* ignore */ }
-
-    // clear local and session draft state
+    // Clear local and session draft state (no loan to delete since it hasn't been created yet)
     setItems([]);
     setSelectedClient(null);
-    setLoanId(null);
     try {
       sessionStorage.removeItem('order_selected_client');
       sessionStorage.removeItem('order_items');
       sessionStorage.removeItem('order_loan_id');
       sessionStorage.removeItem('order_resume');
+      sessionStorage.removeItem('order_init_date');
+      sessionStorage.removeItem('order_return_date');
     } catch (e) {}
 
-    window.history.pushState({}, '', '/admin/orders/create');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate('/admin/orders/create');
   };
 
   const createOrder = async () => {
-    // Instead of immediately posting to backend, redirect to the resume/summary page
+    // Prepare for resume/summary page
     if (!selectedClient) { setAlert({ severity: 'error', message: 'No hay cliente seleccionado. Vuelve atrás.' }); return; }
     if (!items || items.length === 0) { setAlert({ severity: 'error', message: 'Agrega al menos una herramienta' }); return; }
 
@@ -160,24 +138,16 @@ const OrdersCreateTools = () => {
       if (it.stock !== undefined && it.qty > it.stock) { setAlert({ severity: 'error', message: `Cantidad solicitada mayor al stock para ${it.name}` }); return; }
     }
 
-  // Ensure a loan draft exists before saving the resume
-  let currentLoanId = loanId || sessionStorage.getItem('order_loan_id');
-  if (!currentLoanId) {
-    setAlert({ severity: 'error', message: 'No se encontró el pedido asociado. Vuelve al paso anterior y crea el pedido con las fechas.' });
-    return;
-  }
-
-  // Save resume data to sessionStorage so the resume page can read it (include loanId)
-  const resume = { client: selectedClient, items, loanId: currentLoanId };
-  try {
-    sessionStorage.setItem('order_resume', JSON.stringify(resume));
-    // navigate to resume page
-    window.history.pushState({}, '', '/admin/orders/resume');
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  } catch (e) {
-    console.warn('Could not save resume data', e);
-    setAlert({ severity: 'error', message: 'No se pudo preparar el resumen del pedido' });
-  }
+    // Save resume data to sessionStorage (no loanId yet - will be created in ResumeLoan)
+    const resume = { client: selectedClient, items };
+    try {
+      sessionStorage.setItem('order_resume', JSON.stringify(resume));
+      // navigate to resume page
+      navigate('/admin/orders/resume');
+    } catch (e) {
+      console.warn('Could not save resume data', e);
+      setAlert({ severity: 'error', message: 'No se pudo preparar el resumen del pedido' });
+    }
   };
 
   return (
@@ -210,25 +180,16 @@ const OrdersCreateTools = () => {
 
       {/* Drawer with horizontal list of selected items */}
       <OrderItemsDrawer items={items} onChangeQty={changeQty} onRemove={removeItem} onCreate={createOrder} onCancel={async () => {
-        // attempt to delete draft loan on cancel
-        try {
-          const lid = loanId || sessionStorage.getItem('order_loan_id');
-          if (lid) {
-            const me = await api.get('/api/user/me');
-            const employeeId = me.data?.id;
-            if (employeeId) {
-              // backend exposes DELETE /api/loan/{id}
-              await api.delete(`/api/loan/${lid}`);
-            }
-          }
-        } catch (e) {
-          console.warn('Could not delete loan draft on cancel', e?.response?.data || e.message || e);
-        }
+        // Clear state and return to create page (no loan to delete)
         setItems([]);
-        try { sessionStorage.removeItem('order_selected_client'); sessionStorage.removeItem('order_items'); sessionStorage.removeItem('order_loan_id'); } catch (e) {}
-        setLoanId(null);
-        window.history.pushState({}, '', '/admin/orders/create');
-        window.dispatchEvent(new PopStateEvent('popstate'));
+        try { 
+          sessionStorage.removeItem('order_selected_client'); 
+          sessionStorage.removeItem('order_items'); 
+          sessionStorage.removeItem('order_loan_id');
+          sessionStorage.removeItem('order_init_date');
+          sessionStorage.removeItem('order_return_date');
+        } catch (e) {}
+        navigate('/admin/orders/create');
       }} creating={creating} />
     </div>
   );

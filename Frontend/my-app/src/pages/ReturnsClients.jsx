@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import ClientSearch from '../components/Clients/ClientSearch';
+import { useAlert } from '../components/Alerts/useAlert';
 
 const ReturnsClients = () => {
+  const navigate = useNavigate();
+  const { show } = useAlert();
   const [selected, setSelected] = useState(null);
   
 
@@ -15,14 +19,12 @@ const ReturnsClients = () => {
     try {
       sessionStorage.setItem('return_selected_client', JSON.stringify(selected));
     } catch (e) { /* ignore */ }
-    window.history.pushState({}, '', `/admin/returns/client/${selected.id}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate(`/admin/returns/client/${selected.id}`);
   };
 
   const handleCancel = () => {
     try { sessionStorage.removeItem('return_selected_client'); } catch (e) {}
-    window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate('/');
   };
 
   return (

@@ -12,6 +12,19 @@ export const AlertContext = createContext({
 
 export const useAlert = () => useContext(AlertContext);
 
+// Global function to show alerts from non-React code (like axios interceptors)
+let globalShowAlert = null;
+
+export const setGlobalShowAlert = (fn) => {
+  globalShowAlert = fn;
+};
+
+export const showGlobalAlert = (alert) => {
+  if (globalShowAlert) {
+    globalShowAlert(alert);
+  }
+};
+
 /**
  * Provider component for the AlertContext.
  * Manages the state of the current alert and renders the TransitionAlert component.
@@ -26,6 +39,12 @@ export const AlertProvider = ({ children }) => {
 
   // Hides the current alert.
   const hide = useCallback(() => setAlert(null), []);
+
+  // Register global alert function
+  React.useEffect(() => {
+    setGlobalShowAlert(show);
+    return () => setGlobalShowAlert(null);
+  }, [show]);
 
   return (
     <AlertContext.Provider value={{ show, hide }}>

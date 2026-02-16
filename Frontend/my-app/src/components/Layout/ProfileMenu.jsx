@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import ProfileIcon from "./ProfileIcon";
 import "./ProfileMenu.css";
 import { useKeycloak } from "@react-keycloak/web";
 import { getUser, setToken } from "../../services/auth";
 
 const ProfileMenu = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const { keycloak, initialized } = useKeycloak();
@@ -60,10 +62,10 @@ const ProfileMenu = () => {
       {/* Menú desplegable animado */}
       {!logged && (
         <div className={`profile-menu ${open ? "open" : ""}`}>
-          <button className="profile-item" onClick={() => { window.history.pushState({}, '', '/login'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+          <button className="profile-item" onClick={() => navigate('/login')}>
             Iniciar Sesión
           </button>
-          <button className="profile-item" onClick={() => { window.history.pushState({}, '', '/register'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+          <button className="profile-item" onClick={() => navigate('/register')}>
             Registrarse
           </button>
         </div>
@@ -75,8 +77,7 @@ const ProfileMenu = () => {
           <button
             className="profile-item"
             onClick={() => {
-              window.history.pushState({}, '', '/profile');
-              window.dispatchEvent(new PopStateEvent('popstate'));
+              navigate('/profile');
               setOpen(false);
             }}
           >
@@ -93,9 +94,8 @@ const ProfileMenu = () => {
               if (initialized && keycloak.authenticated) {
                 keycloak.logout();
               } else {
-                // Navega a home y recarga para que la UI refleje el logout
-                window.history.pushState({}, '', '/');
-                window.dispatchEvent(new PopStateEvent('popstate'));
+                // Navigate to home and reload to reflect logout state
+                navigate('/');
                 window.location.reload();
               }
             }}

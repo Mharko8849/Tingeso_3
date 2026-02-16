@@ -211,4 +211,24 @@ public class KeycloakAdminService {
 
         return resp.getBody();
     }
+
+    /** Refresca un token usando refresh_token */
+    public Map refreshToken(String refreshToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        String body =
+                "grant_type=refresh_token&client_id=" + clientId +
+                        "&client_secret=" + clientSecret +
+                        "&refresh_token=" + refreshToken;
+
+        try {
+            ResponseEntity<Map> resp =
+                    rest.exchange(tokenEndpoint(), HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
+            return resp.getBody();
+        } catch (Exception ex) {
+            logger.error("Error refrescando token: {}", ex.getMessage());
+            throw new RuntimeException("No se pudo refrescar el token", ex);
+        }
+    }
 }

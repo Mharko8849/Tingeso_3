@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/loan")
@@ -78,6 +79,61 @@ public class LoanController {
 
         LoanEntity loan = loanService.createLoan(clientUser, user,  initDate, returnDate);
         return ResponseEntity.ok(loan);
+    }
+
+    /**
+     * Crea un préstamo con sus herramientas asociadas en una transacción atómica.
+     * Body esperado: {
+     *   "clientId": 123,
+     *   "initDate": "2026-02-16",
+     *   "returnDate": "2026-02-17",
+     *   "toolIds": [1, 2, 3]
+     * }
+     */
+    @PostMapping("/create-with-tools/{employeeId}")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE', 'SUPERADMIN')")
+    public ResponseEntity<?> createLoanWithTools(
+            @PathVariable Long employeeId,
+            @RequestBody Map<String, Object> body) {
+
+        try {
+            // Extraer datos del body
+            Long clientId = Long.valueOf(body.get("clientId").toString());
+            Date initDate = Date.valueOf(body.get("initDate").toString());
+            Date returnDate = Date.valueOf(body.get("returnDate").toString());
+            
+            @SuppressWarnings("unchecked")
+            List<Integer> toolIdsInt = (List<Integer>) body.get("toolIds");
+            List<Long> toolIds = toolIdsInt.stream()
+                    .map(Integer::longValue)
+                    .collect(java.util.stream.Collectors.toList());
+
+            // Buscar el empleado
+            UserEntity employee = userService.findUserById(employeeId);
+            if (employee == null) {
+                return ResponseEntity.badRequest().body(
+                        Map.of("error", "Empleado no encontrado")
+                );
+            }
+
+            // Crear el préstamo con sus herramientas
+            LoanEntity loan = loanService.createLoanWithTools(employee, clientId, initDate, returnDate, toolIds);
+
+            return ResponseEntity.ok(loan);
+
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", "Datos inválidos: " + ex.getMessage())
+            );
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", ex.getMessage())
+            );
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(
+                    Map.of("error", "Error interno del servidor: " + ex.getMessage())
+            );
+        }
     }
 
     @DeleteMapping("/{id}")

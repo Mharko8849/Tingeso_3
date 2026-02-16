@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * A simple link-style "Volver" (Back) button used across admin pages.
@@ -6,19 +7,20 @@ import React from 'react';
  * Output: JSX Element (button)
  */
 const BackButton = ({ label = 'Volver', to = '...', onClick, className = '', style = {} }) => {
+  const navigate = useNavigate();
+  
   /**
    * Handles the click event.
    * If an onClick prop is provided, it calls it.
-   * Otherwise, it navigates to the target path using pushState and dispatches a popstate event.
+   * Otherwise, it navigates to the target path using React Router.
    * Input: click event
    * Output: void
    */
   const handle = (e) => {
     if (onClick) return onClick(e);
-    // mirror existing pattern used in Loans.jsx: pushState + dispatch popstate
+    // Use React Router navigation
     try {
-      window.history.pushState({}, '', to);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      navigate(to);
     } catch (err) {
       // fallback
       if (window) window.location.href = to;

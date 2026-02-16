@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Icons as constants to keep the JSX clean.
 const ICONS = {
@@ -41,6 +42,7 @@ const UserRegisterForm = ({
   readOnlyFields = [],
   isEditMode = false,
 }) => {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     username: initial.username || '',
     name: initial.name || '',
@@ -214,7 +216,7 @@ const UserRegisterForm = ({
         <div className="actions">
           <button className="primary-cta" type="submit" disabled={loading} style={{ width: '100%' , justifyContent: 'center'}}>{loading ? 'Guardando...' : submitLabel}</button>
           {!isEditMode && (
-            <button type="button" className="link" style={{ width: '100%' ,justifyContent: 'center'}} onClick={() => { window.history.pushState({}, '', '/login'); window.dispatchEvent(new PopStateEvent('popstate')); }}>¿Ya tienes cuenta? Inicia sesión</button>
+            <button type="button" className="link" style={{ width: '100%' ,justifyContent: 'center'}} onClick={() => navigate('/login')}>¿Ya tienes cuenta? Inicia sesión</button>
           )}
           {onCancel && <button type="button" className="link" onClick={onCancel} style={{ width: '100%', justifyContent: 'center' }}>Cancelar</button>}
         </div>

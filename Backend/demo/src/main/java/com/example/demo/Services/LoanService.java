@@ -5,6 +5,7 @@ import com.example.demo.Repositories.LoanRepository;
 import com.example.demo.Repositories.LoanXToolsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.util.List;
@@ -18,6 +19,15 @@ public class LoanService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private LoanXToolsRepository loanXToolsRepository;
+
+    @Autowired
+    private ToolService toolService;
+
+    @Autowired
+    private InventoryService inventoryService;
 
     public LoanEntity saveLoan(LoanEntity loanEntity) {
         return loanRepository.save(loanEntity);
@@ -128,5 +138,91 @@ public class LoanService {
         } catch (Exception ex){
             return false;
         }
+    }
+
+    /**
+     * Crea un Loan y sus LoanXTools asociados en una transacción atómica.
+     * Si alguna validación o creación falla, todo se revierte automáticamente.
+     * @param employee El empleado que crea el préstamo
+     * @param clientId ID del cliente
+     * @param initDate Fecha de inicio
+     * @param returnDate Fecha de devolución
+     * @param toolIds Lista de IDs de herramientas
+     * @return El Loan creado con sus LoanXTools
+     */
+    @Transactional
+    public LoanEntity createLoanWithTools(UserEntity employee, Long clientId, Date initDate, Date returnDate, List<Long> toolIds) {
+        // Validar que el empleado tiene permisos
+        userService.validateAdminOrEmployee(employee);
+
+        // Buscar el cliente
+        UserEntity client = userService.findUserById(clientId);
+        if (client == null) {
+            throw new RuntimeException("Cliente no encontrado");
+        }
+
+        // Validar condiciones del préstamo
+        validateConditions(client, initDate, returnDate);
+
+        // Validar que se proporcionaron herramientas
+        if (toolIds == null || toolIds.isEmpty()) {
+            throw new RuntimeException("Debe proporcionar al menos una herramienta");
+        }
+
+        // Incrementar contador de préstamos del cliente
+        client.setLoans(client.getLoans() + 1);
+        userService.saveUser(client);
+
+        // Crear el préstamo
+        LoanEntity loan = new LoanEntity();
+        loan.setIdUser(client);
+        loan.setInitDate(initDate);
+        loan.setReturnDate(returnDate);
+        loan.setStatus("ACTIVO");
+        loan = loanRepository.save(loan);
+
+        // Validar fechas para LoanXTools
+        java.time.LocalDate init = initDate.toLocalDate();
+        java.time.LocalDate ret = returnDate.toLocalDate();
+        if (!ret.isAfter(init)) {
+            throw new RuntimeException("La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
+        }
+
+        // Crear LoanXTools para cada herramienta
+        int i = 0;
+        while (i < toolIds.size()) {
+            Long toolId = toolIds.get(i);
+            
+            // Buscar la herramienta
+            ToolEntity tool = toolService.getToolById(toolId);
+            if (tool == null) {
+                throw new RuntimeException("Herramienta no encontrada: " + toolId);
+            }
+
+            // Validar disponibilidad
+            if (!inventoryService.isAvailableTool(tool)) {
+                throw new RuntimeException("La herramienta " + tool.getToolName() + " no está disponible");
+            }
+
+            // Validar que el cliente no tenga ya esta herramienta prestada
+            List<LoanXToolsEntity> existingLoans = loanXToolsRepository
+                    .findByIdLoan_IdUserAndIdToolAndIdLoan_RealReturnDateIsNull(client, tool);
+            if (!existingLoans.isEmpty()) {
+                throw new RuntimeException("El cliente ya tiene un préstamo activo de la herramienta: " + tool.getToolName());
+            }
+
+            // Crear LoanXToolsEntity
+            LoanXToolsEntity lxt = new LoanXToolsEntity();
+            lxt.setIdLoan(loan);
+            lxt.setIdTool(tool);
+            lxt.setDebt((int) tool.getPriceRent());
+            lxt.setFine(0);
+            lxt.setNeedRepair(false);
+            loanXToolsRepository.save(lxt);
+            
+            i += 1;
+        }
+
+        return loan;
     }
 }

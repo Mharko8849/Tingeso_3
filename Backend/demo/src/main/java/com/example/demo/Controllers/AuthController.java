@@ -89,4 +89,25 @@ public class AuthController {
             return ResponseEntity.status(401).body(java.util.Map.of("error", ex.getMessage()));
         }
     }
+
+    /**
+     * Refresh: usa refresh_token para obtener nuevos tokens
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody java.util.Map<String,String> body) {
+        String refreshToken = body.get("refresh_token");
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "refresh_token requerido"));
+        }
+
+        try {
+            java.util.Map<String,Object> result = authService.refresh(refreshToken);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(401).body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(401).body(java.util.Map.of("error", "No se pudo refrescar el token"));
+        }
+    }
 }

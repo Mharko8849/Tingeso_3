@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
 import api from '../services/http-common';
 import Badge from '../components/Badges/Badge';
@@ -6,6 +7,7 @@ import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
 import BackButton from '../components/Common/BackButton';
 
 const LoanSummaryReadOnly = () => {
+  const navigate = useNavigate();
   const [loan, setLoan] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,8 +38,7 @@ const LoanSummaryReadOnly = () => {
   }, []);
 
   const goBack = () => {
-    window.history.pushState({}, '', '/loans');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate('/loans');
   };
 
   const canForceClose = () => {

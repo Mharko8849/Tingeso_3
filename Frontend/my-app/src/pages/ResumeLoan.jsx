@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import api from '../services/http-common';
 import TransitionAlert from '../components/Alerts/TransitionAlert';
 
 const ResumeLoan = () => {
+  const navigate = useNavigate();
   const [resume, setResume] = useState(null);
   const [initDate, setInitDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
@@ -34,37 +36,23 @@ const ResumeLoan = () => {
       if (raw) {
         const data = JSON.parse(raw);
         setResume(data);
-        // try to load loan dates from backend if loanId present
-        (async () => {
-          try {
-            const loanId = data.loanId || sessionStorage.getItem('order_loan_id');
-            if (loanId) {
-              const r = await api.get(`/loan/${loanId}`);
-              const loan = r.data;
-              if (loan) {
-                if (loan.initDate) setInitDate(loan.initDate.slice(0,10));
-                if (loan.returnDate) setReturnDate(loan.returnDate.slice(0,10));
-                // fetch total from backend to mirror read-only summary behaviour
-                try {
-                  const t = await api.get(`/loantool/total/${loanId}`);
-                  setTotal(Number(t.data || 0));
-                } catch (e) {
-                  setTotal(0);
-                }
-                return;
-              }
-            }
-          } catch (e) {
-            console.warn('Could not fetch loan dates, falling back to defaults', e?.response?.data || e.message || e);
-          }
-          // sensible defaults for dates if loan fetch failed
+        
+        // Load dates from sessionStorage (saved in OrdersCreateClient)
+        const savedInitDate = sessionStorage.getItem('order_init_date');
+        const savedReturnDate = sessionStorage.getItem('order_return_date');
+        
+        if (savedInitDate && savedReturnDate) {
+          setInitDate(savedInitDate);
+          setReturnDate(savedReturnDate);
+        } else {
+          // Fallback: sensible defaults
           const today = new Date();
           const iso = d => d.toISOString().slice(0,10);
           const init = iso(today);
           setInitDate(init);
           const plus1 = new Date(today.getTime() + 1*24*60*60*1000);
           setReturnDate(iso(plus1));
-        })();
+        }
       }
     } catch (e) {
       console.warn('Could not read resume data', e);
@@ -84,7 +72,7 @@ const ResumeLoan = () => {
     }
     if (!initDate || !returnDate) { setAlert({ severity: 'error', message: 'Selecciona las fechas.'}); return; }
 
-    // validate dates: initDate must be today and returnDate at least one day after initDate
+    // Validate dates: returnDate must be at least one day after initDate
     const dInit = new Date(initDate);
     const dReturn = new Date(returnDate);
     const diffMs = dReturn.getTime() - dInit.getTime();
@@ -94,103 +82,66 @@ const ResumeLoan = () => {
       return;
     }
     
-      // final validation: ensure dates are valid before sending
-      if (!isDatesValid()) {
-        setAlert({ severity: 'error', message: 'Fechas inválidas. La fecha inicial debe ser hoy y la devolución al menos 1 día después.'});
-        return;
-      }
-
-    // Pre-check: verify the client does not already have active loans for these tools
-    try {
-      const clientId = resume.client.id;
-      const loansResp = await api.get(`/loan/user/${clientId}`);
-      const loans = loansResp.data || [];
-      const conflicts = [];
-      for (const loan of loans) {
-        // get all loan-tool relations for this loan
-        const lxtResp = await api.get(`/loantool/loan/${loan.id}`);
-        const lxts = lxtResp.data || [];
-        for (const lxt of lxts) {
-          // tool object may be nested under idTool
-          const existingToolId = lxt.idTool?.id || lxt.idTool;
-          // consider tool active only if it was actually lent (PRESTADA)
-          const active = (lxt.toolActivity === 'PRESTADA');
-          if (active) {
-            // check against resume items
-            const matched = resume.items.find(it => Number(it.id) === Number(existingToolId));
-            if (matched) {
-              conflicts.push(matched.name || `herramienta ${existingToolId}`);
-            }
-          }
-        }
-      }
-
-      if (conflicts.length > 0) {
-        setAlert({ severity: 'error', message: `El cliente ya tiene préstamos activos para: ${[...new Set(conflicts)].join(', ')}.` });
-        return;
-      }
-    } catch (e) {
-      // if the pre-check fails for some reason, log it but continue to attempt creation
-      console.warn('Pre-check failed, proceeding to creation. Error:', e?.response?.data || e.message || e);
+    // Final validation: ensure dates are valid before sending
+    if (!isDatesValid()) {
+      setAlert({ severity: 'error', message: 'Fechas inválidas. La fecha inicial debe ser hoy y la devolución al menos 1 día después.'});
+      return;
     }
 
     setCreating(true);
     try {
+      // Get employee ID
       const employeeResp = await api.get('/user/me');
       const employeeId = employeeResp.data?.id;
       if (!employeeId) throw new Error('No se pudo obtener el id del empleado logueado');
 
-      // loanId should be present in resume (created earlier in OrdersCreateClient)
-      let loanId = resume.loanId || sessionStorage.getItem('order_loan_id');
-      if (!loanId) throw new Error('No se encontró el pedido asociado. Vuelve al paso anterior y crea el pedido con fechas.');
+      // Extract tool IDs from resume items
+      const toolIds = resume.items.map(it => Number(it.id));
 
-      // Loan already created with dates in the first step; no need to update dates here.
+      // Call atomic endpoint to create Loan + LoanXTools in one transaction
+      const payload = {
+        clientId: resume.client.id,
+        initDate: initDate,
+        returnDate: returnDate,
+        toolIds: toolIds
+      };
 
-      // collect loanX ids for all items; if some items miss loanXId, create them now
-      const loanXIds = [];
-      for (const it of resume.items) {
-        if (it.loanXId) {
-          loanXIds.push(it.loanXId);
-          continue;
-        }
-        // create LoanXTools for this tool
-        try {
-          const payload = { loanId: loanId, toolId: Number(it.id) };
-          console.log('Creating LoanXTools for', payload);
-          // backend expects path parameters: /loantool/create/{loanId}/{toolId}
-          const r = await api.post(`/loantool/create/${loanId}/${Number(it.id)}`);
-          if (r.data && r.data.id) loanXIds.push(r.data.id);
-        } catch (e) {
-          const status = e?.response?.status;
-          const data = e?.response?.data;
-          console.error('Could not create loanX for item', it, 'status=', status, 'data=', data, e?.message || e);
-          const serverMsg = data && (data.error || data.message) ? (data.error || data.message) : (e?.message || 'No se pudo registrar la herramienta en el servidor.');
-          setAlert({ severity: 'error', message: `No se pudo registrar la herramienta ${it.name}: ${serverMsg}` });
-          setCreating(false);
-          return;
-        }
+      const createResp = await api.post(`/loan/create-with-tools/${employeeId}`, payload);
+      const createdLoan = createResp.data;
+
+      if (!createdLoan || !createdLoan.id) {
+        throw new Error('No se recibió el préstamo creado del servidor');
       }
 
-      if (loanXIds.length === 0) {
-        setAlert({ severity: 'error', message: 'No hay items válidos para prestar.' });
-        setCreating(false);
-        return;
+      // Now mark all tools as 'PRESTADA' (given to client)
+      // First, we need to get the LoanXTools IDs for this loan
+      const lxtResp = await api.get(`/loantool/loan/${createdLoan.id}`);
+      const loanXTools = lxtResp.data || [];
+      const loanXToolIds = loanXTools.map(lxt => lxt.id);
+
+      if (loanXToolIds.length === 0) {
+        throw new Error('No se encontraron herramientas asociadas al préstamo');
       }
 
-  // call batch give endpoint to mark all as PRESTADA in one transaction
-  // backend exposes /loantool/give/all/user/{idUser}
-  await api.post(`/api/loantool/give/all/user/${employeeId}`, loanXIds);
+      // Call batch give endpoint to mark all as PRESTADA
+      await api.post(`/loantool/give/all/user/${employeeId}`, loanXToolIds);
 
-      // success: clear resume and selected client and navigate to orders list
+      // Success: clear all session data
       sessionStorage.removeItem('order_resume');
       sessionStorage.removeItem('order_selected_client');
       sessionStorage.removeItem('order_loan_id');
-  setAlert({ severity: 'success', message: 'Pedido creado y herramientas prestadas correctamente' });
-  // give user time to read the success message before redirecting
-  setTimeout(() => { window.history.pushState({}, '', '/'); window.dispatchEvent(new PopStateEvent('popstate')); }, 3000);
+      sessionStorage.removeItem('order_items');
+      sessionStorage.removeItem('order_init_date');
+      sessionStorage.removeItem('order_return_date');
+      
+      setAlert({ severity: 'success', message: 'Pedido creado y herramientas prestadas correctamente' });
+      
+      // Redirect to home after showing success message
+      setTimeout(() => { navigate('/'); }, 3000);
+      
     } catch (e) {
-      console.error('Error creating/processing order', e?.response?.data || e.message || e);
-      const backendMsg = e?.response?.data && (e.response.data.message || e.response.data.error || e.response.data);
+      console.error('Error creating order', e?.response?.data || e.message || e);
+      const backendMsg = e?.response?.data && (e.response.data.error || e.response.data.message || e.response.data);
       setAlert({ severity: 'error', message: backendMsg || (e.message || 'Error al crear el pedido.') });
     } finally {
       setCreating(false);
@@ -221,8 +172,7 @@ const ResumeLoan = () => {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
               <BackButton onClick={() => {
                 // volver al paso anterior del flujo de creación de pedido
-                window.history.pushState({}, '', '/admin/orders/create/tools');
-                window.dispatchEvent(new PopStateEvent('popstate'));
+                navigate('/admin/orders/create/tools');
               }} />
             </div>
           </div>
