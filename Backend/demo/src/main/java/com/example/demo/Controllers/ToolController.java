@@ -1,5 +1,7 @@
 package com.example.demo.Controllers;
 
+import com.example.demo.DTO.PageResponseDTO;
+import com.example.demo.DTO.ToolDTO;
 import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.ToolService;
@@ -28,6 +30,29 @@ public class ToolController {
     @GetMapping("/")
     public ResponseEntity<List<ToolEntity>> getAllTools() {
         List<ToolEntity> tools = toolService.getAllTools();
+        return ResponseEntity.ok(tools);
+    }
+    
+    /*
+     * GET: Traer herramientas paginadas
+     */
+    @GetMapping("/paginated")
+    public ResponseEntity<PageResponseDTO<ToolDTO>> getAllToolsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size) {
+        PageResponseDTO<ToolDTO> tools = toolService.getAllToolsPaginated(page, size);
+        return ResponseEntity.ok(tools);
+    }
+    
+    /*
+     * GET: Traer herramientas por categoría paginadas
+     */
+    @GetMapping("/category/{category}/paginated")
+    public ResponseEntity<PageResponseDTO<ToolDTO>> getToolsByCategoryPaginated(
+            @PathVariable String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size) {
+        PageResponseDTO<ToolDTO> tools = toolService.getToolsByCategoryPaginated(category, page, size);
         return ResponseEntity.ok(tools);
     }
 

@@ -6,7 +6,7 @@ const OrdersIndex = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div className="max-w-6xl mx-auto big-page" style={{ textAlign: 'center' }}>
           <h2>Administración — Pedidos</h2>
           <p>Interfaz básica para crear/devolver pedidos.</p>

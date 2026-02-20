@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/http-common';
-// import { TOOL_CATEGORIES } from '../../constants/toolCategories';
+import { useAlert } from '../Alerts/AlertContext';
 import './ModalAddStockTool.css';
 
 const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
   const [form, setForm] = useState({ toolName: '', category: '', repoCost: '', priceRent: '', priceFineAtDate: '' });
   const [file, setFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [categoriesList, setCategoriesList] = useState([]);
+  const { show } = useAlert();
 
   useEffect(() => {
-      if (open) {
-        const fetchCategories = async () => {
-          try {
-            const response = await api.get('/categories/');
-            setCategoriesList(response.data.map(c => c.name)); 
-          } catch (error) {
-            console.error('Error fetching categories:', error);
-          }
-        };
-        fetchCategories();
-      }
+    if (open) {
+      const fetchCategories = async () => {
+        try {
+          const response = await api.get('/categories/');
+          setCategoriesList(response.data.map(c => c.name));
+        } catch (error) {
+          console.error('Error fetching categories:', error);
+        }
+      };
+      fetchCategories();
+    }
   }, [open]);
 
   useEffect(() => {
@@ -30,27 +31,90 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
       setForm({
         toolName: tool.toolName || tool.name || '',
         category: (typeof tool.category === 'string' ? tool.category : tool.category?.name) || '',
-        repoCost: tool.repoCost ?? '',
-        priceRent: tool.priceRent ?? tool.price ?? '',
-        priceFineAtDate: tool.priceFineAtDate ?? '',
+        repoCost: tool.repoCost != null ? String(tool.repoCost) : '',
+        priceRent: tool.priceRent != null ? String(tool.priceRent) : (tool.price != null ? String(tool.price) : ''),
+        priceFineAtDate: tool.priceFineAtDate != null ? String(tool.priceFineAtDate) : '',
       });
+      setFile(null);
+      setImagePreview(null);
     }
   }, [tool]);
 
   if (!open || !tool) return null;
 
+  // Classify errors for user-friendly messages
+  const classifyError = (e) => {
+    if (!e) return 'Ocurrió un error desconocido. Contacte al administrador.';
+    if (e.code === 'ERR_NETWORK' || e.message === 'Network Error' || !e.response) {
+      return 'Error de conexión. Verifique su conexión a internet e intente nuevamente.';
+    }
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      return 'No tiene permisos para realizar esta acción. Inicie sesión nuevamente.';
+    }
+    if (status === 400) {
+      const data = e.response?.data;
+      return typeof data === 'string' ? data : 'Datos inválidos. Revise los campos e intente nuevamente.';
+    }
+    if (status === 409) {
+      return 'Ya existe una herramienta con ese nombre. Use un nombre diferente.';
+    }
+    if (status >= 500) {
+      return 'Error interno del servidor. Contacte al administrador del sistema.';
+    }
+    if (e.message) return e.message;
+    return 'No se pudo actualizar la herramienta. Contacte al administrador.';
+  };
+
+  // Validate numeric fields: must be integers >= 0
+  const validateNumericFields = () => {
+    const fields = [
+      { value: form.repoCost, label: 'Precio reposición' },
+      { value: form.priceRent, label: 'Precio arriendo' },
+      { value: form.priceFineAtDate, label: 'Tarifa multa por día' },
+    ];
+    for (const field of fields) {
+      if (field.value === '' || field.value === undefined || field.value === null) continue;
+      const num = Number(field.value);
+      if (isNaN(num) || !Number.isInteger(num) || num < 0) {
+        return `${field.label}: Ingrese un valor válido, entero mayor o igual a 0.`;
+      }
+    }
+    return null;
+  };
+
+  const handleNumericChange = (fieldName, rawValue) => {
+    if (rawValue === '') {
+      setForm(s => ({ ...s, [fieldName]: '' }));
+      return;
+    }
+    if (/^\d+$/.test(rawValue)) {
+      setForm(s => ({ ...s, [fieldName]: rawValue }));
+    } else {
+      show({ severity: 'warning', message: 'Ingrese valores válidos: números enteros mayores o iguales a 0.', autoHideMs: 3500 });
+    }
+  };
+
   const handleConfirm = async () => {
+    if (!form.toolName || String(form.toolName).trim().length === 0) {
+      show({ severity: 'warning', message: 'Nombre de herramienta requerido.', autoHideMs: 3500 });
+      return;
+    }
+    const numError = validateNumericFields();
+    if (numError) {
+      show({ severity: 'warning', message: numError, autoHideMs: 3500 });
+      return;
+    }
+
     setLoading(true);
-    setError(null);
     try {
-      if (!form.toolName || String(form.toolName).trim().length === 0) throw new Error('Nombre de herramienta requerido');
       const repoCost = Number(form.repoCost) || 0;
       const priceRent = Number(form.priceRent) || 0;
       const priceFineAtDate = Number(form.priceFineAtDate) || 0;
 
       const me = await api.get('/api/user/me');
       const userId = me.data?.id;
-      if (!userId) throw new Error('Usuario no identificado');
+      if (!userId) throw new Error('Usuario no identificado. Inicie sesión nuevamente.');
 
       const toolPayload = {
         toolName: String(form.toolName).trim(),
@@ -73,8 +137,7 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
       onClose();
     } catch (e) {
       console.warn('Failed to edit tool', e);
-      const msg = e?.response?.data || e?.message || 'No se pudo actualizar la herramienta';
-      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      show({ severity: 'error', message: classifyError(e), autoHideMs: 6000 });
     } finally {
       setLoading(false);
     }
@@ -83,9 +146,15 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
   const handleFileSelect = (fileObj) => {
     if (!fileObj) {
       setFile(null);
+      setImagePreview(null);
       return;
     }
     setFile(fileObj);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(fileObj);
   };
 
   const handleDragOver = (e) => {
@@ -111,8 +180,8 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
   };
 
   return (
-    <div className="mas-backdrop">
-      <div className="mas-modal mas-modal-large" style={{ position: 'relative' }}>
+    <div className="mas-backdrop" onClick={onClose}>
+      <div className="mas-modal mas-modal-large" style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
         <button className="mas-close" onClick={onClose} aria-label="Cerrar">
           ×
         </button>
@@ -125,8 +194,8 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
 
           <div className="mas-row">
             <label>Categoría</label>
-            <select 
-              value={form.category} 
+            <select
+              value={form.category}
               onChange={(e) => setForm((s) => ({ ...s, category: e.target.value }))}
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
             >
@@ -139,17 +208,35 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
 
           <div className="mas-row">
             <label>Precio reposición</label>
-            <input type="number" value={form.repoCost} onChange={(e) => setForm((s) => ({ ...s, repoCost: e.target.value }))} />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="0"
+              value={form.repoCost}
+              onChange={(e) => handleNumericChange('repoCost', e.target.value)}
+            />
           </div>
 
           <div className="mas-row">
             <label>Precio arriendo</label>
-            <input type="number" value={form.priceRent} onChange={(e) => setForm((s) => ({ ...s, priceRent: e.target.value }))} />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="0"
+              value={form.priceRent}
+              onChange={(e) => handleNumericChange('priceRent', e.target.value)}
+            />
           </div>
 
           <div className="mas-row">
             <label>Tarifa multa por día</label>
-            <input type="number" value={form.priceFineAtDate} onChange={(e) => setForm((s) => ({ ...s, priceFineAtDate: e.target.value }))} />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="0"
+              value={form.priceFineAtDate}
+              onChange={(e) => handleNumericChange('priceFineAtDate', e.target.value)}
+            />
           </div>
 
           <div className="mas-row">
@@ -175,9 +262,17 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
                   : 'Haz clic para seleccionar o arrastra y suelta una nueva imagen aquí'}
               </div>
             </div>
-          </div>
 
-          {error && <div className="mas-error">{error}</div>}
+            {imagePreview && (
+              <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '2px solid #007bff' }}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mas-actions">

@@ -1,9 +1,16 @@
 package com.example.demo.Services;
 
+import com.example.demo.DTO.EntityMapper;
+import com.example.demo.DTO.LoanDTO;
+import com.example.demo.DTO.PageResponseDTO;
 import com.example.demo.Entities.*;
 import com.example.demo.Repositories.LoanRepository;
 import com.example.demo.Repositories.LoanXToolsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +62,33 @@ public class LoanService {
 
     public List<LoanEntity> getAllLoans() {
         return loanRepository.findAll();
+    }
+    
+    /**
+     * Obtiene préstamos paginados ordenados por ID descendente (más recientes primero)
+     */
+    public PageResponseDTO<LoanDTO> getAllLoansPaginated(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<LoanEntity> loanPage = loanRepository.findAllByOrderByIdDesc(pageable);
+        return EntityMapper.toPageResponseDTO(loanPage);
+    }
+    
+    /**
+     * Obtiene préstamos filtrados por estado con paginación
+     */
+    public PageResponseDTO<LoanDTO> getLoansByStatePaginated(String state, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<LoanEntity> loanPage = loanRepository.findByStatus(state, pageable);
+        return EntityMapper.toPageResponseDTO(loanPage);
+    }
+    
+    /**
+     * Obtiene préstamos de un usuario con paginación
+     */
+    public PageResponseDTO<LoanDTO> getLoansByUserPaginated(UserEntity user, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<LoanEntity> loanPage = loanRepository.findByIdUser(user, pageable);
+        return EntityMapper.toPageResponseDTO(loanPage);
     }
 
     public LoanEntity createLoan(UserEntity idClient, UserEntity user, Date initDate, Date returnDate) {

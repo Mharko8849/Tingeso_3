@@ -221,7 +221,7 @@ const EmployeesAdministration = () => {
     return (
       <div className="bg-gray-50 min-h-screen">
         <NavBar />
-        <main style={{ paddingTop: 30 }} className="px-6">
+        <main className="px-6">
           <div className="max-w-6xl mx-auto" style={{ paddingLeft: '24px', paddingRight: '24px' }}>
             <h2>Acceso denegado</h2>
             <p>Esta sección sólo está disponible para usuarios ADMIN o SUPERADMIN.</p>
@@ -234,7 +234,7 @@ const EmployeesAdministration = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div className="max-w-6xl mx-auto" style={{ paddingLeft: '24px', paddingRight: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div>

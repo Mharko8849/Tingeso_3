@@ -62,14 +62,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
+  min-width: 36px;
   height: 36px;
+  padding: 6px 12px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 16px;
   font-weight: bold;
+}
+
+.category-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .category-btn-edit {
@@ -79,6 +86,10 @@
 
 .category-btn-edit:hover {
   background: #2B7FFF;
+  color: white;
+}
+
+.category-btn-edit:hover svg {
   color: white;
 }
 
@@ -92,9 +103,14 @@
   color: white;
 }
 
+.category-btn-delete:hover svg {
+  color: white;
+}
+
 .category-btn-save {
   background: #d4edda;
   color: #155724;
+  font-size: 18px;
 }
 
 .category-btn-save:hover {
@@ -105,6 +121,7 @@
 .category-btn-cancel {
   background: #f8d7da;
   color: #721c24;
+  font-size: 18px;
 }
 
 .category-btn-cancel:hover {

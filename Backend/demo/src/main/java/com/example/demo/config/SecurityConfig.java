@@ -44,9 +44,17 @@ public class SecurityConfig {
             // inventario visible para cualquiera
             .requestMatchers("/api/inventory/**").permitAll()
             .requestMatchers("/inventory/**").permitAll()
+            // herramientas visibles para cualquiera (GET only, POST/PUT/DELETE requieren auth)
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/tool/**").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tool/**").permitAll()
             // ranking visible para cualquiera
             .requestMatchers("/api/kardex/ranking").permitAll()
             .requestMatchers("/kardex/ranking").permitAll()
+            // categorias visibles para cualquiera
+            .requestMatchers("/categories/**").permitAll()
+            // tool states visible para cualquiera (for inventory status display)
+            .requestMatchers("/tool-states/**").permitAll()
+            .requestMatchers("/api/tool-states/**").permitAll()
             .requestMatchers("/images/**").permitAll()
             .anyRequest().authenticated()
                 )

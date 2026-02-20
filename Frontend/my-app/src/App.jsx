@@ -1,27 +1,29 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Home from './pages/Home';
-import InventoryPage from './pages/InventoryPage';
-import ToolDetail from './pages/ToolDetail';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Orders from './pages/Orders';
-import OrdersIndex from './pages/OrdersIndex';
-import Loans from './pages/Loans';
-import OrdersCreateClient from './pages/OrdersCreateClient';
-import OrdersCreateTools from './pages/OrdersCreateTools';
-import EmployeesAdministration from './pages/EmployeesAdministration';
-import ClientsAdministration from './pages/ClientsAdministration';
-import ResumeLoan from './pages/ResumeLoan';
-import ReturnsClients from './pages/ReturnsClients';
-import ReturnsClientLoans from './pages/ReturnsClientLoans';
-import ReturnsLoanSummary from './pages/ReturnsLoanSummary';
-import LoanSummaryReadOnly from './pages/LoanSummaryReadOnly';
-import KardexPage from './pages/KardexPage';
-import UsersDetails from './pages/UsersDetails';
 import { AlertProvider } from './components/Alerts/AlertContext';
 import { useKeycloak } from '@react-keycloak/web';
 import { getUser } from './services/auth';
+
+// Lazy load pages
+const Home = lazy(() => import('./pages/Home'));
+const InventoryPage = lazy(() => import('./pages/InventoryPage'));
+const ToolDetail = lazy(() => import('./pages/ToolDetail'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Orders = lazy(() => import('./pages/Orders'));
+const OrdersIndex = lazy(() => import('./pages/OrdersIndex'));
+const Loans = lazy(() => import('./pages/Loans'));
+const OrdersCreateClient = lazy(() => import('./pages/OrdersCreateClient'));
+const OrdersCreateTools = lazy(() => import('./pages/OrdersCreateTools'));
+const EmployeesAdministration = lazy(() => import('./pages/EmployeesAdministration'));
+const ClientsAdministration = lazy(() => import('./pages/ClientsAdministration'));
+const ResumeLoan = lazy(() => import('./pages/ResumeLoan'));
+const ReturnsClients = lazy(() => import('./pages/ReturnsClients'));
+const ReturnsClientLoans = lazy(() => import('./pages/ReturnsClientLoans'));
+const ReturnsLoanSummary = lazy(() => import('./pages/ReturnsLoanSummary'));
+const LoanSummaryReadOnly = lazy(() => import('./pages/LoanSummaryReadOnly'));
+const KardexPage = lazy(() => import('./pages/KardexPage'));
+const UsersDetails = lazy(() => import('./pages/UsersDetails'));
 
 // lightweight placeholder for tools admin (not implemented yet)
 const ToolsAdmin = () => <h2>Administración de herramientas (pendiente)</h2>;
@@ -58,10 +60,11 @@ function App() {
 
   return (
     <AlertProvider>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+      <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Cargando...</div>}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         
         <Route path="/product/:id" element={<ToolDetailWrapper />} />
         
@@ -86,7 +89,8 @@ function App() {
         <Route path="/admin/kardex" element={<PrivateRoute element={<KardexPage />} rolesAllowed={["EMPLOYEE","ADMIN","SUPERADMIN"]} />} />
         <Route path="/employees" element={<PrivateRoute element={<EmployeesAdministration />} rolesAllowed={["ADMIN","SUPERADMIN"]} />} />
         <Route path="/clients" element={<PrivateRoute element={<ClientsAdministration />} rolesAllowed={["ADMIN","SUPERADMIN"]} />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </AlertProvider>
   );
 }

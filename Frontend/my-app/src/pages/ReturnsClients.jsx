@@ -30,7 +30,7 @@ const ReturnsClients = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div className="max-w-7xl mx-auto" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24 }}>
           <section style={{ paddingRight: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>

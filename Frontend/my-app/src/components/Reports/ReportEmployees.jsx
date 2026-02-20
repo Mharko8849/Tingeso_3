@@ -1,5 +1,6 @@
 import React from 'react';
 import { buildCsv, downloadBlob } from '../Common/csvUtils';
+import { useAlert } from '../Alerts/useAlert';
 
 /**
  * Component that generates a CSV report for employees.
@@ -9,6 +10,7 @@ import { buildCsv, downloadBlob } from '../Common/csvUtils';
  * Output: JSX Element (button)
  */
 const ReportEmployees = ({ rows = [], filename }) => {
+  const { show } = useAlert();
   /**
    * Generates the CSV content and triggers the download.
    */
@@ -26,6 +28,7 @@ const ReportEmployees = ({ rows = [], filename }) => {
     const csv = buildCsv(headers, mapped);
     const name = filename || `reporte_empleados_${new Date().toISOString().slice(0,10)}.csv`;
     downloadBlob(csv, name);
+    show({ severity: 'success', message: 'Reporte de empleados generado correctamente' });
   };
 
   return (

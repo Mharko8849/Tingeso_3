@@ -9,20 +9,21 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - toolrent.192.168.39.45.nip.io
+        - toolrent.192.168.39.122.nip.io
       secretName: toolrent-local-tls
   rules:
-    - host: toolrent.192.168.39.45.nip.io
+    - host: toolrent.192.168.39.122.nip.io
       http:
         paths:
-          - path: /
+          # Backend API routes - must come BEFORE / to match first
+          - path: /api/inventory
             pathType: Prefix
             backend:
               service:
-                name: frontend
+                name: toolrent-service
                 port:
                   number: 80
-          - path: /images
+          - path: /inventory/
             pathType: Prefix
             backend:
               service:
@@ -37,6 +38,13 @@ spec:
                 port:
                   number: 80
           - path: /user
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          - path: /tool-states
             pathType: Prefix
             backend:
               service:
@@ -64,14 +72,6 @@ spec:
                 name: toolrent-service
                 port:
                   number: 80
-
-          - path: /loan
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
           - path: /loantool
             pathType: Prefix
             backend:
@@ -79,13 +79,21 @@ spec:
                 name: toolrent-service
                 port:
                   number: 80
-          - path: /tool-states
+          - path: /loan
             pathType: Prefix
             backend:
               service:
                 name: toolrent-service
                 port:
                   number: 80
+          - path: /images
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          # Keycloak routes
           - path: /realms
             pathType: Prefix
             backend:
@@ -107,31 +115,11 @@ spec:
                 name: keycloak-service
                 port:
                   number: 9090
-          - path: /api/inventory
+          # Frontend - MUST BE LAST as fallback
+          - path: /
             pathType: Prefix
             backend:
               service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /loan
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /loantool
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /kardex
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
+                name: frontend
                 port:
                   number: 80

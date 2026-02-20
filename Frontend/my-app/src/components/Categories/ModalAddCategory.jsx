@@ -22,7 +22,7 @@ const ModalAddCategory = ({ open, onClose, onAdded }) => {
       await api.post(`/categories/`, { name: name.trim() });
 
       show({ message: 'Categoría creada exitosamente', severity: 'success' });
-
+      
       if (onAdded) onAdded();
       setName('');
       onClose();
@@ -38,7 +38,7 @@ const ModalAddCategory = ({ open, onClose, onAdded }) => {
 
   return (
     <div className="mas-backdrop" onClick={onClose} style={{ zIndex: 10001 }}>
-      <div className="mas-modal" style={{ width: '600px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+      <div className="mas-modal" style={{ width: '400px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
         <button className="mas-close" onClick={onClose} aria-label="Cerrar">
           ×
         </button>
@@ -46,9 +46,9 @@ const ModalAddCategory = ({ open, onClose, onAdded }) => {
         <div className="mas-content">
           <div className="mas-row">
             <label>Nombre de la categoría</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+            <input 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
               placeholder="Ej. Herramientas Manuales"
               autoFocus
             />

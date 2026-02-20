@@ -93,7 +93,49 @@ public class KeycloakAdminService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(adminToken);
 
-        // Datos del usuario
+        // ===== PASO 1: VERIFICAR QUE EL ROL EXISTE (ANTES DE CREAR USUARIO) =====
+        Map roleMap;
+        try {
+            logger.info("🔍 Buscando rol '{}' en Keycloak...", roleName);
+            
+            // WORKAROUND: En lugar de GET /roles/{roleName} que falla con "unknown_error",
+            // listamos TODOS los roles y buscamos el que necesitamos
+            ResponseEntity<List> rolesResp = rest.exchange(
+                    adminEndpoint("/roles"),
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    List.class
+            );
+
+            List<Map> allRoles = rolesResp.getBody();
+            roleMap = null;
+            
+            if (allRoles != null) {
+                // Buscar el rol por nombre en la lista
+                for (Map role : allRoles) {
+                    if (roleName.equals(role.get("name"))) {
+                        roleMap = role;
+                        break;
+                    }
+                }
+            }
+            
+            if (roleMap == null) {
+                logger.error("❌ El rol '{}' NO EXISTE en Keycloak", roleName);
+                throw new RuntimeException("El rol '" + roleName + "' no está configurado en el sistema. Contacta al administrador.");
+            }
+            
+            logger.info("✅ Rol '{}' encontrado en Keycloak (ID: {})", roleName, roleMap.get("id"));
+
+        } catch (RuntimeException ex) {
+            // Re-lanzar excepciones de lógica de negocio
+            throw ex;
+        } catch (Exception ex) {
+            logger.error("❌ Error buscando roles en Keycloak: {}", ex.getMessage());
+            throw new RuntimeException("No se pudo verificar los roles del sistema. Intenta nuevamente.");
+        }
+
+        // ===== PASO 2: PREPARAR DATOS DEL USUARIO =====
         Map<String, Object> payload = new HashMap<>();
         payload.put("username", user.getUsername());
         payload.put("email", user.getEmail());
@@ -110,8 +152,9 @@ public class KeycloakAdminService {
 
         payload.put("credentials", Collections.singletonList(password));
 
-        // Crear usuario base
+        // ===== PASO 3: CREAR USUARIO BASE =====
         ResponseEntity<Void> createResp;
+        String userId = null;
 
         try {
             createResp = rest.postForEntity(
@@ -119,64 +162,137 @@ public class KeycloakAdminService {
                     new HttpEntity<>(payload, headers),
                     Void.class
             );
+        } catch (org.springframework.web.client.HttpClientErrorException.Conflict ex) {
+            // Error 409: Usuario ya existe
+            logger.error("Usuario ya existe en Keycloak: {}", user.getUsername());
+            
+            String errorMsg = "El usuario ya está registrado. ";
+            if (user.getUsername().contains("-")) {
+                errorMsg += "El RUT " + user.getUsername() + " ya tiene una cuenta.";
+            } else {
+                errorMsg += "El nombre de usuario '" + user.getUsername() + "' ya está en uso.";
+            }
+            
+            throw new RuntimeException(errorMsg);
+        } catch (org.springframework.web.client.HttpClientErrorException ex) {
+            // Otros errores 4xx
+            logger.error("Error del cliente al crear usuario en Keycloak ({}): {}", 
+                ex.getStatusCode(), ex.getMessage());
+            
+            String errorMsg = "No se pudo crear la cuenta: ";
+            if (ex.getResponseBodyAsString().contains("email")) {
+                errorMsg += "El correo electrónico ya está registrado.";
+            } else if (ex.getResponseBodyAsString().contains("username")) {
+                errorMsg += "El nombre de usuario ya está en uso.";
+            } else {
+                errorMsg += "Verifica que los datos sean correctos.";
+            }
+            
+            throw new RuntimeException(errorMsg);
         } catch (Exception ex) {
-            logger.error("Error creando usuario en Keycloak: {}", ex.getMessage());
-            throw new RuntimeException("Keycloak no pudo crear el usuario", ex);
+            // Otros errores (red, timeout, etc.)
+            logger.error("Error inesperado creando usuario en Keycloak: {}", ex.getMessage());
+            throw new RuntimeException("Error de conexión con el sistema de autenticación. Intenta nuevamente.");
         }
 
-        // Obtener ID del usuario creado
-        String userId = null;
+        // ===== PASO 4: OBTENER ID DEL USUARIO CREADO =====
+        try {
+            if (createResp.getHeaders().getLocation() != null) {
+                String path = createResp.getHeaders().getLocation().getPath();
+                userId = path.substring(path.lastIndexOf('/') + 1);
+                logger.info("✅ Usuario creado en Keycloak con ID: {}", userId);
+            }
 
-        if (createResp.getHeaders().getLocation() != null) {
-            String path = createResp.getHeaders().getLocation().getPath();
-            userId = path.substring(path.lastIndexOf('/') + 1);
-        }
-
-        if (userId == null) {
-            // Buscar por username si no aparece por header
-            try {
+            if (userId == null) {
+                // Buscar por username si no aparece por header
+                logger.warn("⚠️ Location header no disponible, buscando usuario por username...");
                 String encoded = java.net.URLEncoder.encode(user.getUsername(), java.nio.charset.StandardCharsets.UTF_8);
                 ResponseEntity<List> searchResp =
                         rest.exchange(adminEndpoint("/users?username=") + encoded, HttpMethod.GET, new HttpEntity<>(headers), List.class);
 
                 Map userData = (Map) searchResp.getBody().get(0);
                 userId = userData.get("id").toString();
-            } catch (Exception ex) {
-                logger.error("No se encontró el usuario recién creado");
-                throw new RuntimeException("No se encontró usuario creado", ex);
+                logger.info("✅ Usuario encontrado con ID: {}", userId);
             }
-        }
-
-        // Obtener representación del rol solicitado
-        Map roleMap;
-        try {
-            ResponseEntity<Map> roleResp = rest.exchange(
-                    adminEndpoint("/roles/" + roleName),
-                    HttpMethod.GET,
-                    new HttpEntity<>(headers),
-                    Map.class
-            );
-
-            roleMap = roleResp.getBody();
-            if (roleMap == null) {
-                throw new RuntimeException("El rol no existe en Keycloak: " + roleName);
-            }
-
         } catch (Exception ex) {
-            logger.error("No se pudo obtener el rol {} en Keycloak", roleName);
-            throw new RuntimeException("No se pudo obtener el rol " + roleName, ex);
+            logger.error("❌ No se pudo obtener ID del usuario recién creado");
+            // Usuario creado pero no podemos obtener su ID → No podemos continuar ni hacer rollback
+            throw new RuntimeException("Error crítico: Usuario creado pero ID no disponible. Contacta al administrador.");
         }
 
-        // Asignar rol al usuario
+        // ===== PASO 5: ASIGNAR ROL AL USUARIO (CON ROLLBACK SI FALLA) =====
         try {
+            logger.info("➡️ Asignando rol '{}' al usuario {}...", roleName, userId);
+            
             HttpEntity<List> assignReq = new HttpEntity<>(Collections.singletonList(roleMap), headers);
-            rest.postForEntity(adminEndpoint("/users/" + userId + "/role-mappings/realm"), assignReq, Void.class);
+            rest.postForEntity(
+                adminEndpoint("/users/" + userId + "/role-mappings/realm"), 
+                assignReq, 
+                Void.class
+            );
+            
+            logger.info("✅ Rol '{}' asignado correctamente al usuario {}", roleName, userId);
+            
         } catch (Exception ex) {
-            logger.error("Error asignando rol {} al usuario {}", roleName, userId);
-            throw new RuntimeException("No se pudo asignar rol " + roleName, ex);
+            logger.error("❌ Error asignando rol '{}' al usuario {}: {}", roleName, userId, ex.getMessage());
+            logger.warn("🔄 ROLLBACK: Eliminando usuario {} de Keycloak...", userId);
+            
+            // ROLLBACK INTERNO: Eliminar usuario de Keycloak
+            try {
+                rest.exchange(
+                    adminEndpoint("/users/" + userId), 
+                    HttpMethod.DELETE, 
+                    new HttpEntity<>(headers), 
+                    Void.class
+                );
+                logger.info("✅ Rollback completado: Usuario {} eliminado de Keycloak", userId);
+            } catch (Exception delEx) {
+                logger.error("❌❌❌ ROLLBACK FALLÓ: Usuario {} queda huérfano en Keycloak sin rol", userId);
+                logger.error("Error del rollback: {}", delEx.getMessage());
+            }
+            
+            throw new RuntimeException("No se pudo asignar el rol '" + roleName + "' al usuario. Usuario no creado.");
         }
 
         return userId;
+    }
+
+    /**
+     * Verifica si un usuario existe en Keycloak por username
+     * @return true si existe, false si no existe
+     */
+    public boolean checkUserExistsByUsername(String username) {
+        try {
+            String adminToken = obtainAdminAccessToken();
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(adminToken);
+            
+            // Buscar usuario por username exacto
+            String url = adminEndpoint("/users?username=" + username + "&exact=true");
+            
+            ResponseEntity<java.util.List> response = rest.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                java.util.List.class
+            );
+            
+            java.util.List users = response.getBody();
+            boolean exists = users != null && !users.isEmpty();
+            
+            if (exists) {
+                logger.warn("Usuario '{}' ya existe en Keycloak", username);
+            }
+            
+            return exists;
+            
+        } catch (Exception ex) {
+            logger.error("Error verificando existencia de usuario en Keycloak: {}", ex.getMessage());
+            // En caso de error al verificar, asumimos que NO existe para intentar crearlo
+            // El error real se capturará en createKeycloakUser
+            return false;
+        }
     }
 
     /** Elimina un usuario de Keycloak (se usa cuando falló la BD local) */
@@ -189,8 +305,11 @@ public class KeycloakAdminService {
 
         try {
             rest.exchange(adminEndpoint("/users/" + userId), HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+            logger.info("✅ Rollback exitoso: Usuario {} eliminado de Keycloak", userId);
         } catch (Exception ex) {
-            logger.error("Error eliminando usuario {}: {}", userId, ex.getMessage());
+            logger.error("❌ Error en rollback - No se pudo eliminar usuario {} de Keycloak: {}", userId, ex.getMessage());
+            // Este es un error crítico que debería monitorearse
+            throw new RuntimeException("Rollback falló: Usuario queda inconsistente entre sistemas");
         }
     }
 

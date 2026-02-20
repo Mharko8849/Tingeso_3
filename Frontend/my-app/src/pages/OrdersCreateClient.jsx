@@ -44,6 +44,20 @@ const OrdersCreateClient = () => {
     navigate('/');
   };
 
+  const handleClientSelect = (client) => {
+    // Validar si el cliente está restringido
+    if (client && client.stateClient === 'RESTRINGIDO') {
+      show({ 
+        severity: 'error', 
+        message: 'El usuario seleccionado se encuentra actualmente restringido.',
+        autoHideMs: 4500 
+      });
+      return; // No permitir la selección
+    }
+    // Si no está restringido, permitir la selección
+    setSelected(client);
+  };
+
   const handleNext = () => {
     if (!selected) return;
     // Save client and dates to sessionStorage (NO loan creation here)
@@ -73,13 +87,10 @@ const OrdersCreateClient = () => {
   };
 
   useEffect(() => {
-    // sensible defaults: init = today, return = tomorrow
+    // sensible defaults: init = today, return = tomorrow (LOCAL timezone)
     try {
-      const today = new Date();
-      const iso = d => d.toISOString().slice(0,10);
-      setInitDate(iso(today));
-      const plus1 = new Date(today.getTime() + 1*24*60*60*1000);
-      setReturnDate(iso(plus1));
+      setInitDate(getTodayString());
+      setReturnDate(getTomorrowString());
     } catch(e) { /* ignore */ }
   }, []);
 
@@ -92,10 +103,83 @@ const OrdersCreateClient = () => {
     } catch(e) { return false; }
   };
 
+  // Helper: Get today's date in YYYY-MM-DD format (LOCAL timezone, not UTC)
+  const getTodayString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper: Get tomorrow's date in YYYY-MM-DD format (LOCAL timezone)
+  const getTomorrowString = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Auto-correct dates when user selects invalid values
+  const handleInitDateChange = (e) => {
+    const selectedDate = e.target.value;
+    const today = getTodayString();
+    
+    // Si selecciona fecha pasada, establecer hoy
+    if (selectedDate < today) {
+      setInitDate(today);
+      show({ severity: 'warning', message: 'No puedes seleccionar una fecha pasada. Se estableció la fecha de hoy.' });
+    } else {
+      setInitDate(selectedDate);
+      
+      // Si la fecha de retorno ahora es anterior o igual a la de inicio, ajustarla
+      if (returnDate <= selectedDate) {
+        const newReturn = new Date(selectedDate + 'T00:00:00');
+        newReturn.setDate(newReturn.getDate() + 1);
+        const year = newReturn.getFullYear();
+        const month = String(newReturn.getMonth() + 1).padStart(2, '0');
+        const day = String(newReturn.getDate()).padStart(2, '0');
+        const newReturnStr = `${year}-${month}-${day}`;
+        setReturnDate(newReturnStr);
+        show({ severity: 'info', message: 'Fecha de retorno ajustada para ser posterior a la fecha de inicio.' });
+      }
+    }
+  };
+
+  const handleReturnDateChange = (e) => {
+    const selectedDate = e.target.value;
+    
+    // La fecha de retorno debe ser al menos 1 día después de la de inicio
+    if (!initDate) {
+      // Si no hay fecha de inicio, establecer defaults
+      const today = getTodayString();
+      setInitDate(today);
+      setReturnDate(getTomorrowString());
+      show({ severity: 'info', message: 'Se establecieron fechas por defecto.' });
+      return;
+    }
+    
+    // Si selecciona fecha anterior o igual a la de inicio, ajustar a inicio + 1 día
+    if (selectedDate <= initDate) {
+      const minReturn = new Date(initDate + 'T00:00:00');
+      minReturn.setDate(minReturn.getDate() + 1);
+      const year = minReturn.getFullYear();
+      const month = String(minReturn.getMonth() + 1).padStart(2, '0');
+      const day = String(minReturn.getDate()).padStart(2, '0');
+      const minReturnStr = `${year}-${month}-${day}`;
+      setReturnDate(minReturnStr);
+      show({ severity: 'warning', message: 'La fecha de retorno debe ser al menos 1 día después de la fecha de inicio.' });
+    } else {
+      setReturnDate(selectedDate);
+    }
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div className="max-w-7xl mx-auto" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24 }}>
           <section style={{ paddingRight: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -132,28 +216,21 @@ const OrdersCreateClient = () => {
                   isAdmin={isAdmin}
                   onCreate={async (payload) => {
                     try {
-                      // Use same registration endpoint as ClientsAdmin
-                      const res = await fetch('/api/auth/register', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          username: payload.username,
-                          name: payload.name,
-                          lastName: payload.lastName,
-                          rut: payload.rut,
-                          phone: payload.phone,
-                          email: payload.email,
-                          password: payload.password,
-                          rol: payload.rol || 'CLIENT',
-                        }),
+                      // Use axios api instead of fetch to properly route through interceptors
+                      const res = await api.post('/auth/register', {
+                        username: payload.username,
+                        name: payload.name,
+                        lastName: payload.lastName,
+                        rut: payload.rut,
+                        phone: payload.phone,
+                        email: payload.email,
+                        password: payload.password,
+                        rol: payload.rol || 'CLIENT',
                       });
-                      if (!res.ok) {
-                        const err = await res.text();
-                        throw new Error(err || 'Registro de cliente falló');
-                      }
-                      const created = await res.json();
+                      const created = res.data;
                       const toAppend = created || { username: payload.username, name: payload.name, lastName: payload.lastName, email: payload.email, rol: payload.rol || 'CLIENT', rut: payload.rut };
                       // set as selected and store in session
+                      // Note: Newly registered clients should be in ACTIVO state by default, so no need to validate here
                       setSelected(toAppend);
                       // trigger client list reload so ClientSearch refetches and shows the new client
                       setClientListReload((s) => s + 1);
@@ -167,10 +244,16 @@ const OrdersCreateClient = () => {
                       setShowRegister(false);
                       show({ severity: 'success', message: 'La cuenta ha sido registrada exitosamente.' });
                     } catch (e) {
-                      // rethrow so EmployeeRegister/UserRegisterForm shows the error and also show page alert
+                      // Show user-friendly error message instead of HTML
+                      const errorMessage = e?.response?.data?.error 
+                        || e?.response?.data?.message 
+                        || e?.message 
+                        || 'No se pudo crear el cliente. Por favor verifica los datos e intenta nuevamente.';
+                      
+                      console.error('Error creating client:', e);
                       setShowRegister(true);
-                      show({ severity: 'error', message: e?.message || 'Error al crear cliente' });
-                      throw e;
+                      show({ severity: 'error', message: errorMessage });
+                      throw new Error(errorMessage);
                     }
                   }}
                   onCancel={() => setShowRegister(false)}
@@ -178,17 +261,40 @@ const OrdersCreateClient = () => {
               )}
 
               {/* ClientSearch handles its own scrolling and card grid (hide internal label since header above provides it) */}
-              <ClientSearch selected={selected} onSelect={setSelected} reloadKey={clientListReload} hideHeader={true} />
+              <ClientSearch selected={selected} onSelect={handleClientSelect} reloadKey={clientListReload} hideHeader={true} />
 
               {/* Dates moved here so they appear under the client list/table */}
               <div style={{ marginTop: 12, display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <label style={{ display: 'block', fontSize: 13 }}>Fecha inicio</label>
-                  <input type="date" value={initDate} onChange={(e) => setInitDate(e.target.value)} />
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha inicio</label>
+                  <input 
+                    type="date" 
+                    value={initDate} 
+                    min={getTodayString()}
+                    onChange={handleInitDateChange}
+                    style={{ padding: '6px 10px', fontSize: 14, borderRadius: 6, border: '1px solid #d1d5db' }}
+                  />
+                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>Mínimo: Hoy</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <label style={{ display: 'block', fontSize: 13 }}>Fecha retorno</label>
-                  <input type="date" value={returnDate} onChange={(e) => setReturnDate(e.target.value)} />
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha retorno</label>
+                  <input 
+                    type="date" 
+                    value={returnDate} 
+                    min={initDate ? (() => {
+                      const minReturn = new Date(initDate + 'T00:00:00');
+                      minReturn.setDate(minReturn.getDate() + 1);
+                      const year = minReturn.getFullYear();
+                      const month = String(minReturn.getMonth() + 1).padStart(2, '0');
+                      const day = String(minReturn.getDate()).padStart(2, '0');
+                      return `${year}-${month}-${day}`;
+                    })() : getTomorrowString()}
+                    onChange={handleReturnDateChange}
+                    style={{ padding: '6px 10px', fontSize: 14, borderRadius: 6, border: '1px solid #d1d5db' }}
+                  />
+                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+                    Mínimo: {initDate ? 'Inicio + 1 día' : 'Mañana'}
+                  </div>
                 </div>
               </div>
             </div>

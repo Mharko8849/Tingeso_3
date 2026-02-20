@@ -38,11 +38,29 @@ const OrdersCreateTools = () => {
       const qs = {};
       if (f?.minPrice) qs.minPrice = f.minPrice;
       if (f?.maxPrice) qs.maxPrice = f.maxPrice;
-      if (f?.q) qs.q = f.q;
-      const resp = await api.get('/api/inventory/filter', { params: qs });
-      const inv = resp.data || [];
+      if (f?.search) qs.search = f.search;
+      if (f?.asc) qs.asc = true;
+      if (f?.desc) qs.desc = true;
+      if (f?.recent) qs.recent = true;
+      
+      const resp = await api.get('/inventory/filter', { params: qs });
+      let inv = resp.data || [];
+
+      // Fallback to tools endpoint if inventory returns empty
+      if (!Array.isArray(inv) || inv.length === 0) {
+        const toolsResp = await api.get('/tool/');
+        const tools = toolsResp.data || [];
+        inv = tools.map(tool => ({
+          idTool: tool,
+          toolState: { state: 'DISPONIBLE' },
+          stockTool: 0
+        }));
+      }
+
+      // Group inventory entries by tool id and compute available stock
       const map = new Map();
-      (inv || []).forEach((entry) => {
+      const inventoryArray = Array.isArray(inv) ? inv : [];
+      inventoryArray.forEach((entry) => {
         const t = entry.idTool || {};
         const tid = t.id;
         if (!map.has(tid)) {
@@ -50,15 +68,19 @@ const OrdersCreateTools = () => {
             id: tid,
             name: t.toolName || t.name || '—',
             price: t.priceRent || t.price || 0,
-            image: t.image,
+            category: (typeof t.category === 'string' ? t.category : t.category?.name) || '',
+            image: t.imageUrl ? `/images/${t.imageUrl}` : '/images/NoImage.png',
             stock: 0,
           });
         }
         const item = map.get(tid);
-        if (entry.toolState === 'DISPONIBLE') {
+        // sum only available stock entries
+        const stateName = typeof entry.toolState === 'string' ? entry.toolState : entry.toolState?.state;
+        if (stateName === 'DISPONIBLE') {
           item.stock = (item.stock || 0) + (entry.stockTool || 0);
         }
       });
+
       setTools(Array.from(map.values()));
     } catch (e) {
       console.warn('fetchTools failed', e);
@@ -81,6 +103,15 @@ const OrdersCreateTools = () => {
           setAlert({ severity: 'error', message: 'No hay cliente seleccionado. Vuelve atrás.' });
           return;
         }
+
+        // Check if tool has available stock
+        const stockResp = await api.get(`/inventory/check-stock/${t.id}`);
+        const hasStock = stockResp.data === true;
+        if (!hasStock) {
+          setAlert({ severity: 'error', message: 'No hay stock disponible para realizar el préstamo.' });
+          return;
+        }
+
         const resp = await api.get(`/api/loantool/validate/${selectedClient.id}/${t.id}`);
         const already = resp.data === true;
         if (already) {
@@ -88,14 +119,16 @@ const OrdersCreateTools = () => {
           return;
         }
       } catch (e) {
-        console.warn('Validation call failed, allowing add as fallback', e?.response?.data || e.message || e);
-        // If validation fails, allow add but inform user
+        console.error('Validation failed:', e?.response?.data || e.message || e);
+        setAlert({ severity: 'error', message: 'Error al validar la herramienta. Por favor intente nuevamente.' });
+        return;
       }
 
       // include price if available (from the tool object or from current tools list)
       const toolObj = tools.find(x => x.id === t.id);
       const price = (t.price !== undefined && t.price !== null) ? t.price : (toolObj ? toolObj.price : 0);
-      const newItem = { id: t.id, name: t.name, qty: 1, stock: t.stock, image: t.image, price };
+      const image = toolObj ? toolObj.image : (t.image || '/NoImage.png');
+      const newItem = { id: t.id, name: t.name, qty: 1, stock: t.stock, image, price };
       const next = [newItem, ...items];
       setItems(next);
       try { sessionStorage.setItem('order_items', JSON.stringify(next)); } catch (e) { /* ignore */ }
@@ -154,7 +187,7 @@ const OrdersCreateTools = () => {
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
       {alert && <TransitionAlert alert={alert} onClose={() => setAlert(null)} />}
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div className="max-w-6xl mx-auto">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>

@@ -58,6 +58,12 @@ public class InventoryController {
         return ResponseEntity.ok(inventory);
     }
 
+    @GetMapping("/check-stock/{idTool}")
+    public ResponseEntity<Boolean> checkStockAvailable(@PathVariable Long idTool) {
+        boolean hasStock = inventoryService.checkStockAvailable(idTool);
+        return ResponseEntity.ok(hasStock);
+    }
+
     /*
      POST
      */

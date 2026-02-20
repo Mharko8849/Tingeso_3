@@ -6,7 +6,7 @@ const ToolGrid = ({ tools = [], toolCardProps = {} }) => {
   if (!tools || tools.length === 0) return <div>No se encontraron herramientas.</div>;
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 18 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 18 }}>
       {tools.map((t) => {
         // allow addDisabled to be computed per-tool when a function is provided
         const resolvedAddDisabled = typeof toolCardProps.addDisabled === 'function' ? toolCardProps.addDisabled(t) : toolCardProps.addDisabled;

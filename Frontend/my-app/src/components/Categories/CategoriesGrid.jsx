@@ -1,29 +1,23 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './CategoriesGrid.css';
 
 const CategoryCard = ({ cat }) => {
-  const isInternal = cat.href && cat.href.startsWith('/');
+  const navigate = useNavigate();
   
-  if (isInternal) {
-    return (
-      <Link className="cat-card" to={cat.href}>
-        <div className="cat-left">
-          <h4 className="cat-title">{cat.title}</h4>
-          <p className="cat-sub">{cat.subtitle}</p>
-          <div className="cat-cta">
-            <button className="cat-btn">Ver ofertas</button>
-          </div>
-        </div>
-        <div className="cat-right">
-          <img src={cat.image} alt={cat.title} style={{ borderLeft: `6px solid ${cat.color || '#2B7FFF'}` }} />
-        </div>
-      </Link>
-    );
-  }
+  const handleClick = (e) => {
+    e.preventDefault();
+    if (cat.categoryName) {
+      // Navigate to /inventory with category filter in state
+      navigate('/inventory', { state: { initialFilters: { category: cat.categoryName } } });
+    } else if (cat.href) {
+      // Fallback for external links
+      window.location.href = cat.href;
+    }
+  };
 
   return (
-    <a className="cat-card" href={cat.href}>
+    <a className="cat-card" href="#" onClick={handleClick}>
       <div className="cat-left">
         <h4 className="cat-title">{cat.title}</h4>
         <p className="cat-sub">{cat.subtitle}</p>

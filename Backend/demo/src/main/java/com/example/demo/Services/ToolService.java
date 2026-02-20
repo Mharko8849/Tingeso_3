@@ -1,5 +1,8 @@
 package com.example.demo.Services;
 
+import com.example.demo.DTO.EntityMapper;
+import com.example.demo.DTO.PageResponseDTO;
+import com.example.demo.DTO.ToolDTO;
 import com.example.demo.Entities.InventoryEntity;
 import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
@@ -8,6 +11,10 @@ import com.example.demo.Repositories.InventoryRepository;
 import com.example.demo.Repositories.ToolRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,6 +47,24 @@ public class ToolService {
 
     public ArrayList<ToolEntity> getAllTools() {
         return (ArrayList<ToolEntity>) toolRepository.findAll();
+    }
+    
+    /**
+     * Obtiene herramientas paginadas
+     */
+    public PageResponseDTO<ToolDTO> getAllToolsPaginated(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<ToolEntity> toolPage = toolRepository.findAll(pageable);
+        return EntityMapper.toToolPageResponseDTO(toolPage);
+    }
+    
+    /**
+     * Obtiene herramientas por categoría con paginación
+     */
+    public PageResponseDTO<ToolDTO> getToolsByCategoryPaginated(String category, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ToolEntity> toolPage = toolRepository.findByCategory_Name(category, pageable);
+        return EntityMapper.toToolPageResponseDTO(toolPage);
     }
 
     public ToolEntity getToolById(Long id) {

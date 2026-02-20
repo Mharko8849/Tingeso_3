@@ -82,12 +82,12 @@ const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = nul
           />
         </div>
 
-        <div style={{ padding: 14, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: '1 1 auto' }}>
+        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: '1 1 auto', minWidth: 0, overflow: 'hidden' }}>
           <div>
-            <h6 style={{ margin: '0 0 8px 0', fontSize: '1rem', color: '#0f172a' }}>{tool.name}</h6>
-            <p style={{ margin: 0, color: '#334155', fontWeight: 600 }}>{priceLabel}</p>
+            <h6 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#0f172a', fontWeight: 600, wordWrap: 'break-word', overflowWrap: 'break-word', lineHeight: '1.3' }}>{tool.name}</h6>
+            <p style={{ margin: 0, color: '#334155', fontWeight: 600, fontSize: '0.9rem' }}>{priceLabel}</p>
           </div>
-          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', color: '#64748b', fontSize: 13 }}>
+          <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end', color: '#64748b', fontSize: 13 }}>
             {tool.stock !== undefined && <div>Stock: {tool.stock}</div>}
           </div>
         </div>

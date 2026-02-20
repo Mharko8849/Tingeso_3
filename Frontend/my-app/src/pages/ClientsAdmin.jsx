@@ -99,33 +99,42 @@ const ClientsAdmin = () => {
   const addClient = () => setShowRegister((s) => !s);
 
   const createClient = async (form) => {
-    // call backend register endpoint
-    const body = {
-      username: form.username,
-      name: form.name,
-      lastName: form.lastName,
-      rut: form.rut,
-      phone: form.phone,
-      email: form.email,
-      password: form.password,
-      rol: form.rol || 'CLIENT',
-    };
+    try {
+      // Use axios api instead of fetch to properly route through interceptors
+      const body = {
+        username: form.username,
+        name: form.name,
+        lastName: form.lastName,
+        rut: form.rut,
+        phone: form.phone,
+        email: form.email,
+        password: form.password,
+        rol: form.rol || 'CLIENT',
+      };
 
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err || 'Registro de cliente falló');
+      const res = await api.post('/auth/register', body);
+      const created = res.data;
+      
+      // backend may return created user or not; attempt to append minimal info
+      const toAppend = created || { 
+        username: form.username, 
+        name: form.name, 
+        lastName: form.lastName, 
+        email: form.email, 
+        rol: body.rol, 
+        rut: form.rut 
+      };
+      setClients((s) => [toAppend, ...s]);
+    } catch (e) {
+      // Throw user-friendly error instead of HTML
+      const errorMessage = e?.response?.data?.error 
+        || e?.response?.data?.message 
+        || e?.message 
+        || 'No se pudo crear el cliente. Por favor verifica los datos e intenta nuevamente.';
+      
+      console.error('Error creating client:', e);
+      throw new Error(errorMessage);
     }
-
-    const created = await res.json();
-    // backend may return created user or not; attempt to append minimal info
-    const toAppend = created || { username: form.username, name: form.name, lastName: form.lastName, email: form.email, rol: body.rol, rut: form.rut };
-    setClients((s) => [toAppend, ...s]);
   };
 
   // Normalize various possible server fields for client state/status
@@ -147,7 +156,7 @@ const ClientsAdmin = () => {
     return (
       <div className="bg-gray-50 min-h-screen">
         <NavBar />
-        <main style={{ paddingTop: 30 }} className="px-6">
+        <main className="px-6">
           <div className="max-w-6xl mx-auto" style={{ paddingLeft: '24px', paddingRight: '24px' }}>
             <h2>Acceso denegado</h2>
             <p>Esta sección sólo está disponible para usuarios ADMIN o SUPERADMIN.</p>
@@ -160,7 +169,7 @@ const ClientsAdmin = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div style={{ maxWidth: 900, margin: '0 auto 12px' }}>
           <TransitionAlert alert={alert} onClose={() => setAlert(null)} autoHideMs={4000} />
         </div>

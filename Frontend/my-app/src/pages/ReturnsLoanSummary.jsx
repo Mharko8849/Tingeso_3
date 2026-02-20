@@ -8,6 +8,7 @@ import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
 import { useAlert } from '../components/Alerts/useAlert';
 import RepairPaymentModal from '../components/Returns/RepairPaymentModal';
 import DebtPaymentModal from '../components/Returns/DebtPaymentModal';
+import { formatDate } from '../utils/validation';
 import PaginationBar from '../components/Common/PaginationBar';
 
 const ReturnsLoanSummary = () => {
@@ -71,7 +72,7 @@ const ReturnsLoanSummary = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div className="max-w-6xl mx-auto big-page">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div>
@@ -111,8 +112,8 @@ const ReturnsLoanSummary = () => {
                     </div>
 
                     <div style={{ marginTop: 12 }}>
-                      <div>Fecha inicio: {loan.initDate}</div>
-                      <div>Fecha devolución: {loan.returnDate}</div>
+                      <div>Fecha inicio: {formatDate(loan.initDate)}</div>
+                      <div>Fecha devolución: {formatDate(loan.returnDate)}</div>
                     </div>
 
                     <h3 style={{ marginTop: 16 }}>Herramientas solicitadas</h3>

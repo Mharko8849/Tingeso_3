@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/http-common';
 import { useAlert } from '../Alerts/useAlert';
+import { useEscapeKey } from '../../hooks/useKeyboardShortcuts';
 import ModalAddCategory from './ModalAddCategory';
 import '../Stock/ModalAddStockTool.css';
 import './ModalManageCategories.css';
@@ -12,6 +13,9 @@ const ModalManageCategories = ({ open, onClose }) => {
   const [editingName, setEditingName] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const { show } = useAlert();
+  
+  // Close modal with Escape key (Nielsen Heuristic #3: User Control and Freedom)
+  useEscapeKey(onClose, open && !showAddModal);
 
   useEffect(() => {
     if (open) {
@@ -74,7 +78,7 @@ const ModalManageCategories = ({ open, onClose }) => {
   };
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`¿Estás seguro de eliminar la categoría "${name}"?`)) {
+    if (!window.confirm(`¿Estás seguro de eliminar la categoría "${name}"?\n\nEsta acción no se puede deshacer. Las herramientas asociadas a esta categoría quedarán sin categoría.`)) {
       return;
     }
 

@@ -21,6 +21,7 @@ const InventoryPage = ({ category = null }) => {
       maxPrice: initial.maxPrice || 500000,
       sort: initial.sort || '',
       search: searchQuery || '', // Init from URL
+      category: initial.category || category || '', // Read from state or prop
       asc: initial.sort === 'price_asc',
       desc: initial.sort === 'price_desc',
       recent: initial.sort === 'newest',
@@ -52,31 +53,42 @@ const InventoryPage = ({ category = null }) => {
   const fetchProducts = async (appliedFilters) => {
     setLoading(true);
     try {
-      // Request inventory from backend, letting backend apply category,
-      // price and sort filters. Backend will perform case-insensitive
-      // substring match on category when provided.
-        // Use axios instance so interceptor adds Authorization header automatically
-  const qs = {};
-  if (category) qs.category = category;
-  
-  // Use filter state for search (defaults to URL param, but can be changed by sidebar)
-  if (appliedFilters?.search) qs.search = appliedFilters.search;
+      // Build query params for filtering
+      const qs = {};
+      if (appliedFilters?.category) qs.category = appliedFilters.category;
+      else if (category) qs.category = category; // Fallback to prop for URL-based routing
+      if (appliedFilters?.search) qs.search = appliedFilters.search;
+      if (appliedFilters?.minPrice) qs.minPrice = appliedFilters.minPrice;
+      if (appliedFilters?.maxPrice) qs.maxPrice = appliedFilters.maxPrice;
+      if (appliedFilters?.asc) qs.asc = true;
+      if (appliedFilters?.desc) qs.desc = true;
+      if (appliedFilters?.recent) qs.recent = true;
 
-  if (appliedFilters?.minPrice) qs.minPrice = appliedFilters.minPrice;
-  if (appliedFilters?.maxPrice) qs.maxPrice = appliedFilters.maxPrice;
-  if (appliedFilters?.asc) qs.asc = true;
-  if (appliedFilters?.desc) qs.desc = true;
-  if (appliedFilters?.recent) qs.recent = true;
-  // if (appliedFilters?.popular) qs.popular = true; // Removed as backend doesn't support it
+      // Fetch from inventory filter endpoint
+      const resp = await api.get('/inventory/filter', { params: qs });
+      let inv = resp.data;
+      console.debug('[InventoryPage] /inventory/filter response:', inv);
+      console.debug('[InventoryPage] Response type:', typeof inv, 'Is Array:', Array.isArray(inv));
 
-  const resp = await api.get('/inventory/filter', { params: qs });
-  const inv = resp.data;
-  // Debug: log server response so we can inspect its shape in the browser console
-  console.debug('[InventoryPage] /inventory/filter response:', inv);
+      // Fallback to tools endpoint if inventory returns empty
+      if (!Array.isArray(inv) || inv.length === 0) {
+        console.warn('[InventoryPage] Inventory filter returned no results, trying /tool/ endpoint');
+        const toolsResp = await api.get('/tool/');
+        const tools = toolsResp.data || [];
+        console.debug('[InventoryPage] /tool/ response:', tools);
+        
+        // Convert tools to inventory format
+        inv = tools.map(tool => ({
+          idTool: tool,
+          toolState: { state: 'DISPONIBLE' },
+          stockTool: 0
+        }));
+      }
 
       // Group inventory entries by tool id and compute available stock
       const map = new Map();
-      (inv || []).forEach((entry) => {
+      const inventoryArray = Array.isArray(inv) ? inv : [];
+      inventoryArray.forEach((entry) => {
         const t = entry.idTool || {};
         const tid = t.id;
         if (!map.has(tid)) {
@@ -163,7 +175,7 @@ const InventoryPage = ({ category = null }) => {
       <NavBar />
 
       {/* reduce top spacing so page content sits closer to the fixed NavBar (navbar height = 70px) */}
-      <main className="px-6" style={{ paddingTop: '30px', paddingBottom: '24px' }}>
+      <main className="px-6" style={{ paddingBottom: '24px' }}>
         <div className="max-w-6xl mx-auto">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h2 style={{ margin: '0 0 0 20px', fontSize: '1.5rem', fontWeight: 700 }}>{formatTitle(category || 'inventario')}</h2>
@@ -188,7 +200,16 @@ const InventoryPage = ({ category = null }) => {
           )}
         </div>
       </main>
-      <ModalAddNewTool open={showAddNewTool} onClose={() => setShowAddNewTool(false)} onAdded={() => fetchProducts(filters)} />
+      <ModalAddNewTool 
+        open={showAddNewTool} 
+        onClose={() => setShowAddNewTool(false)} 
+        onAdded={() => {
+          // Wait a bit for backend to process, then refresh
+          setTimeout(() => {
+            fetchProducts(filters);
+          }, 500);
+        }} 
+      />
     </div>
   );
 };

@@ -1,5 +1,7 @@
 package com.example.demo.Controllers;
 
+import com.example.demo.DTO.LoanDTO;
+import com.example.demo.DTO.PageResponseDTO;
 import com.example.demo.Entities.LoanEntity;
 import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
@@ -40,6 +42,20 @@ public class LoanController {
         List<LoanEntity> loans = loanService.getAllLoansByIdUser(user);
         return ResponseEntity.ok(loans);
     }
+    
+    /**
+     * Obtiene préstamos de un usuario paginados y ordenados por más recientes
+     */
+    @GetMapping("/user/{idUser}/paginated")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE', 'SUPERADMIN')")
+    public ResponseEntity<PageResponseDTO<LoanDTO>> getLoansByUserPaginated(
+            @PathVariable Long idUser,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size) {
+        UserEntity user = userService.findUserById(idUser);
+        PageResponseDTO<LoanDTO> loans = loanService.getLoansByUserPaginated(user, page, size);
+        return ResponseEntity.ok(loans);
+    }
 
     @GetMapping("/{idLoan}")
     @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE', 'SUPERADMIN')")
@@ -54,11 +70,42 @@ public class LoanController {
         List<LoanEntity> loans = loanService.getAllLoans();
         return ResponseEntity.ok(loans);
     }
+    
+    /**
+     * Obtiene préstamos paginados ordenados por los más recientes
+     * Parámetros: page (default 0), size (default 8)
+     */
+    @GetMapping("/paginated")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE', 'SUPERADMIN')")
+    public ResponseEntity<PageResponseDTO<LoanDTO>> getAllLoansPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size) {
+        PageResponseDTO<LoanDTO> loans = loanService.getAllLoansPaginated(page, size);
+        return ResponseEntity.ok(loans);
+    }
 
     @GetMapping("/filter")
     @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE','SUPERADMIN')")
     public ResponseEntity<List<LoanEntity>> filterLoans(@RequestParam(required = false) String state){
         List<LoanEntity> loans = loanService.filter(state);
+        return ResponseEntity.ok(loans);
+    }
+    
+    /**
+     * Filtra préstamos por estado con paginación
+     */
+    @GetMapping("/filter/paginated")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE','SUPERADMIN')")
+    public ResponseEntity<PageResponseDTO<LoanDTO>> filterLoansPaginated(
+            @RequestParam(required = false) String state,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size) {
+        
+        if (state == null || state.isBlank()) {
+            return ResponseEntity.ok(loanService.getAllLoansPaginated(page, size));
+        }
+        
+        PageResponseDTO<LoanDTO> loans = loanService.getLoansByStatePaginated(state, page, size);
         return ResponseEntity.ok(loans);
     }
 

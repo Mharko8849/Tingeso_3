@@ -102,7 +102,7 @@ const Orders = () => {
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
       {alert && <TransitionAlert alert={alert} onClose={() => setAlert(null)} />}
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div className="max-w-6xl mx-auto">
           <h2 style={{ margin: '0 0 12px 0', fontSize: '1.5rem', fontWeight: 700 }}>Administración — Pedidos</h2>
           <div style={{ marginTop: 6 }}>{selectedClient ? `Cliente seleccionado: ${selectedClient.username} — ${selectedClient.name || ''}` : 'Cliente no seleccionado'}</div>

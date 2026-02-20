@@ -82,7 +82,7 @@ const Login = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 120 }} className="px-6">
+      <main className="px-6">
         <div className="form-card max-w-md mx-auto bg-white p-8 rounded shadow">
           <h2 className="form-title">Iniciar sesión</h2>
           <p className="form-sub">Ingresa con tu usuario o email</p>

@@ -10,6 +10,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
+
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -50,12 +52,26 @@ public class KardexController {
     public ResponseEntity<List<KardexEntity>> filterKardex(
             @RequestParam(required = false) Long idTool,
             @RequestParam(required = false) String type,
-            @RequestParam(required = false) Date initDate,
-            @RequestParam(required = false) Date finalDate,
+            @RequestParam(required = false) String initDate,
+            @RequestParam(required = false) String finalDate,
             @RequestParam(required = false) Long idUser,
             @RequestParam(required = false) Long idEmployee) {
 
-        List<KardexEntity> kardexList = kardexService.filterKardex(idTool, type, initDate, finalDate, idUser, idEmployee);
+        Date parsedInitDate = null;
+        Date parsedFinalDate = null;
+        
+        try {
+            if (initDate != null && !initDate.isEmpty()) {
+                parsedInitDate = Date.valueOf(initDate);
+            }
+            if (finalDate != null && !finalDate.isEmpty()) {
+                parsedFinalDate = Date.valueOf(finalDate);
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<KardexEntity> kardexList = kardexService.filterKardex(idTool, type, parsedInitDate, parsedFinalDate, idUser, idEmployee);
         return ResponseEntity.ok(kardexList);
     }
 
@@ -68,9 +84,24 @@ public class KardexController {
     @GetMapping("/ranking/range")
     @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE', 'SUPERADMIN')")
     public ResponseEntity<List<Map<String, Object>>> getRankingByDateRange(
-            @RequestParam(required = false) Date initDate,
-            @RequestParam(required = false) Date finalDate) {
-        List<Map<String, Object>> ranking = kardexService.getRankingToolsByDateRange(initDate, finalDate);
+            @RequestParam(required = false) String initDate,
+            @RequestParam(required = false) String finalDate) {
+        
+        Date parsedInitDate = null;
+        Date parsedFinalDate = null;
+        
+        try {
+            if (initDate != null && !initDate.isEmpty()) {
+                parsedInitDate = Date.valueOf(initDate);
+            }
+            if (finalDate != null && !finalDate.isEmpty()) {
+                parsedFinalDate = Date.valueOf(finalDate);
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        List<Map<String, Object>> ranking = kardexService.getRankingToolsByDateRange(parsedInitDate, parsedFinalDate);
         return ResponseEntity.ok(ranking);
     }
 }

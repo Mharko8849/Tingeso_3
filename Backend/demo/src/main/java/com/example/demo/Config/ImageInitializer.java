@@ -48,7 +48,7 @@ public class ImageInitializer implements CommandLineRunner {
                     String filename = resource.getFilename();
                     if (filename != null) {
                         Path targetFile = targetDir.resolve(filename);
-                        // Only copy if the file doesn't exist in the target directory
+                        // Copy the base image if it doesn't exist
                         if (!Files.exists(targetFile)) {
                             try (InputStream inputStream = resource.getInputStream()) {
                                 Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
@@ -57,11 +57,32 @@ public class ImageInitializer implements CommandLineRunner {
                                 System.err.println("Failed to copy image " + filename + ": " + e.getMessage());
                             }
                         }
+                        
+                        // Also copy with timestamp for existing DB entries
+                        if (filename.equals("Sierra.png")) {
+                            copyWithTimestamp(resource, targetDir, "1771455824130_Sierra.png");
+                        } else if (filename.equals("Pala.png")) {
+                            copyWithTimestamp(resource, targetDir, "1771531179609_Pala.png");
+                        } else if (filename.equals("Martillo.png")) {
+                            copyWithTimestamp(resource, targetDir, "1764735846760_Martillo.png");
+                        }
                     }
                 }
             }
         } catch (IOException e) {
             System.err.println("Failed to load initial images from classpath: " + e.getMessage());
+        }
+    }
+    
+    private void copyWithTimestamp(Resource resource, Path targetDir, String timestampedName) {
+        Path targetFile = targetDir.resolve(timestampedName);
+        if (!Files.exists(targetFile)) {
+            try (InputStream inputStream = resource.getInputStream()) {
+                Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                System.out.println("Initialized timestamped image: " + timestampedName);
+            } catch (IOException e) {
+                System.err.println("Failed to copy timestamped image " + timestampedName + ": " + e.getMessage());
+            }
         }
     }
 }

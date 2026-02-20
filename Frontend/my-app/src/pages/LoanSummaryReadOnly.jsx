@@ -5,6 +5,7 @@ import api from '../services/http-common';
 import Badge from '../components/Badges/Badge';
 import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
 import BackButton from '../components/Common/BackButton';
+import { formatDate } from '../utils/validation';
 
 const LoanSummaryReadOnly = () => {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ const LoanSummaryReadOnly = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 30 }} className="px-6">
+      <main className="px-6">
         <div className="max-w-6xl mx-auto big-page">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -121,8 +122,8 @@ const LoanSummaryReadOnly = () => {
                     </div>
 
                     <div style={{ marginTop: 12 }}>
-                      <div>Fecha inicio: {loan.initDate}</div>
-                      <div>Fecha devolución: {loan.returnDate}</div>
+                      <div>Fecha inicio: {formatDate(loan.initDate)}</div>
+                      <div>Fecha devolución: {formatDate(loan.returnDate)}</div>
                     </div>
 
                     <h3 style={{ marginTop: 16 }}>Herramientas solicitadas</h3>

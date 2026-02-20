@@ -4,6 +4,7 @@ import BackButton from '../components/Common/BackButton';
 import { default as ReportKardex } from '../components/Reports/ReportKardex';
 import { default as ReportRanking } from '../components/Reports/ReportRanking';
 import PaginationBar from '../components/Common/PaginationBar';
+import { HelpIcon } from '../components/Common/Tooltip';
 import api from '../services/http-common';
 import { useAlert } from '../components/Alerts/useAlert';
 
@@ -164,11 +165,17 @@ const KardexPage = () => {
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
 
-      <main className="px-6" style={{ paddingTop: '30px', paddingBottom: '24px' }}>
+      <main className="px-6" style={{ paddingTop: '90px', paddingBottom: '24px' }}>
         <div className="max-w-6xl mx-auto">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div>
-              <h2 style={{ margin: 0 }}>Kardex — Movimientos</h2>
+              <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                Kardex — Movimientos
+                <HelpIcon 
+                  content="El Kardex es un registro contable que permite controlar el inventario de manera detallada. Registra todas las entradas, salidas y ajustes de herramientas con información de empleados, fechas y montos."
+                  position="right"
+                />
+              </h2>
               <p style={{ margin: '4px 0 0', color: '#4b5563' }}>
                 Registro histórico de movimientos de inventario: préstamos, devoluciones, ingresos, bajas y pagos.
               </p>
@@ -235,7 +242,13 @@ const KardexPage = () => {
             </div>
 
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ fontWeight: 600 }}>Tipo de Movimiento:</span>
+              <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                Tipo de Movimiento
+                <HelpIcon 
+                  content="PRÉSTAMO: salida de herramienta al cliente. DEVOLUCIÓN: retorno de herramienta. INGRESO: nueva herramienta al inventario. BAJA: herramienta retirada del sistema. REPARACIÓN: herramienta en mantenimiento. PAGO: registro de pago de deuda o reparación."
+                  position="bottom"
+                />
+              </span>
               <select
                 value={typeFilter}
                 onChange={(e) => {
@@ -247,13 +260,13 @@ const KardexPage = () => {
                 style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db' }}
               >
                 <option value="">Todos</option>
-                <option value="PRESTAMO">PRÉSTAMO</option>
-                <option value="DEVOLUCION">DEVOLUCIÓN</option>
-                <option value="REPARACION">REPARACIÓN</option>
-                <option value="BAJA">BAJA</option>
-                <option value="INGRESO">INGRESO</option>
-                <option value="PAGO_DEUDA">PAGO DEUDA</option>
-                <option value="PAGO_REPARACION">PAGO REPARACIÓN</option>
+                <option value="PRESTAMO">Prestamo</option>
+                <option value="DEVOLUCION">Devolución</option>
+                <option value="REPARACION">Reparación</option>
+                <option value="BAJA">Baja</option>
+                <option value="INGRESO">Ingreso</option>
+                <option value="PAGO_DEUDA">Pago de deuda</option>
+                <option value="PAGO_REPARACION">Pago de reparación</option>
               </select>
             </div>
 

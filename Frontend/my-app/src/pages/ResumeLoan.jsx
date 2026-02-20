@@ -14,6 +14,7 @@ const ResumeLoan = () => {
   const [alert, setAlert] = useState(null);
   const [dateError, setDateError] = useState('');
   const [total, setTotal] = useState(0);
+  const [countdown, setCountdown] = useState(null);
   
     const isDatesValid = () => {
         if (!initDate || !returnDate) return false;
@@ -29,6 +30,23 @@ const ResumeLoan = () => {
 
   // derived validation flag used to enable/disable the Confirm button
   const datesValid = isDatesValid();
+
+  // Countdown effect for redirect after order creation
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      navigate('/');
+      return;
+    }
+    const timer = setTimeout(() => {
+      const nextCount = countdown - 1;
+      setCountdown(nextCount);
+      if (nextCount > 0) {
+        setAlert({ severity: 'success', message: `Pedido creado y herramientas prestadas correctamente. Redirigiendo al inicio en ${nextCount}...` });
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [countdown, navigate]);
 
   useEffect(() => {
     try {
@@ -67,10 +85,19 @@ const ResumeLoan = () => {
 
   const confirmAndCreate = async () => {
     if (!resume || !resume.client || !resume.items || resume.items.length === 0) {
-      setAlert({ severity: 'error', message: 'No hay datos del pedido.' });
+      setAlert({ 
+        severity: 'error', 
+        message: 'Faltan datos del pedido. Verifica que hayas seleccionado un cliente y agregado herramientas. Regresa al paso anterior para completar la información.' 
+      });
       return;
     }
-    if (!initDate || !returnDate) { setAlert({ severity: 'error', message: 'Selecciona las fechas.'}); return; }
+    if (!initDate || !returnDate) { 
+      setAlert({ 
+        severity: 'error', 
+        message: 'Debes seleccionar ambas fechas: inicio y devolución. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.'
+      }); 
+      return; 
+    }
 
     // Validate dates: returnDate must be at least one day after initDate
     const dInit = new Date(initDate);
@@ -78,13 +105,19 @@ const ResumeLoan = () => {
     const diffMs = dReturn.getTime() - dInit.getTime();
     const minDiff = 24 * 60 * 60 * 1000; // 1 day
     if (diffMs < minDiff) {
-      setAlert({ severity: 'error', message: 'La fecha de devolución debe ser al menos 1 día después de la fecha inicial.'});
+      setAlert({ 
+        severity: 'error', 
+        message: 'La fecha de devolución debe ser al menos 1 día después de la fecha inicial. Ajusta las fechas e intenta nuevamente.'
+      });
       return;
     }
     
     // Final validation: ensure dates are valid before sending
     if (!isDatesValid()) {
-      setAlert({ severity: 'error', message: 'Fechas inválidas. La fecha inicial debe ser hoy y la devolución al menos 1 día después.'});
+      setAlert({ 
+        severity: 'error', 
+        message: 'Fechas inválidas. La fecha inicial debe ser hoy y la devolución al menos 1 día después. Verifica las fechas seleccionadas.'
+      });
       return;
     }
 
@@ -93,7 +126,7 @@ const ResumeLoan = () => {
       // Get employee ID
       const employeeResp = await api.get('/user/me');
       const employeeId = employeeResp.data?.id;
-      if (!employeeId) throw new Error('No se pudo obtener el id del empleado logueado');
+      if (!employeeId) throw new Error('No se pudo obtener tu identificación de empleado. Verifica que hayas iniciado sesión correctamente. Si el problema persiste, contacta al administrador.');
 
       // Extract tool IDs from resume items
       const toolIds = resume.items.map(it => Number(it.id));
@@ -110,7 +143,7 @@ const ResumeLoan = () => {
       const createdLoan = createResp.data;
 
       if (!createdLoan || !createdLoan.id) {
-        throw new Error('No se recibió el préstamo creado del servidor');
+        throw new Error('No se recibió confirmación del servidor. El préstamo pudo no haberse creado correctamente. Verifica en la lista de préstamos si se registró o intenta nuevamente.');
       }
 
       // Now mark all tools as 'PRESTADA' (given to client)
@@ -120,7 +153,7 @@ const ResumeLoan = () => {
       const loanXToolIds = loanXTools.map(lxt => lxt.id);
 
       if (loanXToolIds.length === 0) {
-        throw new Error('No se encontraron herramientas asociadas al préstamo');
+        throw new Error('El préstamo se creó pero no se encontraron herramientas asociadas. Verifica el préstamo en la lista de préstamos o contacta al administrador.');
       }
 
       // Call batch give endpoint to mark all as PRESTADA
@@ -134,15 +167,30 @@ const ResumeLoan = () => {
       sessionStorage.removeItem('order_init_date');
       sessionStorage.removeItem('order_return_date');
       
-      setAlert({ severity: 'success', message: 'Pedido creado y herramientas prestadas correctamente' });
-      
-      // Redirect to home after showing success message
-      setTimeout(() => { navigate('/'); }, 3000);
+      setAlert({ severity: 'success', message: 'Pedido creado y herramientas prestadas correctamente. Redirigiendo al inicio en 5...' });
+      setCountdown(5);
       
     } catch (e) {
       console.error('Error creating order', e?.response?.data || e.message || e);
       const backendMsg = e?.response?.data && (e.response.data.error || e.response.data.message || e.response.data);
-      setAlert({ severity: 'error', message: backendMsg || (e.message || 'Error al crear el pedido.') });
+      
+      // Enhanced error message with recovery suggestions
+      let errorMsg = backendMsg || e.message || 'Error al crear el pedido.';
+      
+      // Add recovery suggestions based on error type
+      if (e?.response?.status === 409) {
+        errorMsg += ' Una o más herramientas ya están prestadas. Verifica el inventario e intenta con otras herramientas.';
+      } else if (e?.response?.status === 400) {
+        errorMsg += ' Los datos enviados son inválidos. Verifica las fechas, el cliente seleccionado y las herramientas agregadas.';
+      } else if (e?.response?.status === 404) {
+        errorMsg += ' No se encontró el recurso solicitado. Verifica que el cliente y las herramientas todavía existan en el sistema.';
+      } else if (e?.response?.status === 500) {
+        errorMsg += ' Error interno del servidor. Por favor intenta nuevamente en unos momentos o contacta al administrador.';
+      } else if (!e?.response) {
+        errorMsg = 'No se pudo conectar con el servidor. Verifica tu conexión a internet e intenta nuevamente.';
+      }
+      
+      setAlert({ severity: 'error', message: errorMsg });
     } finally {
       setCreating(false);
     }
@@ -151,8 +199,8 @@ const ResumeLoan = () => {
   if (!resume) return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      {alert && <TransitionAlert alert={alert} onClose={() => setAlert(null)} />}
-      <main className="px-6" style={{ paddingTop: 30 }}>
+      {alert && <TransitionAlert alert={alert} onClose={() => setAlert(null)} autoHideMs={countdown !== null ? 0 : 4000} />}
+      <main className="px-6">
         <div className="max-w-4xl mx-auto">No hay datos del pedido. Vuelve y selecciona cliente/herramientas.</div>
       </main>
     </div>
@@ -161,8 +209,8 @@ const ResumeLoan = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      {alert && <TransitionAlert alert={alert} onClose={() => setAlert(null)} />}
-      <main className="px-6" style={{ paddingTop: 30 }}>
+      {alert && <TransitionAlert alert={alert} onClose={() => setAlert(null)} autoHideMs={countdown !== null ? 0 : 4000} />}
+      <main className="px-6">
         <div className="max-w-4xl mx-auto">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div>

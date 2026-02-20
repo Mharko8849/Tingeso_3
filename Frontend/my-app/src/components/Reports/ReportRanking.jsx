@@ -31,9 +31,19 @@ const ReportRanking = ({ rows = [], filename, dateFrom, dateTo, label = "Generar
             // Backend returns List<Map<String, Object>> where tool is an object
             dataToProcess = resp.data.map(item => {
                 const t = item.tool || {};
+                // Handle category which might be an object with a 'name' property or a string
+                let categoryName = '—';
+                if (t.category) {
+                    if (typeof t.category === 'object') {
+                        categoryName = t.category.name || t.category.categoryName || '—';
+                    } else {
+                        categoryName = String(t.category);
+                    }
+                }
+                
                 return {
                     toolName: t.toolName || t.name || '—',
-                    category: t.category || '—',
+                    category: categoryName,
                     count: item.totalLoans || 0,
                     price: t.priceRent || 0
                 };
@@ -46,16 +56,30 @@ const ReportRanking = ({ rows = [], filename, dateFrom, dateTo, label = "Generar
     }
 
     const headers = ['Herramienta', 'Categoría', 'Total Préstamos', 'Precio Renta'];
-    const mapped = dataToProcess.map(r => [
-      r.toolName || r.name || r.tool || '',
-      r.category || '',
-      r.count ?? r.times ?? r.totalLoans ?? '',
-      r.price ?? r.priceRent ?? ''
-    ]);
+    const mapped = dataToProcess.map(r => {
+      // Handle different structures for category
+      let categoryValue = '';
+      if (r.category) {
+        if (typeof r.category === 'object') {
+          categoryValue = r.category.name || r.category.categoryName || '';
+        } else {
+          categoryValue = String(r.category);
+        }
+      }
+      
+      return [
+        r.toolName || r.name || r.tool || '',
+        categoryValue,
+        r.count ?? r.times ?? r.totalLoans ?? '',
+        r.price ?? r.priceRent ?? ''
+      ];
+    });
     
     const csv = buildCsv(headers, mapped);
     const name = filename || `ranking_${dateFrom || 'inicio'}_${dateTo || 'fin'}.csv`;
     downloadBlob(csv, name);
+    
+    show({ severity: 'success', message: 'Reporte de ranking generado correctamente' });
   };
 
   return (

@@ -18,11 +18,11 @@ public class InventoryEntity {
     @Column(unique=true, nullable=false)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "idTool", referencedColumnName = "id",  nullable = false)
     private ToolEntity idTool;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tool_state_id")
     private ToolStateEntity toolState;
 

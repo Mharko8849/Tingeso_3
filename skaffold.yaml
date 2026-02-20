@@ -6,6 +6,10 @@ metadata:
 build:
   local:
     push: false
+    useBuildkit: true
+  tagPolicy:
+    gitCommit:
+      ignoreChanges: true
   artifacts:
     - image: mharko/toolrent-service
       context: Backend/demo

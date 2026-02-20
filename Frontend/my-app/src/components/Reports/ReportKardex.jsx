@@ -1,5 +1,6 @@
 import React from 'react';
 import { buildCsv, downloadBlob } from '../Common/csvUtils';
+import { useAlert } from '../Alerts/useAlert';
 
 /**
  * Component that generates a CSV report for the Kardex (inventory movements).
@@ -9,6 +10,7 @@ import { buildCsv, downloadBlob } from '../Common/csvUtils';
  * Output: JSX Element (button)
  */
 const ReportKardex = ({ rows = [], filename }) => {
+  const { show } = useAlert();
   /**
    * Generates the CSV content and triggers the download.
    */
@@ -44,18 +46,29 @@ const ReportKardex = ({ rows = [], filename }) => {
       return String(t);
     };
 
-    const mapped = rows.map(m => [
-      formatDate(m.date),
-      renderUser(m.idEmployee ?? m.employee ?? m.employeeId),
-      renderTool(m.tool ?? m.idTool),
-      renderUser(m.user ?? m.idUser),
-      String(m.type || '').toUpperCase(),
-      m.qty ?? m.quantity ?? m.cantidad ?? m.cant ?? '—',
-      m.cost ?? m.amount ?? m.balance ?? m.stock ?? '—'
-    ]);
+    const mapped = rows.map(m => {
+      // Handle different field names for employee
+      const employee = m.idEmployee || m.employee || m.employeeId;
+      // Handle different field names for tool
+      const tool = m.tool || m.idTool;
+      // Handle different field names for user
+      const user = m.user || m.idUser || m.client;
+      
+      return [
+        formatDate(m.date),
+        renderUser(employee),
+        renderTool(tool),
+        renderUser(user),
+        String(m.type || '').toUpperCase(),
+        m.qty ?? m.quantity ?? m.cantidad ?? m.cant ?? '—',
+        m.cost ?? m.amount ?? m.balance ?? m.stock ?? '—'
+      ];
+    });
+    
     const csv = buildCsv(headers, mapped);
     const name = filename || `kardex_${new Date().toISOString().slice(0,10)}.csv`;
     downloadBlob(csv, name);
+    show({ severity: 'success', message: 'Reporte de kardex generado correctamente' });
   };
 
   return (

@@ -57,18 +57,20 @@ const ToolDetail = (props) => {
       }
 
       // Compute stock by state from inventory entries of this tool
-      const summary = { DISPONIBLE: 0, PRESTADA: 0, EN_REPARACION: 0, DADA_DE_BAJA: 0 };
+      const summary = {};
       for (const e of arr) {
-        const st = String(e.toolState || '').toUpperCase();
+        const stateName = e.toolState?.state || '';
         const qty = Number(e.stockTool) || 0;
-        if (summary.hasOwnProperty(st)) summary[st] += qty;
+        if (stateName) {
+          summary[stateName] = (summary[stateName] || 0) + qty;
+        }
       }
 
       const mapped = {
         id: t.id,
         name: t.toolName ?? t.name ?? '',
         price: typeof t.priceRent === 'number' ? t.priceRent : (typeof t.price === 'number' ? t.price : null),
-        category: t.category ?? '',
+        category: (typeof t.category === 'string' ? t.category : t.category?.name) || '',
         description: '',
         specs: [],
         image: t.imageUrl ? `/images/${t.imageUrl}` : '',
@@ -117,6 +119,16 @@ const ToolDetail = (props) => {
     return state?.color || '#6b7280';
   };
 
+  // Format state name: first letter uppercase, rest lowercase, handle spaces
+  const formatStateName = (stateName) => {
+    if (!stateName) return '';
+    return stateName
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const handleToolUpdated = (updated) => {
     if (!updated) {
       fetchTool();
@@ -150,7 +162,7 @@ const ToolDetail = (props) => {
     <div className="td-page bg-gray-50 min-h-screen">
       <NavBar />
 
-      <main className="td-main px-6 pb-12" style={{ paddingTop: 30 }}>
+      <main className="td-main px-6 pb-12">
         <div className="td-container flex items-center justify-center w-full py-8 min-h-[calc(100vh-70px)]">
           {loading && <p>Cargando herramienta...</p>}
           {!loading && error && <p style={{ color: 'red' }}>{error}</p>}
@@ -210,79 +222,33 @@ const ToolDetail = (props) => {
                 <div className="td-stock">
                   <h4 className="mt-3 mb-1 text-lg font-semibold">Stock</h4>
                   <div className="td-stock-list">
-                    <div className="td-stock-row">
-                      <span 
-                        style={{ 
-                          display: 'inline-block',
-                          width: '16px', 
-                          height: '16px', 
-                          borderRadius: '50%', 
-                          backgroundColor: getStateColor('DISPONIBLE'),
-                          boxShadow: `0 0 6px ${getStateColor('DISPONIBLE')}80`,
-                          verticalAlign: 'middle'
-                        }}
-                      />
-                      <span className="ml-2">Disponible:</span>
-                      <span className="ml-2 font-semibold">
-                        {(stockSummary.DISPONIBLE || 0).toLocaleString()}
-                      </span>
-                    </div>
+                    {toolStates.map((state) => {
+                      const stateName = state.state;
+                      const isDisponible = stateName === 'DISPONIBLE';
+                      const showRow = isDisponible || isInternalUser;
+                      
+                      if (!showRow) return null;
 
-                    {isInternalUser && (
-                      <>
-                        <div className="td-stock-row">
+                      return (
+                        <div className="td-stock-row" key={stateName}>
                           <span 
                             style={{ 
                               display: 'inline-block',
                               width: '16px', 
                               height: '16px', 
                               borderRadius: '50%', 
-                              backgroundColor: getStateColor('PRESTADA'),
-                              boxShadow: `0 0 6px ${getStateColor('PRESTADA')}80`,
+                              backgroundColor: state.color || '#6b7280',
+                              boxShadow: `0 0 6px ${state.color || '#6b7280'}80`,
                               verticalAlign: 'middle'
                             }}
                           />
-                          <span className="ml-2">Prestada:</span>
+                          <span className="ml-2">{formatStateName(stateName)}:</span>
                           <span className="ml-2 font-semibold">
-                            {(stockSummary.PRESTADA || 0).toLocaleString()}
+                            {(stockSummary[stateName] || 0).toLocaleString()}
                           </span>
                         </div>
-                        <div className="td-stock-row">
-                          <span 
-                            style={{ 
-                              display: 'inline-block',
-                              width: '16px', 
-                              height: '16px', 
-                              borderRadius: '50%', 
-                              backgroundColor: getStateColor('EN_REPARACION'),
-                              boxShadow: `0 0 6px ${getStateColor('EN_REPARACION')}80`,
-                              verticalAlign: 'middle'
-                            }}
-                          />
-                          <span className="ml-2">Reparación:</span>
-                          <span className="ml-2 font-semibold">
-                            {(stockSummary.EN_REPARACION || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="td-stock-row">
-                          <span 
-                            style={{ 
-                              display: 'inline-block',
-                              width: '16px', 
-                              height: '16px', 
-                              borderRadius: '50%', 
-                              backgroundColor: getStateColor('DADA_DE_BAJA'),
-                              boxShadow: `0 0 6px ${getStateColor('DADA_DE_BAJA')}80`,
-                              verticalAlign: 'middle'
-                            }}
-                          />
-                          <span className="ml-2">Dada de Baja:</span>
-                          <span className="ml-2 font-semibold">
-                            {(stockSummary.DADA_DE_BAJA || 0).toLocaleString()}
-                          </span>
-                        </div>
-                      </>
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
 

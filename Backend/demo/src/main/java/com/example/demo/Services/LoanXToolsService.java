@@ -380,22 +380,16 @@ public class LoanXToolsService {
 
             client.setLoans(client.getLoans() - 1);
 
+            // Un pedido solo está FINALIZADO cuando no hay multas pendientes NI reparaciones pendientes
             if (totalFine == 0 && !anyNeedRepair) {
                 loan.setStatus("FINALIZADO");
                 if(!userHaveDebt(client)){
                     client.setStateClient("ACTIVO");
                 }
             }
-            else if (totalFine == 0 && anyNeedRepair) {
+            else {
+                // Si hay multa O necesita reparación, el pedido está PENDIENTE hasta que se pague/repare
                 loan.setStatus("PENDIENTE");
-                client.setStateClient("RESTRINGIDO");
-            }
-            else if (totalFine != 0 && anyNeedRepair) {
-                loan.setStatus("PENDIENTE");
-                client.setStateClient("RESTRINGIDO");
-            }
-            else if (totalFine != 0 && !anyNeedRepair) {
-                loan.setStatus("FINALIZADO");
                 client.setStateClient("RESTRINGIDO");
             }
 
@@ -526,12 +520,16 @@ public class LoanXToolsService {
         }
 
         if (hadRepairPending) {
+            // Verificar si podemos liberar al usuario (solo si no tiene más deudas en ningún préstamo)
             if (!userHaveDebt(user)) {
                 user.setStateClient("ACTIVO");
             }
             userService.saveUser(user);
 
-            loan.setStatus("FINALIZADO");
+            // Solo marcar el préstamo como FINALIZADO si no hay multas pendientes
+            if (getTotalFine(loan) == 0) {
+                loan.setStatus("FINALIZADO");
+            }
             loanService.saveLoan(loan);
 
             return true;

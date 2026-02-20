@@ -7,7 +7,7 @@ const backendPort = import.meta.env.VITE_BACKEND_PORT;
 
 const baseURL = backendServer && backendPort 
   ? `http://${backendServer}:${backendPort}` 
-  : 'https://toolrent.192.168.39.45.nip.io';
+  : 'https://toolrent.192.168.39.122.nip.io';
 
 const api = axios.create({
   baseURL: baseURL,

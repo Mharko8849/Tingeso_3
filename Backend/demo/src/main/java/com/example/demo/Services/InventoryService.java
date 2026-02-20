@@ -248,4 +248,15 @@ public class InventoryService {
 
         return inventoryList;
     }
+
+    // Check if tool has available stock for loan
+    public boolean checkStockAvailable(Long idTool) {
+        try {
+            ToolEntity tool = toolService.getToolById(idTool);
+            InventoryEntity availableInventory = inventoryRepository.findByIdToolAndToolState_State(tool, "DISPONIBLE");
+            return availableInventory != null && availableInventory.getStockTool() > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

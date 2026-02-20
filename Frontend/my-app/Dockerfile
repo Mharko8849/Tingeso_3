@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package*.json ./
 # Update npm to latest version to avoid warnings
 RUN npm install -g npm@11.10.0
+# Clean node_modules to ensure fresh install
+RUN rm -rf node_modules node_modules.nosync
 RUN npm install
 COPY . .
 RUN npm run build

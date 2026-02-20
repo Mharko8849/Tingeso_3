@@ -14,25 +14,34 @@ const ToolDropdown = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch categories from backend when component mounts
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get('/categories/');
-        // Extract category names from the response
-        const categoryNames = response.data.map(cat => cat.name);
-        setCategories(categoryNames);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-        // Keep empty array on error
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch categories from backend
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/categories/');
+      // Extract category names from the response
+      const categoryNames = response.data.map(cat => cat.name);
+      setCategories(categoryNames);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      // Keep empty array on error
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Fetch categories when component mounts
+  useEffect(() => {
     fetchCategories();
   }, []);
+
+  // Refetch categories when dropdown opens
+  useEffect(() => {
+    if (open) {
+      fetchCategories();
+    }
+  }, [open]);
 
   const toggleMenu = () => setOpen(!open);
   const closeMenu = () => setOpen(false);

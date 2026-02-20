@@ -7,6 +7,7 @@ import ToolDropdown from "../Tools/ToolDropdown";
 import ProfileMenu from "./ProfileMenu";
 import Solicitudes from "../Loans/Solicitudes";
 import AdminDropdown from "./AdminDropdown";
+import KeyboardShortcutsHelp from "../Common/KeyboardShortcutsHelp";
 import { cancelOrderDraft } from "../../services/orderDraft";
 import { useKeycloak } from "@react-keycloak/web";
 import { getUser } from "../../services/auth";
@@ -55,6 +56,7 @@ const NavBar = () => {
       </div>
 
       <div className="navbar-right">
+        <KeyboardShortcutsHelp />
         <ProfileMenu />
       </div>
     </nav>

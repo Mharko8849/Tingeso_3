@@ -23,20 +23,53 @@ public class AuthService {
 
     /**
      * Registro estándar:
-     * Crea usuario en Keycloak con el rol indicado,
-     * luego lo guarda en la DB local.
-     * Si falla en la DB → rollback en Keycloak.
+     * 1. Valida datos del usuario
+     * 2. Verifica que NO exista en DB local
+     * 3. Verifica que NO exista en Keycloak (prevención)
+     * 4. Crea usuario en Keycloak con el rol indicado
+     * 5. Guarda en la DB local
+     * 6. Si falla DB → ROLLBACK en Keycloak (elimina usuario)
      */
     public UserEntity registerWithRole(UserEntity user, String rol) {
         validateUser(user);
+        
+        // ========== VALIDACIÓN PREVENTIVA: Verificar existencia en DB local ==========
+        UserEntity existingByUsername = userService.getUserByUsername(user.getUsername());
+        if (existingByUsername != null) {
+            logger.warn("❌ Intento de registro duplicado: username '{}' ya existe en DB local", user.getUsername());
+            String msg = "El usuario ya está registrado en el sistema. ";
+            if (user.getUsername().contains("-")) {
+                msg += "El RUT " + user.getUsername() + " ya tiene una cuenta.";
+            } else {
+                msg += "El nombre de usuario '" + user.getUsername() + "' ya está en uso.";
+            }
+            throw new RuntimeException(msg);
+        }
+        
+        UserEntity existingByEmail = userService.getUserByEmail(user.getEmail());
+        if (existingByEmail != null) {
+            logger.warn("❌ Intento de registro duplicado: email '{}' ya existe en DB local", user.getEmail());
+            throw new RuntimeException("El correo electrónico '" + user.getEmail() + "' ya está registrado.");
+        }
+        
+        // ========== VALIDACIÓN PREVENTIVA: Verificar existencia en Keycloak ==========
+        boolean existsInKeycloak = keycloakAdminService.checkUserExistsByUsername(user.getUsername());
+        if (existsInKeycloak) {
+            logger.error("🚨 INCONSISTENCIA DETECTADA: Usuario '{}' existe en Keycloak pero NO en DB local. Estado huérfano.", user.getUsername());
+            String msg = "El usuario existe en el sistema de autenticación pero no en la base de datos. ";
+            msg += "Contacta al administrador para resolver esta inconsistencia.";
+            throw new RuntimeException(msg);
+        }
+        
+        // ========== CREAR EN KEYCLOAK ==========
         String kcId;
-
         try {
-            // Ahora usa createKeycloakUser(user, rol)
+            logger.info("➡️ Creando usuario '{}' en Keycloak con rol '{}'", user.getUsername(), rol);
             kcId = keycloakAdminService.createKeycloakUser(user, rol);
+            logger.info("✅ Usuario '{}' creado en Keycloak con ID: {}", user.getUsername(), kcId);
         } catch (Exception ex) {
-            logger.error("Keycloak: error creando usuario: {}", ex.getMessage(), ex);
-            throw new RuntimeException("Error creando usuario en sistema de autenticación.");
+            logger.error("❌ Keycloak: error creando usuario '{}': {}", user.getUsername(), ex.getMessage());
+            throw new RuntimeException("Error creando usuario en sistema de autenticación: " + ex.getMessage());
         }
 
         user.setKeycloakId(kcId);
@@ -44,23 +77,36 @@ public class AuthService {
 
         // Ensure new users have default active state in local DB
         if (rol != null) {
-            // Use the existing field `stateClient` for all roles
             user.setStateClient("ACTIVO");
         }
 
+        // ========== GUARDAR EN DB LOCAL (CON ROLLBACK SI FALLA) ==========
         try {
-            return userService.saveUser(user);
+            logger.info("➡️ Guardando usuario '{}' en DB local", user.getUsername());
+            UserEntity savedUser = userService.saveUser(user);
+            logger.info("✅ Usuario '{}' registrado exitosamente en DB local", user.getUsername());
+            return savedUser;
+            
         } catch (Exception ex) {
+            logger.error("❌ DB ERROR: Falló guardado en DB local para usuario '{}': {}", user.getUsername(), ex.getMessage());
+            logger.warn("🔄 INICIANDO ROLLBACK: Eliminando usuario {} de Keycloak", kcId);
 
-            logger.error("DB error: intentando borrar usuario Keycloak {}: {}", kcId, ex.getMessage());
-
+            // ========== ROLLBACK: ELIMINAR DE KEYCLOAK ==========
             try {
                 keycloakAdminService.deleteKeycloakUser(kcId);
+                logger.info("✅ Rollback completado: Usuario eliminado de Keycloak");
             } catch (Exception delEx) {
-                logger.error("Rollback Keycloak falló: {}", delEx.getMessage());
+                logger.error("❌❌❌ ROLLBACK FALLÓ: Usuario '{}' (ID: {}) queda HUÉRFANO en Keycloak", user.getUsername(), kcId);
+                logger.error("❌ Error del rollback: {}", delEx.getMessage());
+                // Este es un caso CRÍTICO que requiere intervención manual
+                throw new RuntimeException(
+                    "ERROR CRÍTICO: Usuario creado en Keycloak pero no en DB. " +
+                    "Contacta al administrador (Usuario huérfano: " + kcId + ")"
+                );
             }
 
-            throw new RuntimeException(ex.getMessage());
+            // Rollback exitoso, propagar el error original
+            throw new RuntimeException("No se pudo guardar el usuario en la base de datos: " + ex.getMessage());
         }
     }
 

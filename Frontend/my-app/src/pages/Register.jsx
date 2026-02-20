@@ -41,7 +41,7 @@ const Register = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      <main style={{ paddingTop: 60 }} className="px-6">
+      <main className="px-6">
         <div style={{ maxWidth: 900, margin: '0 auto 12px' }}>
           <TransitionAlert alert={alert} onClose={() => setAlert(null)} autoHideMs={4000} />
         </div>
