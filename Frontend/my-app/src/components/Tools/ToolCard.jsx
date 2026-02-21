@@ -24,18 +24,18 @@ const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = nul
     >
       <div
         className="tool-card card"
-        style={{ 
-          borderRadius: 8, 
-          overflow: 'hidden', 
-          boxShadow: '0 6px 18px rgba(15,23,42,0.04)', 
-          background: '#fff', 
-          position: 'relative', 
-          display: 'flex', 
+        style={{
+          borderRadius: 8,
+          overflow: 'hidden',
+          boxShadow: '0 6px 18px rgba(15,23,42,0.04)',
+          background: '#fff',
+          position: 'relative',
+          display: 'flex',
           flexDirection: isVertical ? 'column' : 'row',
-          gap: 0, 
-          alignItems: 'stretch', 
+          gap: 0,
+          alignItems: 'stretch',
           height: '100%',
-          ...style 
+          ...style
         }}
       >
         {showAdd && (
@@ -50,8 +50,8 @@ const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = nul
             +
           </button>
         )}
-      
-        <div style={isVertical ? { width: '100%', height: '200px', background: '#f6f7fb', position: 'relative' } : { flex: '0 0 160px', background: '#f6f7fb', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+
+        <div style={isVertical ? { width: '100%', height: '180px', background: '#f6f7fb', position: 'relative' } : { flex: '0 0 160px', background: '#f6f7fb', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
           {/* Visits Badge */}
           {tool.visits !== undefined && (
             <div style={{
@@ -82,7 +82,7 @@ const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = nul
           />
         </div>
 
-        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: '1 1 auto', minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ padding: 8, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: '1 1 auto', minWidth: 0, overflow: 'hidden' }}>
           <div>
             <h6 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#0f172a', fontWeight: 600, wordWrap: 'break-word', overflowWrap: 'break-word', lineHeight: '1.3' }}>{tool.name}</h6>
             <p style={{ margin: 0, color: '#334155', fontWeight: 600, fontSize: '0.9rem' }}>{priceLabel}</p>

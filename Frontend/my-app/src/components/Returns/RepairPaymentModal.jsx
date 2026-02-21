@@ -41,7 +41,7 @@ const RepairPaymentModal = ({ open, onClose, loan, initialItems, onPaid }) => {
           const status = err?.response?.status;
           const msg = status === 404 ? 'Endpoint de reparaciones no encontrado (404). Revisa la ruta en el backend.' : 'No se pudieron cargar las reparaciones';
           alert?.show?.({ severity: 'error', message: msg, autoHideMs: 7000 });
-        } catch (e) {}
+        } catch (e) { }
         onClose && onClose();
       } finally {
         if (mounted) setLoading(false);
@@ -74,7 +74,7 @@ const RepairPaymentModal = ({ open, onClose, loan, initialItems, onPaid }) => {
       if (!adminUser) throw new Error('No pude obtener tu id de usuario (employee)');
       const payload = { adminUser: adminUser, cost: Number(totalCost) };
       await api.post(`/api/loantool/repair/${loan.id}/pay`, payload);
-      try { alert?.show?.({ severity: 'success', message: 'Reparaciones pagadas correctamente.', autoHideMs: 4000 }); } catch (e) {}
+      try { alert?.show?.({ severity: 'success', message: 'Reparaciones pagadas correctamente.', autoHideMs: 4000 }); } catch (e) { }
       onPaid && onPaid();
       onClose && onClose();
     } catch (err) {
@@ -83,7 +83,7 @@ const RepairPaymentModal = ({ open, onClose, loan, initialItems, onPaid }) => {
       try {
         if (resp) { alert?.show?.({ severity: 'error', message: typeof resp === 'string' ? resp : JSON.stringify(resp), autoHideMs: 8000 }); }
         else { alert?.show?.({ severity: 'error', message: err?.message || 'Error desconocido', autoHideMs: 8000 }); }
-      } catch (e) {}
+      } catch (e) { }
     } finally { setSubmitting(false); }
   };
 
@@ -118,23 +118,27 @@ const RepairPaymentModal = ({ open, onClose, loan, initialItems, onPaid }) => {
                           )}
                         </div>
                         <div>
-                          <div style={{paddingLeft: 8, fontWeight: 700 }}>{displayName}</div>
+                          <div style={{ paddingLeft: 8, fontWeight: 700 }}>{displayName}</div>
                           {it.notes && <div style={{ fontSize: 13, color: '#4b5563' }}>{it.notes}</div>}
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, minWidth: 210 }}>
-                        <label style={{padding: 8, justifyContent: 'center', fontSize: 16, color: '#000000ff' }}>Monto reparación</label>
+                        <label style={{ padding: 8, justifyContent: 'center', fontSize: 16, color: '#000000ff' }}>Monto reparación</label>
                         <input
                           className="repair-amount-input"
-                          type="number"
-                          min={1}
-                          step={1}
+                          type="text"
+                          inputMode="numeric"
                           value={amounts[it.id] ?? ''}
                           placeholder="Ingrese monto"
                           onChange={e => {
                             const raw = e.target.value;
-                            const num = raw === '' ? '' : Number(raw);
-                            setAmounts(prev => ({ ...prev, [it.id]: num }));
+                            if (raw === '') {
+                              setAmounts(prev => ({ ...prev, [it.id]: '' }));
+                            } else if (/^\d+$/.test(raw)) {
+                              setAmounts(prev => ({ ...prev, [it.id]: Number(raw) }));
+                            } else {
+                              try { alert?.show?.({ severity: 'warning', message: 'Debe ingresar solo números enteros positivos', autoHideMs: 3500 }); } catch (e) { }
+                            }
                           }}
                           onBlur={e => {
                             const num = Number(e.target.value || 0);

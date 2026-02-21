@@ -5,8 +5,8 @@ import { showGlobalAlert } from '../components/Alerts/AlertContext';
 const backendServer = import.meta.env.VITE_BACKEND_SERVER;
 const backendPort = import.meta.env.VITE_BACKEND_PORT;
 
-const baseURL = backendServer && backendPort 
-  ? `http://${backendServer}:${backendPort}` 
+const baseURL = backendServer && backendPort
+  ? `http://${backendServer}:${backendPort}`
   : 'https://toolrent.54.207.116.60.nip.io';
 
 const api = axios.create({
@@ -22,7 +22,7 @@ api.interceptors.request.use(
     // — if we attach an expired token the backend will immediately return 401.
     const url = config.url || '';
     const isAuthEndpoint = url.includes('/api/auth/login') || url.includes('/api/auth/register');
-    const isPublicEndpoint = url.includes('/api/kardex/ranking') || url.includes('/images/');
+    const isPublicEndpoint = url.includes('/api/kardex/ranking') || url.includes('/images/') || url.includes('/api/categories/') || url.includes('/api/tool-states/') || url.includes('/api/inventory/') || url.includes('/api/tool/');
 
     if (isAuthEndpoint || isPublicEndpoint) {
       return config;
@@ -156,11 +156,11 @@ api.interceptors.response.use(
 
     } catch (refreshError) {
       console.warn("Token refresh failed", refreshError);
-      
+
       // Clear all auth data
       processQueue(refreshError, null);
       isRefreshing = false;
-      
+
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('app_token');

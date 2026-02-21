@@ -1,12 +1,26 @@
 import React from 'react';
 import Badge from '../Badges/Badge';
+import { useAlert } from '../Alerts/AlertContext';
 
-const OrderItemsList = ({ items = [], onChangeQty = () => {}, onRemove = () => {}, onCreate = () => {}, onCancel = () => {}, creating = false }) => {
+const OrderItemsList = ({ items = [], onChangeQty = () => { }, onRemove = () => { }, onCreate = () => { }, onCancel = () => { }, creating = false }) => {
   const totalItems = items.reduce((s, i) => s + (i.qty || 0), 0);
+  const { show } = useAlert();
+
+  const handleQtyChange = (id, rawValue) => {
+    if (rawValue === '') {
+      onChangeQty(id, 1);
+      return;
+    }
+    if (/^\d+$/.test(rawValue)) {
+      onChangeQty(id, Number(rawValue));
+    } else {
+      show({ severity: 'warning', message: 'Debe ingresar solo números enteros positivos', autoHideMs: 3500 });
+    }
+  };
 
   return (
     <div>
-        <h4 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <h4 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Badge variant={totalItems > 0 ? 'green' : undefined} ariaLabel={`Pedido tiene ${totalItems} items`} />
         Items del pedido
       </h4>
@@ -15,7 +29,7 @@ const OrderItemsList = ({ items = [], onChangeQty = () => {}, onRemove = () => {
         <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, borderBottom: '1px solid #eee' }}>
           <div style={{ flex: 1 }}>{it.name}</div>
           <div>
-            <input type="number" value={it.qty} min={1} onChange={(e) => onChangeQty(it.id, Number(e.target.value))} style={{ width: 72, padding: 6 }} />
+            <input type="text" inputMode="numeric" value={it.qty} onChange={(e) => handleQtyChange(it.id, e.target.value)} style={{ width: 72, padding: 6 }} />
           </div>
           <div><button className="link" onClick={() => onRemove(it.id)}>Quitar</button></div>
         </div>
@@ -29,7 +43,7 @@ const OrderItemsList = ({ items = [], onChangeQty = () => {}, onRemove = () => {
         </div>
       </div>
     </div>
-  ); 
+  );
 };
 
 export default OrderItemsList;

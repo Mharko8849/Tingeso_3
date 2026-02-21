@@ -11,6 +11,7 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
   const { show } = useAlert();
+  const alert = useAlert();
 
   useEffect(() => {
     if (open) {
@@ -83,15 +84,11 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
     return null;
   };
 
-  const handleNumericChange = (fieldName, rawValue) => {
-    if (rawValue === '') {
-      setForm(s => ({ ...s, [fieldName]: '' }));
-      return;
-    }
-    if (/^\d+$/.test(rawValue)) {
-      setForm(s => ({ ...s, [fieldName]: rawValue }));
+  const handleNumericInput = (field, value) => {
+    if (value === '' || /^\d+$/.test(value)) {
+      setForm((s) => ({ ...s, [field]: value }));
     } else {
-      show({ severity: 'warning', message: 'Ingrese valores válidos: números enteros mayores o iguales a 0.', autoHideMs: 3500 });
+      alert.show({ severity: 'warning', message: 'Debe ingresar solo números enteros positivos', autoHideMs: 3500 });
     }
   };
 
@@ -211,9 +208,8 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
             <input
               type="text"
               inputMode="numeric"
-              placeholder="0"
               value={form.repoCost}
-              onChange={(e) => handleNumericChange('repoCost', e.target.value)}
+              onChange={(e) => handleNumericInput('repoCost', e.target.value)}
             />
           </div>
 
@@ -222,9 +218,8 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
             <input
               type="text"
               inputMode="numeric"
-              placeholder="0"
               value={form.priceRent}
-              onChange={(e) => handleNumericChange('priceRent', e.target.value)}
+              onChange={(e) => handleNumericInput('priceRent', e.target.value)}
             />
           </div>
 
@@ -233,9 +228,8 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
             <input
               type="text"
               inputMode="numeric"
-              placeholder="0"
               value={form.priceFineAtDate}
-              onChange={(e) => handleNumericChange('priceFineAtDate', e.target.value)}
+              onChange={(e) => handleNumericInput('priceFineAtDate', e.target.value)}
             />
           </div>
 

@@ -9,25 +9,25 @@ import { useNavigate } from "react-router-dom";
 const getImageUrl = (imagePath) => {
   if (!imagePath) return "/NoImage.png"; // Fallback image
   if (imagePath.startsWith("http")) return imagePath;
-  return `/images/${imagePath}`; 
+  return `/images/${imagePath}`;
 };
 
 const FALLBACK_CATEGORIES = [
-  { 
-    title: "Herramientas Eléctricas", 
-    image: 'Taladro.png', 
+  {
+    title: "Herramientas Eléctricas",
+    image: 'Taladro.png',
   },
-  { 
-    title: "Generadores", 
-    image: 'Generador.png', 
+  {
+    title: "Generadores",
+    image: 'Generador.png',
   },
-  { 
-    title: "Construcción", 
-    image: 'Pala.png', 
+  {
+    title: "Construcción",
+    image: 'Pala.png',
   },
-  { 
-    title: "Seguridad", 
-    image: 'SetCascoBotasGuante.png', 
+  {
+    title: "Seguridad",
+    image: 'SetCascoBotasGuante.png',
   },
 ];
 
@@ -65,7 +65,7 @@ const Home = () => {
       if (!t.category) return null;
       return typeof t.category === 'string' ? t.category : t.category.name;
     }).filter(Boolean))];
-    
+
     // 2. Build category objects from ranking data (using the first tool's image)
     let finalCats = rankedCategoryNames.map(catName => {
       const tool = rankingTools.find(t => {
@@ -115,7 +115,7 @@ const Home = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
-      
+
       {/* Header block: centered welcome */}
       <div style={{ paddingTop: '100px', paddingBottom: '24px' }} className="px-6 py-6">
         <div className="max-w-6xl mx-auto">
@@ -128,15 +128,15 @@ const Home = () => {
 
       {/* Most Popular (First Carousel) */}
       <section style={{ width: '100%', padding: 0 }}>
-        <ToolCarousel 
-          tools={rankingTools} 
-          title="Lo más popular" 
+        <ToolCarousel
+          tools={rankingTools}
+          title="Lo más popular"
           onViewMore={handleViewMorePopular}
         />
       </section>
 
       {/* Categories centered after first carousel */}
-      <div style={{ paddingTop: '50px'}} className="px-6 py-6">
+      <div style={{ paddingTop: '50px' }} className="px-6 py-6">
         <div className="max-w-6xl mx-auto">
           <CategoriesGrid
             categories={displayCategories}

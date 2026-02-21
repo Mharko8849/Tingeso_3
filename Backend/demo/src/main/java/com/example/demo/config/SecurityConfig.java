@@ -52,6 +52,7 @@ public class SecurityConfig {
             .requestMatchers("/kardex/ranking").permitAll()
             // categorias visibles para cualquiera
             .requestMatchers("/categories/**").permitAll()
+            .requestMatchers("/api/categories/**").permitAll()
             // tool states visible para cualquiera (for inventory status display)
             .requestMatchers("/tool-states/**").permitAll()
             .requestMatchers("/api/tool-states/**").permitAll()

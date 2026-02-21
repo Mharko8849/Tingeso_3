@@ -13,7 +13,7 @@ const InventoryPage = ({ category = null }) => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const searchQuery = queryParams.get('search');
-  
+
   // default maxPrice aligns with FiltersSidebar BOUND_MAX
   const [filters, setFilters] = useState(() => {
     const initial = location.state?.initialFilters || {};
@@ -36,7 +36,7 @@ const InventoryPage = ({ category = null }) => {
   // determine roles to show add button only to admins
   const { keycloak, initialized } = useKeycloak();
   const user = getUser();
-  
+
   let rolesRaw = [];
   if (initialized && keycloak.authenticated && keycloak.tokenParsed && keycloak.tokenParsed.realm_access) {
     rolesRaw = keycloak.tokenParsed.realm_access.roles || [];
@@ -75,9 +75,36 @@ const InventoryPage = ({ category = null }) => {
       if (!Array.isArray(inv) || inv.length === 0) {
         console.warn('[InventoryPage] Inventory filter returned no results, trying /tool/ endpoint');
         const toolsResp = await api.get('/api/tool/');
-        const tools = toolsResp.data || [];
+        let tools = toolsResp.data || [];
         console.debug('[InventoryPage] /tool/ response:', tools);
-        
+
+        // Apply filters client-side since we're bypassing the inventory filter
+        const filterCategory = appliedFilters?.category || (category ? category : '');
+        if (filterCategory) {
+          tools = tools.filter(t => {
+            const catName = typeof t.category === 'string' ? t.category : t.category?.name;
+            return catName && catName.toLowerCase() === filterCategory.toLowerCase();
+          });
+        }
+        if (appliedFilters?.search) {
+          const s = appliedFilters.search.toLowerCase();
+          tools = tools.filter(t => (t.toolName || t.name || '').toLowerCase().includes(s));
+        }
+        if (appliedFilters?.minPrice) {
+          tools = tools.filter(t => (t.priceRent || t.price || 0) >= appliedFilters.minPrice);
+        }
+        if (appliedFilters?.maxPrice && appliedFilters.maxPrice < 500000) {
+          tools = tools.filter(t => (t.priceRent || t.price || 0) <= appliedFilters.maxPrice);
+        }
+        // Apply sorting
+        if (appliedFilters?.asc) {
+          tools.sort((a, b) => (a.priceRent || a.price || 0) - (b.priceRent || b.price || 0));
+        } else if (appliedFilters?.desc) {
+          tools.sort((a, b) => (b.priceRent || b.price || 0) - (a.priceRent || a.price || 0));
+        } else if (appliedFilters?.recent) {
+          tools.sort((a, b) => (b.id || 0) - (a.id || 0));
+        }
+
         // Convert tools to inventory format
         inv = tools.map(tool => ({
           idTool: tool,
@@ -124,7 +151,7 @@ const InventoryPage = ({ category = null }) => {
           // Fetch ranking data to know which tools are popular
           const rankingResp = await api.get("/api/kardex/ranking");
           const rankingList = rankingResp.data; // List of { tool: {...}, totalLoans: X }
-          
+
           // Create a map of toolId -> totalLoans for quick lookup
           const popularityMap = new Map();
           rankingList.forEach(item => {
@@ -201,15 +228,15 @@ const InventoryPage = ({ category = null }) => {
           )}
         </div>
       </main>
-      <ModalAddNewTool 
-        open={showAddNewTool} 
-        onClose={() => setShowAddNewTool(false)} 
+      <ModalAddNewTool
+        open={showAddNewTool}
+        onClose={() => setShowAddNewTool(false)}
         onAdded={() => {
           // Wait a bit for backend to process, then refresh
           setTimeout(() => {
             fetchProducts(filters);
           }, 500);
-        }} 
+        }}
       />
     </div>
   );

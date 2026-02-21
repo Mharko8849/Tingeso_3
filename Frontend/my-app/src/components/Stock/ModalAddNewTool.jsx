@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../services/http-common';
 import Cropper from 'react-easy-crop';
 import './ModalAddStockTool.css';
+import { useAlert } from '../Alerts/AlertContext';
 
 const ModalAddNewTool = ({ open, onClose, onAdded }) => {
   const [form, setForm] = useState({ toolName: '', category: '', repoCost: '', priceRent: '', priceFineAtDate: '' });
@@ -17,13 +18,15 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
   const [success, setSuccess] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
 
+  const alert = useAlert();
+
   useEffect(() => {
     if (open) {
       const fetchCategories = async () => {
         try {
           const response = await api.get('/api/categories/');
           // response.data is array of objects {id, name}
-          setCategoriesList(response.data.map(c => c.name)); 
+          setCategoriesList(response.data.map(c => c.name));
         } catch (error) {
           console.error('Error fetching categories:', error);
         }
@@ -82,7 +85,7 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
 
   const handleSaveCrop = async () => {
     if (!imagePreview || !croppedAreaPixels) return;
-    
+
     try {
       const croppedBlob = await getCroppedImg(imagePreview, croppedAreaPixels);
       const croppedFile = new File([croppedBlob], file.name || 'cropped-image.jpg', { type: 'image/jpeg' });
@@ -131,14 +134,10 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setSuccess(true);
       setError(null);
-      
-      // Wait a bit to show success message, then close and refresh
-      setTimeout(() => {
-        if (onAdded) onAdded();
-        onClose();
-      }, 1500);
+      alert.show({ message: 'Herramienta creada exitosamente', severity: 'success', autoHideMs: 3500 });
+      if (onAdded) onAdded();
+      onClose();
     } catch (e) {
       console.warn('Failed to add new tool', e);
       const msg = e?.response?.data || e?.message || 'No se pudo crear la herramienta';
@@ -187,6 +186,14 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
     }
   };
 
+  const handleNumericInput = (field, value) => {
+    if (value === '' || /^\d+$/.test(value)) {
+      setForm((s) => ({ ...s, [field]: value }));
+    } else {
+      alert.show({ severity: 'warning', message: 'Debe ingresar solo números enteros positivos', autoHideMs: 3500 });
+    }
+  };
+
   return (
     <div className="mas-backdrop">
       <div className="mas-modal mas-modal-large" style={{ position: 'relative' }}>
@@ -195,108 +202,95 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
         </button>
         <h3 className="mas-title">Añadir nueva herramienta</h3>
         <div className="mas-content">
-        <div className="mas-row">
-          <label>Nombre</label>
-          <input value={form.toolName} onChange={(e) => setForm((s) => ({ ...s, toolName: e.target.value }))} />
-        </div>
-
-        <div className="mas-row">
-          <label>Categoría</label>
-          <select 
-            value={form.category} 
-            onChange={(e) => setForm((s) => ({ ...s, category: e.target.value }))}
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          >
-            <option value="">Seleccionar categoría</option>
-            {categoriesList.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mas-row">
-          <label>Precio reposición</label>
-          <input type="number" value={form.repoCost} onChange={(e) => setForm((s) => ({ ...s, repoCost: e.target.value }))} />
-        </div>
-
-        <div className="mas-row">
-          <label>Precio arriendo</label>
-          <input type="number" value={form.priceRent} onChange={(e) => setForm((s) => ({ ...s, priceRent: e.target.value }))} />
-        </div>
-
-        <div className="mas-row">
-          <label>Tarifa multa por día</label>
-          <input type="number" value={form.priceFineAtDate} onChange={(e) => setForm((s) => ({ ...s, priceFineAtDate: e.target.value }))} />
-        </div>
-
-        <div className="mas-row">
-          <label>Imagen (opcional)</label>
-          <div
-            className={`mas-file-wrapper ${isDragging ? 'mas-file-wrapper-dragging' : ''}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <label className="mas-file-button">
-              Seleccionar archivo
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
-                style={{ display: 'none' }}
-              />
-            </label>
-            <div className="mas-file-name">
-              {file
-                ? file.name
-                : 'Haz clic para seleccionar o arrastra y suelta una imagen aquí'}
-            </div>
+          <div className="mas-row">
+            <label>Nombre</label>
+            <input value={form.toolName} onChange={(e) => setForm((s) => ({ ...s, toolName: e.target.value }))} />
           </div>
-          
-          {/* Preview de imagen seleccionada (después del crop) */}
-          {imagePreview && !showCrop && (
-            <div style={{ marginTop: '12px', textAlign: 'center' }}>
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
-                style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '2px solid #007bff' }} 
-              />
-              <button 
-                type="button"
-                onClick={() => setShowCrop(true)} 
-                style={{ 
-                  display: 'block', 
-                  margin: '8px auto', 
-                  padding: '6px 12px', 
-                  background: '#007bff', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '4px', 
-                  cursor: 'pointer' 
-                }}
-              >
-                Recortar imagen
-              </button>
-            </div>
-          )}
-        </div>
 
-        {success && (
-          <div style={{ 
-            padding: '12px', 
-            background: '#d4edda', 
-            border: '1px solid #c3e6cb', 
-            borderRadius: '4px', 
-            color: '#155724',
-            marginTop: '12px',
-            textAlign: 'center',
-            fontWeight: 'bold'
-          }}>
-            ✓ Herramienta creada exitosamente
+          <div className="mas-row">
+            <label>Categoría</label>
+            <select
+              value={form.category}
+              onChange={(e) => setForm((s) => ({ ...s, category: e.target.value }))}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value="">Seleccionar categoría</option>
+              {categoriesList.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
           </div>
-        )}
 
-        {error && <div className="mas-error">{error}</div>}
+          <div className="mas-row">
+            <label>Precio reposición</label>
+            <input type="text" inputMode="numeric" value={form.repoCost} onChange={(e) => handleNumericInput('repoCost', e.target.value)} />
+          </div>
+
+          <div className="mas-row">
+            <label>Precio arriendo</label>
+            <input type="text" inputMode="numeric" value={form.priceRent} onChange={(e) => handleNumericInput('priceRent', e.target.value)} />
+          </div>
+
+          <div className="mas-row">
+            <label>Tarifa multa por día</label>
+            <input type="text" inputMode="numeric" value={form.priceFineAtDate} onChange={(e) => handleNumericInput('priceFineAtDate', e.target.value)} />
+          </div>
+
+          <div className="mas-row">
+            <label>Imagen (opcional)</label>
+            <div
+              className={`mas-file-wrapper ${isDragging ? 'mas-file-wrapper-dragging' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <label className="mas-file-button">
+                Seleccionar archivo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              <div className="mas-file-name">
+                {file
+                  ? file.name
+                  : 'Haz clic para seleccionar o arrastra y suelta una imagen aquí'}
+              </div>
+            </div>
+
+            {/* Preview de imagen seleccionada (después del crop) */}
+            {imagePreview && !showCrop && (
+              <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '2px solid #007bff' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCrop(true)}
+                  style={{
+                    display: 'block',
+                    margin: '8px auto',
+                    padding: '6px 12px',
+                    background: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Recortar imagen
+                </button>
+              </div>
+            )}
+          </div>
+
+
+
+          {error && <div className="mas-error">{error}</div>}
 
         </div>
 
@@ -334,7 +328,7 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
               onCropComplete={onCropComplete}
             />
           </div>
-          
+
           <div style={{
             background: '#333',
             padding: '20px',
@@ -354,7 +348,7 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
                 style={{ flex: 1 }}
               />
             </div>
-            
+
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 onClick={handleSaveCrop}

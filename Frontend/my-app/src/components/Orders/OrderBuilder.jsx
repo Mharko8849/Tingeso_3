@@ -4,6 +4,7 @@ import api from '../../services/http-common';
 import ToolCard from '../Tools/ToolCard';
 import '../Tools/ToolDropdown.css';
 import PaginationBar from '../Common/PaginationBar';
+import { useAlert } from '../Alerts/AlertContext';
 
 const OrderBuilder = ({ onClose, onCreated }) => {
   const [clients, setClients] = useState([]);
@@ -18,6 +19,7 @@ const OrderBuilder = ({ onClose, onCreated }) => {
 
   const [items, setItems] = useState([]); // { id, name, qty }
   const [alert, setAlert] = useState(null);
+  const { show } = useAlert();
 
   useEffect(() => {
     // fetch clients (admins can view all clients)
@@ -89,6 +91,18 @@ const OrderBuilder = ({ onClose, onCreated }) => {
 
   const removeItem = (id) => setItems((s) => s.filter((i) => i.id !== id));
   const changeQty = (id, qty) => setItems((s) => s.map((i) => i.id === id ? { ...i, qty: Math.max(1, qty) } : i));
+
+  const handleQtyInput = (id, rawValue) => {
+    if (rawValue === '') {
+      changeQty(id, 1);
+      return;
+    }
+    if (/^\d+$/.test(rawValue)) {
+      changeQty(id, Number(rawValue));
+    } else {
+      show({ severity: 'warning', message: 'Debe ingresar solo números enteros positivos', autoHideMs: 3500 });
+    }
+  };
 
   const totalTools = tools.length;
   const totalToolsPages = Math.max(1, Math.ceil(totalTools / toolsPageSize));
@@ -185,7 +199,7 @@ const OrderBuilder = ({ onClose, onCreated }) => {
                 <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, borderBottom: '1px solid #eee' }}>
                   <div style={{ flex: 1 }}>{it.name}</div>
                   <div>
-                    <input type="number" value={it.qty} min={1} onChange={(e) => changeQty(it.id, Number(e.target.value))} style={{ width: 64, padding: 6 }} />
+                    <input type="text" inputMode="numeric" value={it.qty} onChange={(e) => handleQtyInput(it.id, e.target.value)} style={{ width: 64, padding: 6 }} />
                   </div>
                   <div><button className="link" onClick={() => removeItem(it.id)}>Quitar</button></div>
                 </div>

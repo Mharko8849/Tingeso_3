@@ -19,10 +19,10 @@ import { useEscapeKey } from '../../hooks/useKeyboardShortcuts';
 const ModalEmployeesRegister = ({ onCreate, onCancel, isSuper = false, isAdmin = false, defaultRole = 'EMPLOYEE', title = 'Añadir empleado', allowedRoles = null, hideRoleField = false }) => {
   // Close modal with Escape key (Nielsen Heuristic #3: User Control and Freedom)
   useEscapeKey(onCancel);
-  
+
   return (
     <div className="tool-overlay" onClick={onCancel}>
-      <div className="tool-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%', padding: '30px' }}>
+      <div className="tool-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px', width: '90%', padding: '28px 30px' }}>
         <button className="close-btn" onClick={onCancel}>✕</button>
 
         <UserRegisterForm

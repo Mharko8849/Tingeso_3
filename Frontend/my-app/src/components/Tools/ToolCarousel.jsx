@@ -19,7 +19,7 @@ const ToolCarousel = ({
   autoplayDelay = 3500,
 }) => {
   const [page, setPage] = useState(0);
-  const [visibleCount, setVisibleCount] = useState(4);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   // Navigate to previous page
   const prev = () => {
@@ -43,8 +43,9 @@ const ToolCarousel = ({
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth;
-      if (w >= 1200) setVisibleCount(4);
-      else if (w >= 900) setVisibleCount(3);
+      if (w >= 1200) setVisibleCount(5);
+      else if (w >= 992) setVisibleCount(4);
+      else if (w >= 768) setVisibleCount(3);
       else if (w >= 600) setVisibleCount(2);
       else setVisibleCount(1);
     };
@@ -61,7 +62,7 @@ const ToolCarousel = ({
   }, [visibleCount, pages]);
 
   const gap = 12; // Must match CSS gap
-  const cardFlexBasis = `calc((100% - ${(visibleCount - 1) * gap}px) / ${visibleCount})`;
+  const cardFlexBasis = `calc((100% - ${(visibleCount - 4) * gap}px) / ${visibleCount})`;
 
   // Create pages array
   const pagesArr = [];
@@ -93,8 +94,8 @@ const ToolCarousel = ({
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="mb-0">{title}</h3>
         {onViewMore ? (
-          <button 
-            onClick={onViewMore} 
+          <button
+            onClick={onViewMore}
             className="primary-cta"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
           >
