@@ -6,10 +6,10 @@ data:
   POSTGRES_USER: "mharko"
   DB_PORT: "5432"
 
-  KEYCLOAK_URL: "http://54.207.116.60:31000"
+  KEYCLOAK_URL: "http://keycloak-service-prod:9090"
   KEYCLOAK_ISSUER_URL: "http://54.207.116.60:31000"
   KEYCLOAK_REALM: "ToolRent"
   KEYCLOAK_CLIENT_ID: "toolrent-backend"
-  KEYCLOAK_CLIENT_SECRET: "f82wFht8ZajhLtOdpjWhoJCXgKy9QJcZ"
+  KEYCLOAK_CLIENT_SECRET: "UZIFn2CqfctR6Sy710qc58ZT5tLSQJf5"
 
   BACKEND_URL: "https://toolrent.54.207.116.60.nip.io"

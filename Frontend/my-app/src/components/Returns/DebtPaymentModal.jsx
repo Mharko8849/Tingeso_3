@@ -78,7 +78,8 @@ const DebtPaymentModal = ({ open, onClose, loan, totalFine, onPaid }) => {
               <div style={{ display: 'grid', gap: 12 }}>
                 {items.map(it => {
                   const name = (it.idTool && (it.idTool.toolName || it.idTool.name)) || it.toolName || it.name || `Herramienta ${it.id}`;
-                  const image = it.idTool?.imageUrl || it.idTool?.image || null;
+                  const imageUrl = it.idTool?.imageUrl || it.idTool?.image || null;
+                  const image = imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `/images/${imageUrl}`) : null;
                   const fine = Number(it.fine ?? it.debt ?? 0) || 0;
                   return (
                     <div key={it.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6 }}>

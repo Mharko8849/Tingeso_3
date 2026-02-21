@@ -1,6 +1,35 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: toolrent-api-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "self-signed"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - toolrent.192.168.39.122.nip.io
+      secretName: toolrent-local-tls
+  rules:
+    - host: toolrent.192.168.39.122.nip.io
+      http:
+        paths:
+          # All backend API calls go through /api/...
+          # The rewrite strips /api/ so backend receives the original path
+          - path: /api/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: toolrent-ingress
   annotations:
     cert-manager.io/cluster-issuer: "self-signed"
@@ -15,85 +44,7 @@ spec:
     - host: toolrent.192.168.39.122.nip.io
       http:
         paths:
-          # Backend API routes - must come BEFORE / to match first
-          - path: /api/inventory
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /inventory/
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /auth
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /user
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /tool-states
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /tool
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /categories
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /kardex
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /loantool
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /loan
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          - path: /images
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service
-                port:
-                  number: 80
-          # Keycloak routes
+          # Keycloak routes (no rewrite needed)
           - path: /realms
             pathType: Prefix
             backend:
@@ -115,7 +66,15 @@ spec:
                 name: keycloak-service
                 port:
                   number: 9090
-          # Frontend - MUST BE LAST as fallback
+          # Images served by backend (need full path, no rewrite)
+          - path: /images
+            pathType: Prefix
+            backend:
+              service:
+                name: toolrent-service
+                port:
+                  number: 80
+          # Frontend SPA catch-all — serves index.html for all routes
           - path: /
             pathType: Prefix
             backend:

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HelpIcon } from '../Common/Tooltip';
-import { validateRUT, validateEmail, formatRUT } from '../../utils/validation';
+import { validate as validateRutLib, format as formatRutLib, clean as cleanRut } from 'rut.js';
+import { validateEmail } from '../../utils/validation';
 import { useCtrlEnter } from '../../hooks/useKeyboardShortcuts';
 
 // Icons as constants to keep the JSX clean.
@@ -80,16 +81,37 @@ const UserRegisterForm = ({
 
   // Updates the form state for a given field key.
   const update = (k) => (e) => {
-    const value = e.target.value;
+    let value = e.target.value;
+    
+    // Auto-format RUT while typing using rut.js library
+    if (k === 'rut') {
+      // Clean and format the RUT value
+      const cleaned = cleanRut(value);
+      if (cleaned.length > 0) {
+        // Format as user types: XX.XXX.XXX-X
+        value = formatRutLib(cleaned);
+      }
+    }
+    
     setForm({ ...form, [k]: value });
     
-    // Real-time validation for RUT and Email
+    // Validation for RUT - only validate when appears complete
     if (k === 'rut' && value.trim()) {
-      const result = validateRUT(value);
-      setValidation(prev => ({
-        ...prev,
-        rut: { isValid: result.isValid, message: result.message }
-      }));
+      const cleaned = cleanRut(value);
+      // Only validate if RUT has at least 7 digits (minimum valid RUT)
+      if (cleaned.length >= 7) {
+        const isValid = validateRutLib(value);
+        setValidation(prev => ({
+          ...prev,
+          rut: { 
+            isValid: isValid, 
+            message: isValid ? 'RUT válido' : 'RUT inválido'
+          }
+        }));
+      } else {
+        // RUT incomplete, don't show validation message
+        setValidation(prev => ({ ...prev, rut: { isValid: null, message: '' } }));
+      }
     } else if (k === 'rut') {
       setValidation(prev => ({ ...prev, rut: { isValid: null, message: '' } }));
     }
@@ -122,9 +144,9 @@ const UserRegisterForm = ({
     
     // RUT validation (if provided)
     if (form.rut && form.rut.trim()) {
-      const rutResult = validateRUT(form.rut);
-      if (!rutResult.isValid) {
-        setMsg(`RUT inválido: ${rutResult.message}`);
+      const isValid = validateRutLib(form.rut);
+      if (!isValid) {
+        setMsg('RUT inválido. Verifica el formato y dígito verificador.');
         return false;
       }
     }
@@ -212,8 +234,7 @@ const UserRegisterForm = ({
 
         <div className="input-group">
           <label>
-            Email{' '}
-            <HelpIcon content="Correo para iniciar sesión." position="right" />
+            Email <HelpIcon content="Correo electrónico para iniciar sesión" position="top" />
           </label>
           <div className="input-with-icon">
             <span className="icon" aria-hidden>{ICONS.EMAIL}</span>
@@ -246,16 +267,16 @@ const UserRegisterForm = ({
 
         <div className="input-group">
           <label>
-            RUT{' '}
-            <HelpIcon content="Formato: XX.XXX.XXX-X" position="right" />
+            RUT <HelpIcon content="Ejemplo: 12.345.678-9" position="top" />
           </label>
           <div className="input-with-icon">
             <span className="icon" aria-hidden>{ICONS.ID_CARD}</span>
             <input 
               value={form.rut} 
               onChange={update('rut')} 
-              placeholder="12345678-9" 
+              placeholder="12.345.678-9" 
               disabled={isReadOnly('rut')}
+              maxLength={12}
               style={{
                 borderColor: validation.rut.isValid === false ? '#ef4444' : validation.rut.isValid === true ? 'limegreen' : undefined
               }}
@@ -322,30 +343,9 @@ const UserRegisterForm = ({
         )}
 
         <div className="actions">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%' }}>
-            <button className="primary-cta" type="submit" disabled={loading} style={{ flex: 1, justifyContent: 'center'}}>
-              {loading ? 'Guardando...' : submitLabel}
-            </button>
-            <svg 
-              width="24" 
-              height="24" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ color: '#2b6cb0', cursor: 'pointer' }}
-            >
-              <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-              <rect x="5" y="8" width="2" height="2" fill="currentColor"/>
-              <rect x="9" y="8" width="2" height="2" fill="currentColor"/>
-              <rect x="13" y="8" width="2" height="2" fill="currentColor"/>
-              <rect x="17" y="8" width="2" height="2" fill="currentColor"/>
-              <rect x="5" y="12" width="2" height="2" fill="currentColor"/>
-              <rect x="9" y="12" width="2" height="2" fill="currentColor"/>
-              <rect x="13" y="12" width="2" height="2" fill="currentColor"/>
-              <rect x="17" y="12" width="2" height="2" fill="currentColor"/>
-              <rect x="7" y="16" width="10" height="2" rx="1" fill="currentColor"/>
-            </svg>
-          </div>
+          <button className="primary-cta" type="submit" disabled={loading} style={{ width: '100%', justifyContent: 'center'}}>
+            {loading ? 'Guardando...' : submitLabel}
+          </button>
           {!isEditMode && (
             <button type="button" className="link" style={{ width: '100%' ,justifyContent: 'center'}} onClick={() => navigate('/login')}>¿Ya tienes cuenta? Inicia sesión</button>
           )}

@@ -21,7 +21,7 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
         throw new Error('El nombre del estado es requerido');
       }
 
-      await api.post(`/tool-states/`, { state: name.trim(), color: color });
+      await api.post(`/api/tool-states/`, { state: name.trim(), color: color });
 
       show({ message: 'Estado creado exitosamente', severity: 'success' });
       
@@ -92,11 +92,11 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
                 style={{ 
                   width: '100%',
                   padding: '10px 12px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #ccc',
                   borderRadius: '6px',
                   fontSize: '14px',
                   backgroundColor: '#ffffff',
-                  color: '#333333'
+                  color: '#000000'
                 }}
               />
               <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', fontStyle: 'italic' }}>

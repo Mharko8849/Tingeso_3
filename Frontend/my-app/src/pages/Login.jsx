@@ -25,7 +25,7 @@ const Login = () => {
       setLoading(true);
       const body = { username: identifier, password };
       // Use axios instance which points to backend (VITE env vars or defaults)
-      const resp = await api.post('/auth/login', body);
+      const resp = await api.post('/api/auth/login', body);
       const data = resp.data;
       
       // Extract user name for welcome message

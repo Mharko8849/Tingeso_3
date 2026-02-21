@@ -66,7 +66,7 @@ const InventoryPage = ({ category = null }) => {
       if (appliedFilters?.recent) qs.recent = true;
 
       // Fetch from inventory filter endpoint
-      const resp = await api.get('/inventory/filter', { params: qs });
+      const resp = await api.get('/api/inventory/filter', { params: qs });
       let inv = resp.data;
       console.debug('[InventoryPage] /inventory/filter response:', inv);
       console.debug('[InventoryPage] Response type:', typeof inv, 'Is Array:', Array.isArray(inv));
@@ -74,7 +74,7 @@ const InventoryPage = ({ category = null }) => {
       // Fallback to tools endpoint if inventory returns empty
       if (!Array.isArray(inv) || inv.length === 0) {
         console.warn('[InventoryPage] Inventory filter returned no results, trying /tool/ endpoint');
-        const toolsResp = await api.get('/tool/');
+        const toolsResp = await api.get('/api/tool/');
         const tools = toolsResp.data || [];
         console.debug('[InventoryPage] /tool/ response:', tools);
         
@@ -122,7 +122,7 @@ const InventoryPage = ({ category = null }) => {
       if (appliedFilters?.popular) {
         try {
           // Fetch ranking data to know which tools are popular
-          const rankingResp = await api.get("/kardex/ranking");
+          const rankingResp = await api.get("/api/kardex/ranking");
           const rankingList = rankingResp.data; // List of { tool: {...}, totalLoans: X }
           
           // Create a map of toolId -> totalLoans for quick lookup

@@ -31,7 +31,7 @@ const ReturnsClientLoans = () => {
     setLoading(true);
     try {
       // Usar endpoint paginado del backend (page es 0-indexed en Spring)
-      const response = await api.get(`/loan/user/${clientId}/paginated?page=${page - 1}&size=${pageSize}`);
+      const response = await api.get(`/api/loan/user/${clientId}/paginated?page=${page - 1}&size=${pageSize}`);
       const data = response.data;
       
       setLoans(data.content || []);

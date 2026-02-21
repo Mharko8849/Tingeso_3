@@ -37,8 +37,8 @@ const SearchBar = () => {
         borderRadius: '6px',
         border: '1px solid #ccc',
         width: '300px',
-        backgroundColor: '#fff',
-        color: '#333',
+        backgroundColor: '#ffffff',
+        color: '#000000',
       }}
     />
   );

@@ -1,0 +1,51 @@
+/* PaginationBar styles — self-contained so the component looks correct
+   regardless of which page loads first. */
+
+.cl-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    padding-bottom: 6px;
+    margin-bottom: 16px;
+}
+
+.cl-controls-left label {
+    margin-right: 8px;
+    font-weight: 600;
+}
+
+.cl-controls-left select {
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #e6e9ef;
+}
+
+.cl-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cl-page-small {
+    margin-left: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #e6e9ef;
+    background: #fff;
+    min-width: 34px;
+    text-align: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.cl-page-small:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.cl-page-ind-small {
+    margin: 0 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}

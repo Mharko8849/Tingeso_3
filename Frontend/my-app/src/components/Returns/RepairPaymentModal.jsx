@@ -105,7 +105,8 @@ const RepairPaymentModal = ({ open, onClose, loan, initialItems, onPaid }) => {
               <div style={{ display: 'grid', gap: 12 }}>
                 {items.map(it => {
                   const displayName = (it?.idTool && it.idTool.toolName) || it.toolName || it.name || it.description || `Item ${it.id}`;
-                  const image = it.idTool?.imageUrl || it.idTool?.image || null;
+                  const imageUrl = it.idTool?.imageUrl || it.idTool?.image || null;
+                  const image = imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `/images/${imageUrl}`) : null;
                   return (
                     <div key={it.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 10, border: '1px solid #e6e6e6', borderRadius: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

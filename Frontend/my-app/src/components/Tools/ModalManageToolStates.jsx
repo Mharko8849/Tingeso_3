@@ -24,7 +24,7 @@ const ModalManageToolStates = ({ open, onClose }) => {
   const fetchStates = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/tool-states/');
+      const response = await api.get('/api/tool-states/');
       // Una respuesta vacía es válida, no es un error
       setStates(response.data || []);
     } catch (error) {
@@ -65,7 +65,7 @@ const ModalManageToolStates = ({ open, onClose }) => {
     }
 
     try {
-      await api.put(`/tool-states/${id}`, { state: editingState.trim(), color: editingColor });
+      await api.put(`/api/tool-states/${id}`, { state: editingState.trim(), color: editingColor });
       show({ message: 'Estado actualizado exitosamente', severity: 'success' });
       setEditingId(null);
       setEditingState('');
@@ -84,7 +84,7 @@ const ModalManageToolStates = ({ open, onClose }) => {
     }
 
     try {
-      await api.delete(`/tool-states/${id}`);
+      await api.delete(`/api/tool-states/${id}`);
       show({ message: 'Estado eliminado exitosamente', severity: 'success' });
       fetchStates();
     } catch (error) {

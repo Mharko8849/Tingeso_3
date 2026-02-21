@@ -3,90 +3,7 @@
  * Follows Nielsen's Heuristics #5 (Error Prevention) and #9 (Error Recovery)
  */
 
-/**
- * Validates Chilean RUT (Rol Único Tributario).
- * Format: XX.XXX.XXX-X or XXXXXXXX-X
- * 
- * @param {string} rut - RUT string to validate
- * @returns {Object} - { isValid: boolean, message: string, formatted: string }
- */
-export const validateRUT = (rut) => {
-  if (!rut || typeof rut !== 'string') {
-    return { isValid: false, message: 'RUT es requerido', formatted: '' };
-  }
-
-  // Remove dots and hyphens, convert to uppercase
-  const cleanRUT = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase().trim();
-
-  if (cleanRUT.length < 2) {
-    return { isValid: false, message: 'RUT incompleto', formatted: rut };
-  }
-
-  // Separate body and verifier digit
-  const body = cleanRUT.slice(0, -1);
-  const verifier = cleanRUT.slice(-1);
-
-  // Validate that body contains only numbers
-  if (!/^\d+$/.test(body)) {
-    return { isValid: false, message: 'RUT debe contener solo números', formatted: rut };
-  }
-
-  // Calculate verification digit
-  let sum = 0;
-  let multiplier = 2;
-
-  for (let i = body.length - 1; i >= 0; i--) {
-    sum += parseInt(body[i]) * multiplier;
-    multiplier = multiplier === 7 ? 2 : multiplier + 1;
-  }
-
-  const calculatedVerifier = 11 - (sum % 11);
-  let expectedVerifier;
-
-  if (calculatedVerifier === 11) {
-    expectedVerifier = '0';
-  } else if (calculatedVerifier === 10) {
-    expectedVerifier = 'K';
-  } else {
-    expectedVerifier = calculatedVerifier.toString();
-  }
-
-  if (verifier !== expectedVerifier) {
-    return { 
-      isValid: false, 
-      message: `RUT inválido. Dígito verificador esperado: ${expectedVerifier}`,
-      formatted: formatRUT(body + verifier)
-    };
-  }
-
-  return { 
-    isValid: true, 
-    message: 'RUT válido',
-    formatted: formatRUT(body + verifier)
-  };
-};
-
-/**
- * Formats RUT to standard Chilean format: XX.XXX.XXX-X
- * 
- * @param {string} rut - RUT string to format
- * @returns {string} - Formatted RUT
- */
-export const formatRUT = (rut) => {
-  if (!rut) return '';
-
-  const cleanRUT = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
-  
-  if (cleanRUT.length < 2) return cleanRUT;
-
-  const body = cleanRUT.slice(0, -1);
-  const verifier = cleanRUT.slice(-1);
-
-  // Add thousand separators
-  const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-  return `${formatted}-${verifier}`;
-};
+import { validate as validateRutLib } from 'rut.js';
 
 /**
  * Validates email address format.
@@ -229,7 +146,11 @@ export const validateUsername = (username) => {
 export const validateField = (fieldType, value) => {
   switch (fieldType.toLowerCase()) {
     case 'rut':
-      return validateRUT(value);
+      const isValid = validateRutLib(value);
+      return { 
+        isValid, 
+        message: isValid ? 'RUT válido' : 'RUT inválido' 
+      };
     case 'email':
       return validateEmail(value);
     case 'password':

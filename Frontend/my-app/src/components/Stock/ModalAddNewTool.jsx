@@ -21,7 +21,7 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
     if (open) {
       const fetchCategories = async () => {
         try {
-          const response = await api.get('/categories/');
+          const response = await api.get('/api/categories/');
           // response.data is array of objects {id, name}
           setCategoriesList(response.data.map(c => c.name)); 
         } catch (error) {
@@ -39,11 +39,11 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
     }
   }, [open]);
 
-  if (!open) return null;
-
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
+
+  if (!open) return null;
 
   const createImage = (url) =>
     new Promise((resolve, reject) => {

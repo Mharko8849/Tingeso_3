@@ -44,12 +44,12 @@ const OrdersCreateTools = () => {
       if (f?.desc) qs.desc = true;
       if (f?.recent) qs.recent = true;
       
-      const resp = await api.get('/inventory/filter', { params: qs });
+      const resp = await api.get('/api/inventory/filter', { params: qs });
       let inv = resp.data || [];
 
       // Fallback to tools endpoint if inventory returns empty
       if (!Array.isArray(inv) || inv.length === 0) {
-        const toolsResp = await api.get('/tool/');
+        const toolsResp = await api.get('/api/tool/');
         const tools = toolsResp.data || [];
         inv = tools.map(tool => ({
           idTool: tool,
@@ -106,7 +106,7 @@ const OrdersCreateTools = () => {
         }
 
         // Check if tool has available stock
-        const stockResp = await api.get(`/inventory/check-stock/${t.id}`);
+        const stockResp = await api.get(`/api/inventory/check-stock/${t.id}`);
         const hasStock = stockResp.data === true;
         if (!hasStock) {
           setAlert({ severity: 'error', message: 'No hay stock disponible para realizar el préstamo.' });

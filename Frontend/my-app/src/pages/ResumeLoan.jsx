@@ -124,7 +124,7 @@ const ResumeLoan = () => {
     setCreating(true);
     try {
       // Get employee ID
-      const employeeResp = await api.get('/user/me');
+      const employeeResp = await api.get('/api/user/me');
       const employeeId = employeeResp.data?.id;
       if (!employeeId) throw new Error('No se pudo obtener tu identificación de empleado. Verifica que hayas iniciado sesión correctamente. Si el problema persiste, contacta al administrador.');
 
@@ -139,7 +139,7 @@ const ResumeLoan = () => {
         toolIds: toolIds
       };
 
-      const createResp = await api.post(`/loan/create-with-tools/${employeeId}`, payload);
+      const createResp = await api.post(`/api/loan/create-with-tools/${employeeId}`, payload);
       const createdLoan = createResp.data;
 
       if (!createdLoan || !createdLoan.id) {
@@ -148,7 +148,7 @@ const ResumeLoan = () => {
 
       // Now mark all tools as 'PRESTADA' (given to client)
       // First, we need to get the LoanXTools IDs for this loan
-      const lxtResp = await api.get(`/loantool/loan/${createdLoan.id}`);
+      const lxtResp = await api.get(`/api/loantool/loan/${createdLoan.id}`);
       const loanXTools = lxtResp.data || [];
       const loanXToolIds = loanXTools.map(lxt => lxt.id);
 
@@ -157,7 +157,7 @@ const ResumeLoan = () => {
       }
 
       // Call batch give endpoint to mark all as PRESTADA
-      await api.post(`/loantool/give/all/user/${employeeId}`, loanXToolIds);
+      await api.post(`/api/loantool/give/all/user/${employeeId}`, loanXToolIds);
 
       // Success: clear all session data
       sessionStorage.removeItem('order_resume');

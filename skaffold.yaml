@@ -33,6 +33,14 @@ profiles:
     build:
       local:
         push: true
+      artifacts:
+        - image: mharko/frontend
+          context: Frontend/my-app
+          docker:
+            dockerfile: Dockerfile
+            buildArgs:
+              VITE_BACKEND_SERVER: "54.207.116.60"
+              VITE_BACKEND_PORT: "80"
     manifests:
       rawYaml:
         - Kubernetes-Config-Prod/**/*.yaml

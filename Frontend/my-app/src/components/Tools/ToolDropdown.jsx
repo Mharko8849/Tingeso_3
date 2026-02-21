@@ -18,7 +18,7 @@ const ToolDropdown = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/categories/');
+      const response = await api.get('/api/categories/');
       // Extract category names from the response
       const categoryNames = response.data.map(cat => cat.name);
       setCategories(categoryNames);

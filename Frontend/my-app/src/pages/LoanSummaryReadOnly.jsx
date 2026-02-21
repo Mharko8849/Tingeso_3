@@ -133,7 +133,8 @@ const LoanSummaryReadOnly = () => {
                         <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {items.map(it => {
                             const name = it.idTool?.name || it.idTool?.toolName || 'Herramienta';
-                            const image = it.idTool?.image || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80';
+                            const imageUrl = it.idTool?.imageUrl;
+                            const image = imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `/images/${imageUrl}`) : 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80';
                             const activity = it.toolActivity || '-';
                             const price = Number(it.idTool?.priceRent || it.idTool?.price || 0);
                             const qty = Number(it.amount || it.quantity || 1);

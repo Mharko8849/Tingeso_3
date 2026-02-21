@@ -7,7 +7,7 @@ const backendPort = import.meta.env.VITE_BACKEND_PORT;
 
 const baseURL = backendServer && backendPort 
   ? `http://${backendServer}:${backendPort}` 
-  : 'https://toolrent.192.168.39.122.nip.io';
+  : 'https://toolrent.54.207.116.60.nip.io';
 
 const api = axios.create({
   baseURL: baseURL,
@@ -18,18 +18,11 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
-    // If the URL starts with /api/, remove it.
-    // This harmonizes frontend calls (e.g., /api/kardex/ranking) with backend endpoints (/kardex)
-    // as defined in the controllers and Ingress.
-    if (config.url && config.url.startsWith('/api/')) {
-       config.url = config.url.substring(4);
-    }
-
     // Don't attach an Authorization header for the backend login/register endpoints
     // — if we attach an expired token the backend will immediately return 401.
     const url = config.url || '';
-    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
-    const isPublicEndpoint = url.includes('/kardex/ranking') || url.includes('/images/');
+    const isAuthEndpoint = url.includes('/api/auth/login') || url.includes('/api/auth/register');
+    const isPublicEndpoint = url.includes('/api/kardex/ranking') || url.includes('/images/');
 
     if (isAuthEndpoint || isPublicEndpoint) {
       return config;
@@ -88,7 +81,7 @@ api.interceptors.response.use(
 
     // Don't retry auth endpoints
     const url = originalRequest.url || '';
-    if (url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh')) {
+    if (url.includes('/api/auth/login') || url.includes('/api/auth/register') || url.includes('/api/auth/refresh')) {
       return Promise.reject(error);
     }
 
@@ -135,7 +128,7 @@ api.interceptors.response.use(
       // Try local refresh_token if available
       const refreshToken = localStorage.getItem('refresh_token');
       if (refreshToken) {
-        const response = await axios.post(`${baseURL}/auth/refresh`, {
+        const response = await axios.post(`${baseURL}/api/auth/refresh`, {
           refresh_token: refreshToken
         });
 

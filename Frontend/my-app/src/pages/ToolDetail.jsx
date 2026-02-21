@@ -100,7 +100,7 @@ const ToolDetail = (props) => {
   useEffect(() => {
     const fetchToolStates = async () => {
       try {
-        const response = await api.get('/tool-states/');
+        const response = await api.get('/api/tool-states/');
         setToolStates(response.data || []);
       } catch (error) {
         console.error('Error fetching tool states:', error);

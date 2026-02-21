@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/http-common';
-// import { TOOL_CATEGORIES } from '../../constants/toolCategories';
 import './FiltersSidebar.css';
 
 /**
  * FiltersSidebar component.
  * Renders a sidebar with price range sliders and sorting options.
  */
-const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
+const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
   // Defines the minimum and maximum values and price steps.
   const BOUND_MIN = 0;
   const BOUND_MAX = 500000;
@@ -19,7 +18,7 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
   // Initializes state with clamped initial values or defaults.
   const [minPrice, setMinPrice] = useState(clamp(initial.minPrice ?? BOUND_MIN));
   const [maxPrice, setMaxPrice] = useState(clamp(initial.maxPrice ?? BOUND_MAX));
-  
+
   // Stores the current sort order. Empty string means 'no specific order'.
   const [sort, setSort] = useState(initial.sort ?? '');
   const [category, setCategory] = useState(initial.category ?? '');
@@ -28,10 +27,10 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
 
   useEffect(() => {
     const fetchCats = async () => {
-        try {
-            const res = await api.get('/categories/'); // Ensure trailing slash if controller has it
-            setCategories(res.data.map(c => c.name));
-        } catch(e) { console.error(e); }
+      try {
+        const res = await api.get('/api/categories/'); // Ensure trailing slash if controller has it
+        setCategories(res.data.map(c => c.name));
+      } catch (e) { console.error(e); }
     };
     fetchCats();
   }, []);
@@ -43,7 +42,7 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
     setSort('');
     setCategory('');
     setSearch('');
-    
+
     // Mirrors the shape returned by apply() to ensure consistency.
     const filters = {
       minPrice: 0,
@@ -74,7 +73,7 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
     const desc = sort === 'price_desc';
     const recent = sort === 'newest';
     const popular = sort === 'popular';
-    
+
     const filters = {
       minPrice: minPrice ? Number(minPrice) : 0,
       maxPrice: maxPrice ? Number(maxPrice) : 0,
@@ -112,7 +111,9 @@ const FiltersSidebar = ({ onApply = () => {}, initial = {} }) => {
               padding: '8px 30px 8px 8px',
               borderRadius: '6px',
               border: '1px solid #e1e3e8',
-              marginTop: '4px'
+              marginTop: '4px',
+              backgroundColor: '#ffffff',
+              color: '#000000'
             }}
           />
           {search && (

@@ -192,7 +192,7 @@ const KardexPage = () => {
                 placeholder="Buscar por herramienta, empleado, usuario o tipo..."
                 value={q}
                 onChange={(e) => { setQ(e.target.value); setPage(1); }}
-                style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260 }}
+                style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260, backgroundColor: '#ffffff', color: '#000000' }}
               />
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
                 <button

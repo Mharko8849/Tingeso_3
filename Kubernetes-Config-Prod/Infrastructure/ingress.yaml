@@ -1,26 +1,50 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: toolrent-ingress
+  name: toolrent-api-ingress
   annotations:
-    # Uso el emisor de producción que configuré antes
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    # Fuerzo la redirección a HTTPS para seguridad
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - toolrent.54.207.116.60.nip.io
+      secretName: toolrent-prod-tls
   rules:
-    # Defino mi dominio dinámico con nip.io basado en mi IP elástica
     - host: toolrent.54.207.116.60.nip.io
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          # All backend API calls go through /api/...
+          # The rewrite strips /api/ so backend receives the original path
+          - path: /api/(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
-                name: frontend
+                name: toolrent-service-prod
                 port:
                   number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: toolrent-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - toolrent.54.207.116.60.nip.io
+      secretName: toolrent-prod-tls
+  rules:
+    - host: toolrent.54.207.116.60.nip.io
+      http:
+        paths:
+          # Images served by backend (need full path, no rewrite)
           - path: /images
             pathType: Prefix
             backend:
@@ -28,51 +52,11 @@ spec:
                 name: toolrent-service-prod
                 port:
                   number: 80
-          - path: /auth
+          # Frontend SPA catch-all — serves index.html for all routes
+          - path: /
             pathType: Prefix
             backend:
               service:
-                name: toolrent-service-prod
+                name: frontend
                 port:
                   number: 80
-          - path: /user
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service-prod
-                port:
-                  number: 80
-          - path: /tool
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service-prod
-                port:
-                  number: 80
-
-          - path: /loan
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service-prod
-                port:
-                  number: 80
-          - path: /loantool
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service-prod
-                port:
-                  number: 80
-          - path: /kardex
-            pathType: Prefix
-            backend:
-              service:
-                name: toolrent-service-prod
-                port:
-                  number: 80
-  tls:
-    # Configuro el certificado para este dominio específico
-    - hosts:
-        - toolrent.54.207.116.60.nip.io
-      secretName: toolrent-prod-tls

@@ -19,7 +19,7 @@ const ModalAddCategory = ({ open, onClose, onAdded }) => {
         throw new Error('El nombre de la categoría es requerido');
       }
 
-      await api.post(`/categories/`, { name: name.trim() });
+      await api.post(`/api/categories/`, { name: name.trim() });
 
       show({ message: 'Categoría creada exitosamente', severity: 'success' });
       

@@ -217,7 +217,7 @@ const OrdersCreateClient = () => {
                   onCreate={async (payload) => {
                     try {
                       // Use axios api instead of fetch to properly route through interceptors
-                      const res = await api.post('/auth/register', {
+                      const res = await api.post('/api/auth/register', {
                         username: payload.username,
                         name: payload.name,
                         lastName: payload.lastName,
@@ -262,46 +262,50 @@ const OrdersCreateClient = () => {
 
               {/* ClientSearch handles its own scrolling and card grid (hide internal label since header above provides it) */}
               <ClientSearch selected={selected} onSelect={handleClientSelect} reloadKey={clientListReload} hideHeader={true} />
-
-              {/* Dates moved here so they appear under the client list/table */}
-              <div style={{ marginTop: 12, display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha inicio</label>
-                  <input 
-                    type="date" 
-                    value={initDate} 
-                    min={getTodayString()}
-                    onChange={handleInitDateChange}
-                    style={{ padding: '6px 10px', fontSize: 14, borderRadius: 6, border: '1px solid #d1d5db' }}
-                  />
-                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>Mínimo: Hoy</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha retorno</label>
-                  <input 
-                    type="date" 
-                    value={returnDate} 
-                    min={initDate ? (() => {
-                      const minReturn = new Date(initDate + 'T00:00:00');
-                      minReturn.setDate(minReturn.getDate() + 1);
-                      const year = minReturn.getFullYear();
-                      const month = String(minReturn.getMonth() + 1).padStart(2, '0');
-                      const day = String(minReturn.getDate()).padStart(2, '0');
-                      return `${year}-${month}-${day}`;
-                    })() : getTomorrowString()}
-                    onChange={handleReturnDateChange}
-                    style={{ padding: '6px 10px', fontSize: 14, borderRadius: 6, border: '1px solid #d1d5db' }}
-                  />
-                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
-                    Mínimo: {initDate ? 'Inicio + 1 día' : 'Mañana'}
-                  </div>
-                </div>
-              </div>
             </div>
           </section>
 
           <aside style={{ position: 'relative' }}>
-            <div style={{ position: 'sticky', top: 90 }}>
+            <div style={{ position: 'sticky', top: 90, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Dates selector box */}
+              <div style={{ padding: 18, borderRadius: 8, background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', border: '1px solid #eee' }}>
+                <h3 style={{ marginTop: 0, marginBottom: 16 }}>Fechas</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha inicio</label>
+                    <input 
+                      type="date" 
+                      value={initDate} 
+                      min={getTodayString()}
+                      onChange={handleInitDateChange}
+                      style={{ width: '100%', padding: '6px 10px', fontSize: 14, borderRadius: 6, border: '1px solid #d1d5db' }}
+                    />
+                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>Mínimo: Hoy</div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha retorno</label>
+                    <input 
+                      type="date" 
+                      value={returnDate} 
+                      min={initDate ? (() => {
+                        const minReturn = new Date(initDate + 'T00:00:00');
+                        minReturn.setDate(minReturn.getDate() + 1);
+                        const year = minReturn.getFullYear();
+                        const month = String(minReturn.getMonth() + 1).padStart(2, '0');
+                        const day = String(minReturn.getDate()).padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                      })() : getTomorrowString()}
+                      onChange={handleReturnDateChange}
+                      style={{ width: '100%', padding: '6px 10px', fontSize: 14, borderRadius: 6, border: '1px solid #d1d5db' }}
+                    />
+                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+                      Mínimo: {initDate ? 'Inicio + 1 día' : 'Mañana'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Selected client box */}
               <div style={{ padding: 18, borderRadius: 8, background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', border: '1px solid #eee' }}>
                 <h3 style={{ marginTop: 0 }}>Seleccionado</h3>
                 {selected ? (

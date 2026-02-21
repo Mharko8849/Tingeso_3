@@ -11,7 +11,7 @@ const ModalToolStatesList = ({ open, onClose }) => {
   const fetchStates = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/tool-states/');
+      const response = await api.get('/api/tool-states/');
       setStates(response.data);
     } catch (error) {
       console.error("Error fetching tool states", error);

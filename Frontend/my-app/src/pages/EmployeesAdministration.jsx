@@ -252,7 +252,7 @@ const EmployeesAdministration = () => {
               placeholder="Buscar por nombre o email..."
               value={q}
               onChange={(e) => { setQ(e.target.value); setPage(1); }}
-              style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260 }}
+              style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260, backgroundColor: '#ffffff', color: '#000000' }}
             />
             <select
               value={roleFilter}

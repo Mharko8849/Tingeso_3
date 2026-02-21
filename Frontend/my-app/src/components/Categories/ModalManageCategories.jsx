@@ -26,7 +26,7 @@ const ModalManageCategories = ({ open, onClose }) => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/categories/');
+      const response = await api.get('/api/categories/');
       // Una respuesta vacía es válida, no es un error
       setCategories(response.data || []);
     } catch (error) {
@@ -65,7 +65,7 @@ const ModalManageCategories = ({ open, onClose }) => {
     }
 
     try {
-      await api.put(`/categories/${id}`, { name: editingName.trim() });
+      await api.put(`/api/categories/${id}`, { name: editingName.trim() });
       show({ message: 'Categoría actualizada exitosamente', severity: 'success' });
       setEditingId(null);
       setEditingName('');
@@ -83,7 +83,7 @@ const ModalManageCategories = ({ open, onClose }) => {
     }
 
     try {
-      await api.delete(`/categories/${id}`);
+      await api.delete(`/api/categories/${id}`);
       show({ message: 'Categoría eliminada exitosamente', severity: 'success' });
       fetchCategories();
     } catch (error) {

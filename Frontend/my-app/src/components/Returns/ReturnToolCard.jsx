@@ -93,7 +93,7 @@ const ReturnToolCard = ({ item, onStateChange, disabled = false }) => {
           <div style={{ width: 56, height: 56, borderRadius: 8, overflow: 'hidden', background: '#f3f4f6', flexShrink: 0 }}>
             {item.idTool?.imageUrl ? (
               <img
-                src={item.idTool.imageUrl}
+                src={item.idTool.imageUrl.startsWith('http') ? item.idTool.imageUrl : `/images/${item.idTool.imageUrl}`}
                 alt={name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

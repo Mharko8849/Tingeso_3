@@ -113,7 +113,7 @@ const ClientsAdmin = () => {
         rol: form.rol || 'CLIENT',
       };
 
-      const res = await api.post('/auth/register', body);
+      const res = await api.post('/api/auth/register', body);
       const created = res.data;
       
       // backend may return created user or not; attempt to append minimal info
@@ -192,7 +192,7 @@ const ClientsAdmin = () => {
                   placeholder="Buscar por nombre, usuario o email..."
                   value={q}
                   onChange={(e) => { setQ(e.target.value); setPage(1); }}
-                  style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260 }}
+                  style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260, backgroundColor: '#ffffff', color: '#000000' }}
                 />
                 <select
                   value={status}

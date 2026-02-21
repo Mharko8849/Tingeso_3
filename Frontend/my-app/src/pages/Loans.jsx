@@ -77,7 +77,8 @@ const Loans = () => {
     const term = q.toLowerCase();
     return loans.filter((l) => {
       const idStr = String(l.id || '');
-      const clientName = l.client ? ((l.client.name ? `${l.client.name} ${l.client.lastName || ''}` : (l.client.username || l.client.email || ''))) : '';
+      const client = l.idUser;
+      const clientName = client ? ((client.name ? `${client.name} ${client.lastName || ''}` : (client.username || client.email || ''))) : '';
       return idStr.includes(term) || clientName.toLowerCase().includes(term);
     });
   }, [loans, q]);
@@ -109,7 +110,7 @@ const Loans = () => {
               placeholder="Buscar por #pedido o cliente..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260 }}
+              style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260, backgroundColor: '#ffffff', color: '#000000' }}
             />
             <select
               value={status}
@@ -171,7 +172,7 @@ const Loans = () => {
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
                     {filtered.map((l) => {
-                      const client = l.client || l.idUser;
+                      const client = l.idUser;
                       const clientName = client ? (client.name ? `${client.name} ${client.lastName || ''}` : (client.username || client.email)) : '—';
                       
                       return (

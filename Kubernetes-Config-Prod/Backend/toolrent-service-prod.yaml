@@ -93,9 +93,7 @@ spec:
       volumes:
       - name: images-storage
         persistentVolumeClaim:
-          claimName: images-pvc-prod            cpu: "250m"
-          limits:
-            memory: "512Mi"
+          claimName: images-pvc-prod
 
 ---
 
@@ -109,4 +107,4 @@ spec:
     app: toolrent-service-prod
   ports:
   - port: 80       
-    targetPort: 8080 
+    targetPort: 8080

@@ -1,4 +1,5 @@
 import React from 'react';
+import './PaginationBar.css';
 
 /**
  * Reusable pagination bar with Inventory/CategoryListing aesthetics.

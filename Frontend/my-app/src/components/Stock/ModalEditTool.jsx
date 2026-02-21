@@ -16,7 +16,7 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
     if (open) {
       const fetchCategories = async () => {
         try {
-          const response = await api.get('/categories/');
+          const response = await api.get('/api/categories/');
           setCategoriesList(response.data.map(c => c.name));
         } catch (error) {
           console.error('Error fetching categories:', error);

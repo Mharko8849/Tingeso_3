@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import api from '../../services/http-common';
 import Badge from '../Badges/Badge';
 import { statusToBadgeVariant } from '../Badges/statusToBadge';
+import PaginationBar from '../Common/PaginationBar';
 
 const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => {
   const [clients, setClients] = useState([]);
   const [query, setQuery] = useState('');
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(5);
 
   useEffect(() => {
     let mounted = true;
@@ -26,21 +28,28 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
   const filtered = clients.filter((c) => {
     if (!query) return true;
     const s = query.toLowerCase();
-    return (String(c.username||'') + ' ' + String(c.name||'') + ' ' + String(c.lastName||'') + ' ' + String(c.email||'')).toLowerCase().includes(s);
+    return (String(c.username || '') + ' ' + String(c.name || '') + ' ' + String(c.lastName || '') + ' ' + String(c.email || '')).toLowerCase().includes(s);
   });
+
+  // Reset to page 1 when search query changes
+  useEffect(() => { setPage(1); }, [query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   return (
     <div>
       {!hideHeader && <>
         <label>Buscar cliente</label>
-        <input placeholder="buscar por nombre/usuario/email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6 }} />
+        <input placeholder="buscar por nombre/usuario/email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6, backgroundColor: '#ffffff', color: '#000000' }} />
       </>}
       {hideHeader && (
-        <input placeholder="buscar por nombre/usuario/email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6 }} />
+        <input placeholder="buscar por nombre/usuario/email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6, backgroundColor: '#ffffff', color: '#000000' }} />
       )}
 
-  <div style={{ marginTop: 8, maxHeight: 360, overflowY: 'auto', overflowX: 'hidden', border: '1px solid #eee', borderRadius: 6, padding: 10, boxSizing: 'border-box' }}>
-        {/* Column headers aligned with the 4-column card grid */}
+      <div style={{ marginTop: 8, border: '1px solid #eee', borderRadius: 6, padding: 10, boxSizing: 'border-box' }}>
+        {/* Column headers */}
         {filtered.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: '20% 30% 15% 15% 20%', gap: 12, padding: '6px 8px', borderBottom: '1px solid #f1f5f9', marginBottom: 8 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Usuario</div>
@@ -51,9 +60,9 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
           </div>
         )}
 
-        {/* Render one card per row so each card can use the full horizontal space available */}
+        {/* Client cards — only current page */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-          {(filtered.slice(0, visibleCount)).map((c) => {
+          {paged.map((c) => {
             const isSel = selected?.id === c.id;
             return (
               <div
@@ -74,7 +83,6 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
                   gap: 24,
                 }}
               >
-                {/* Card layout: four equal columns (25% each): username+name | email | RUT | Estado */}
                 <div style={{ display: 'grid', gridTemplateColumns: '20% 30% 15% 15% 20%', alignItems: 'center', gap: 12, width: '100%' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 800, fontSize: 18, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -97,7 +105,6 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
-                    {/* Use reusable Badge component for client state */}
                     <Badge
                       variant={statusToBadgeVariant(c.stateClient)}
                       title={c.stateClient || ''}
@@ -112,16 +119,18 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
 
         {filtered.length === 0 && <div style={{ padding: 12, color: '#666' }}>No se encontraron clientes</div>}
 
-        {filtered.length > visibleCount && (
-          <div style={{ marginTop: 10, display: 'flex', justifyContent: 'center' }}>
-            <button className="link" onClick={() => setVisibleCount((v) => v + 20)}>Mostrar más</button>
-          </div>
+        {/* Pagination */}
+        {filtered.length > pageSize && (
+          <PaginationBar
+            page={safePage}
+            pageSize={pageSize}
+            total={filtered.length}
+            onPageChange={setPage}
+            showPageSizeControls={false}
+            showSummary={true}
+          />
         )}
       </div>
-
-      {/* Selection preview removed here because OrdersCreateClient renders a dedicated right-side panel.
-          Keeping selection preview inside the page avoids duplication when the component is used standalone.
-      */}
     </div>
   );
 };
