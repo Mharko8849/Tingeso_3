@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavBar from '../components/Layout/NavBar';
 import UserRegisterForm from '../components/Register/UserRegisterForm';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import BackButton from '../components/Common/BackButton';
 
@@ -59,7 +60,14 @@ const UsersDetails = () => {
     }
   };
 
-  if (loading) return <div className="p-8">Cargando...</div>;
+  if (loading) return (
+    <div className="bg-gray-50 min-h-screen">
+      <NavBar />
+      <main className="px-6" style={{ paddingTop: '90px' }}>
+        <LoadingSpinner message="Cargando..." fullScreen={false} />
+      </main>
+    </div>
+  );
   if (error) return <div className="p-8 text-red-600">{error}</div>;
   if (!user) return <div className="p-8">No se encontró usuario.</div>;
 

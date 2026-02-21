@@ -17,7 +17,7 @@ const KeyboardShortcutsHelp = () => {
   const shortcuts = [
     { key: 'Escape', description: 'Cerrar modal o diálogo abierto' },
     { key: 'Ctrl + Enter', description: 'Enviar formulario activo' },
-    { key: 'Enter', description: 'Guardar cambios en edición inline' },
+    { key: 'Enter', description: 'Guardar cambios en edición' },
     { key: 'Enter', description: 'Buscar en barra de búsqueda' },
   ];
 
@@ -64,7 +64,7 @@ const KeyboardShortcutsHelp = () => {
             <h3 style={{ marginTop: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
               Atajos de Teclado
               <HelpIcon 
-                content="Los atajos de teclado te permiten navegar y realizar acciones más rápidamente sin usar el mouse."
+                content="Navega más rápido sin usar el mouse."
                 position="right"
               />
             </h3>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import { useKeycloak } from '@react-keycloak/web';
 import { getUser } from '../services/auth';
@@ -164,7 +165,7 @@ const ToolDetail = (props) => {
 
       <main className="td-main px-6 pb-12">
         <div className="td-container flex items-center justify-center w-full py-8 min-h-[calc(100vh-70px)]">
-          {loading && <p>Cargando herramienta...</p>}
+          {loading && <LoadingSpinner message="Cargando herramienta..." />}
           {!loading && error && <p style={{ color: 'red' }}>{error}</p>}
 
           {tool && (

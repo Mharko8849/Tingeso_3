@@ -3,6 +3,7 @@ import NavBar from "../components/Layout/NavBar";
 import BackButton from "../components/Common/BackButton";
 import CategoryListing from "../components/Categories/CategoryListing";
 import ModalAddNewTool from "../components/Stock/ModalAddNewTool";
+import LoadingSpinner from "../components/Loading/LoadingSpinner";
 import api from "../services/http-common";
 import { useLocation } from "react-router-dom";
 import { useKeycloak } from "@react-keycloak/web";
@@ -184,7 +185,7 @@ const InventoryPage = ({ category = null }) => {
             </div>
           </div>
 
-          {loading ? <p>Cargando productos...</p> : (
+          {loading ? <LoadingSpinner message="Cargando productos..." /> : (
             <CategoryListing
               tools={products}
               onApplyFilters={applyFilters}

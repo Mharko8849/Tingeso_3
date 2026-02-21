@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import Badge from '../components/Badges/Badge';
 import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
@@ -83,7 +84,7 @@ const LoanSummaryReadOnly = () => {
           </div>
           {error && <p style={{ marginTop: 8, color: '#b91c1c', fontSize: 14 }}>{String(error)}</p>}
           {success && <p style={{ marginTop: 8, color: '#047857', fontSize: 14 }}>{String(success)}</p>}
-          {loading ? <p>Cargando resumen...</p> : (
+          {loading ? <LoadingSpinner message="Cargando resumen..." /> : (
             <div>
               {loan ? (
                 <div style={{ marginTop: 12, display: 'flex', gap: 16 }}>

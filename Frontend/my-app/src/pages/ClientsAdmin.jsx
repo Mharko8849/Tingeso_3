@@ -9,6 +9,7 @@ import Badge from '../components/Badges/Badge';
 import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
 import BackButton from '../components/Common/BackButton';
 import PaginationBar from '../components/Common/PaginationBar';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 
 const ClientsAdmin = () => {
   const { keycloak } = useKeycloak();
@@ -255,7 +256,7 @@ const ClientsAdmin = () => {
                 />
               )}
             </div>
-            {loading && <div>Cargando clientes...</div>}
+            {loading && <LoadingSpinner message="Cargando clientes..." />}
             {error && <div style={{ color: 'red' }}>{error}</div>}
 
             {!loading && !error && (

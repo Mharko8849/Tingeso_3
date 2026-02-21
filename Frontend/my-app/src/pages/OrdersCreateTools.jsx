@@ -4,6 +4,7 @@ import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import CategoryListing from '../components/Categories/CategoryListing';
 import OrderItemsDrawer from '../components/Orders/OrderItemsDrawer';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import TransitionAlert from '../components/Alerts/TransitionAlert';
 
@@ -202,7 +203,7 @@ const OrdersCreateTools = () => {
           </div>
 
           <div style={{ marginTop: 12 }}>
-            {loadingTools ? <div>Cargando herramientas...</div> : (
+            {loadingTools ? <LoadingSpinner message="Cargando herramientas..." /> : (
               <CategoryListing tools={tools} onApplyFilters={fetchTools} initialFilters={filters} toolCardProps={{ showAdd: true, onAdd: addTool, addDisabled: (t) => (t.stock <= 0) || items.some(it => it.id === t.id) }} />
             )}
           </div>

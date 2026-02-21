@@ -8,6 +8,7 @@ import ConfirmDelete from '../components/Common/ConfirmDelete';
 import BackButton from '../components/Common/BackButton';
 import { ReportEmployees } from '../components/Reports';
 import PaginationBar from '../components/Common/PaginationBar';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 
 const EmployeesAdministration = () => {
   const { keycloak } = useKeycloak();
@@ -312,7 +313,7 @@ const EmployeesAdministration = () => {
           )}
 
           <div style={{ marginTop: 12 }}>
-            {loading && <div>Cargando empleados...</div>}
+            {loading && <LoadingSpinner message="Cargando empleados..." />}
             {error && <div style={{ color: 'red' }}>{error}</div>}
 
             {!loading && !error && (

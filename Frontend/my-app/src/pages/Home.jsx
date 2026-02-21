@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import NavBar from "../components/Layout/NavBar";
 import ToolCarousel from "../components/Tools/ToolCarousel";
 import CategoriesGrid from "../components/Categories/CategoriesGrid";
+import LoadingSpinner from "../components/Loading/LoadingSpinner";
 import api from "../services/http-common";
 import { useNavigate } from "react-router-dom";
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import PaginationBar from '../components/Common/PaginationBar';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import Badge from '../components/Badges/Badge';
 import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
@@ -98,7 +99,7 @@ const ReturnsClientLoans = () => {
             />
           )}
           
-          {loading ? <p>Cargando pedidos...</p> : (
+          {loading ? <LoadingSpinner message="Cargando pedidos..." /> : (
             loans.length === 0 && totalElements === 0 ? <p>El cliente no tiene pedidos.</p> : (
               <>
                 <div style={{ marginTop: 12, maxHeight: 520, overflowY: 'auto', width: '100%' }}>

@@ -4,6 +4,7 @@ import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import PaginationBar from '../components/Common/PaginationBar';
 import { HelpIcon } from '../components/Common/Tooltip';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import Badge from '../components/Badges/Badge';
 import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
@@ -92,7 +93,7 @@ const Loans = () => {
               <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                 Pedidos — Todos
                 <HelpIcon 
-                  content="Listado completo de todos los préstamos del sistema. ACTIVO: préstamo en curso. FINALIZADO: préstamo completado. PENDIENTE: esperando confirmación. ATRASADO: fecha de devolución vencida."
+                  content="Activo • Finalizado • Pendiente • Atrasado"
                   position="right"
                 />
               </h2>
@@ -144,7 +145,7 @@ const Loans = () => {
 
           {error && <div style={{ color: '#b91c1c', marginTop: 8 }}>{error}</div>}
 
-          {loading ? <p style={{ marginTop: 12 }}>Cargando pedidos...</p> : (
+          {loading ? <LoadingSpinner message="Cargando pedidos..." /> : (
             <>
               <PaginationBar
                 page={page + 1}

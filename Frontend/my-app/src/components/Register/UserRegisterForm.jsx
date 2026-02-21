@@ -213,7 +213,7 @@ const UserRegisterForm = ({
         <div className="input-group">
           <label>
             Email{' '}
-            <HelpIcon content="Ingresa un correo electrónico válido. Lo usarás para iniciar sesión." position="right" />
+            <HelpIcon content="Correo para iniciar sesión." position="right" />
           </label>
           <div className="input-with-icon">
             <span className="icon" aria-hidden>{ICONS.EMAIL}</span>
@@ -247,7 +247,7 @@ const UserRegisterForm = ({
         <div className="input-group">
           <label>
             RUT{' '}
-            <HelpIcon content="Ingresa tu RUT chileno en formato XX.XXX.XXX-X o sin puntos." position="right" />
+            <HelpIcon content="Formato: XX.XXX.XXX-X" position="right" />
           </label>
           <div className="input-with-icon">
             <span className="icon" aria-hidden>{ICONS.ID_CARD}</span>

@@ -5,6 +5,7 @@ import { default as ReportKardex } from '../components/Reports/ReportKardex';
 import { default as ReportRanking } from '../components/Reports/ReportRanking';
 import PaginationBar from '../components/Common/PaginationBar';
 import { HelpIcon } from '../components/Common/Tooltip';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import { useAlert } from '../components/Alerts/useAlert';
 
@@ -172,7 +173,7 @@ const KardexPage = () => {
               <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                 Kardex — Movimientos
                 <HelpIcon 
-                  content="El Kardex es un registro contable que permite controlar el inventario de manera detallada. Registra todas las entradas, salidas y ajustes de herramientas con información de empleados, fechas y montos."
+                  content="Kardex es el registro completo del inventario: entradas, salidas y ajustes."
                   position="right"
                 />
               </h2>
@@ -245,7 +246,7 @@ const KardexPage = () => {
               <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 Tipo de Movimiento
                 <HelpIcon 
-                  content="PRÉSTAMO: salida de herramienta al cliente. DEVOLUCIÓN: retorno de herramienta. INGRESO: nueva herramienta al inventario. BAJA: herramienta retirada del sistema. REPARACIÓN: herramienta en mantenimiento. PAGO: registro de pago de deuda o reparación."
+                  content="Préstamo • Devolución • Ingreso • Baja • Reparación • Pago"
                   position="bottom"
                 />
               </span>
@@ -279,7 +280,7 @@ const KardexPage = () => {
           </div>
 
           {loading ? (
-            <p>Cargando movimientos...</p>
+            <LoadingSpinner message="Cargando movimientos..." />
           ) : (
             <div style={{ overflowX: 'auto', background: '#fff', borderRadius: 8, padding: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
               {error && <div style={{ color: '#b91c1c', marginBottom: 8 }}>{error}</div>}

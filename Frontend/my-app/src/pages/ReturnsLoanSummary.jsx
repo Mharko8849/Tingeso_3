@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import ReturnToolCard from '../components/Returns/ReturnToolCard';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import Badge from '../components/Badges/Badge';
 import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
@@ -83,7 +84,7 @@ const ReturnsLoanSummary = () => {
               <BackButton to={`/admin/returns/client/${loan?.idUser?.id || ''}`} />
             </div>
           </div>
-          {loading ? <p>Cargando resumen...</p> : (
+          {loading ? <LoadingSpinner message="Cargando resumen..." /> : (
             <div>
               {loan ? (
                 <div style={{ marginTop: 12, display: 'flex', gap: 16 }}>

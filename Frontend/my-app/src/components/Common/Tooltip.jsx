@@ -42,19 +42,110 @@ const Tooltip = ({ text, children, position = 'top', maxWidth = '250px' }) => {
  */
 export const HelpIcon = ({ content, position = 'right' }) => {
   const [visible, setVisible] = useState(false);
+  const [actualPosition, setActualPosition] = useState(position);
+  const [tooltipStyle, setTooltipStyle] = useState({});
+  const iconRef = React.useRef(null);
+
+  const handleMouseEnter = () => {
+    setVisible(true);
+    
+    // Smart positioning: adjust based on viewport space
+    if (iconRef.current) {
+      const rect = iconRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      let newPosition = position;
+      let style = {};
+      
+      // Calculate fixed position based on icon location
+      const gap = 8;
+      
+      // Check if there's space on the right
+      if (position === 'right' && rect.right > viewportWidth - 250) {
+        newPosition = 'left';
+        style = {
+          top: `${rect.top + rect.height / 2}px`,
+          right: `${viewportWidth - rect.left + gap}px`,
+          transform: 'translateY(-50%)'
+        };
+      } else if (position === 'right') {
+        style = {
+          top: `${rect.top + rect.height / 2}px`,
+          left: `${rect.right + gap}px`,
+          transform: 'translateY(-50%)'
+        };
+      }
+      
+      // Check if there's space on the left
+      if (position === 'left' && rect.left < 250) {
+        newPosition = 'right';
+        style = {
+          top: `${rect.top + rect.height / 2}px`,
+          left: `${rect.right + gap}px`,
+          transform: 'translateY(-50%)'
+        };
+      } else if (position === 'left') {
+        style = {
+          top: `${rect.top + rect.height / 2}px`,
+          right: `${viewportWidth - rect.left + gap}px`,
+          transform: 'translateY(-50%)'
+        };
+      }
+      
+      // Check if there's space on bottom
+      if (position === 'bottom' && rect.bottom > viewportHeight - 100) {
+        newPosition = 'top';
+        style = {
+          bottom: `${viewportHeight - rect.top + gap}px`,
+          left: `${rect.left + rect.width / 2}px`,
+          transform: 'translateX(-50%)'
+        };
+      } else if (position === 'bottom') {
+        style = {
+          top: `${rect.bottom + gap}px`,
+          left: `${rect.left + rect.width / 2}px`,
+          transform: 'translateX(-50%)'
+        };
+      }
+      
+      // Check if there's space on top
+      if (position === 'top' && rect.top < 100) {
+        newPosition = 'bottom';
+        style = {
+          top: `${rect.bottom + gap}px`,
+          left: `${rect.left + rect.width / 2}px`,
+          transform: 'translateX(-50%)'
+        };
+      } else if (position === 'top') {
+        style = {
+          bottom: `${viewportHeight - rect.top + gap}px`,
+          left: `${rect.left + rect.width / 2}px`,
+          transform: 'translateX(-50%)'
+        };
+      }
+      
+      setActualPosition(newPosition);
+      setTooltipStyle(style);
+    }
+  };
 
   return (
     <span 
+      ref={iconRef}
       className="help-icon"
-      onMouseEnter={() => setVisible(true)}
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setVisible(false)}
       aria-label="Ayuda"
     >
       ?
       {visible && content && (
-        <span className={`tooltip-content tooltip-${position}`} style={{ maxWidth: '280px' }}>
+        <span 
+          className={`tooltip-content tooltip-fixed tooltip-${actualPosition}`}
+          style={tooltipStyle}
+        >
           {content}
-          <span className={`tooltip-arrow tooltip-arrow-${position}`} />
+          <span className={`tooltip-arrow tooltip-arrow-${actualPosition}`} />
         </span>
       )}
     </span>
