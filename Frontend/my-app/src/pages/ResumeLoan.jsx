@@ -15,18 +15,18 @@ const ResumeLoan = () => {
   const [dateError, setDateError] = useState('');
   const [total, setTotal] = useState(0);
   const [countdown, setCountdown] = useState(null);
-  
-    const isDatesValid = () => {
-        if (!initDate || !returnDate) return false;
-        try {
-          const dInit = new Date(initDate);
-          const dRet = new Date(returnDate);
-          const minDiff = 24 * 60 * 60 * 1000;
-          return (dRet.getTime() - dInit.getTime()) >= minDiff;
-        } catch (e) {
-          return false;
-        }
-    };
+
+  const isDatesValid = () => {
+    if (!initDate || !returnDate) return false;
+    try {
+      const dInit = new Date(initDate);
+      const dRet = new Date(returnDate);
+      const minDiff = 24 * 60 * 60 * 1000;
+      return (dRet.getTime() - dInit.getTime()) >= minDiff;
+    } catch (e) {
+      return false;
+    }
+  };
 
   // derived validation flag used to enable/disable the Confirm button
   const datesValid = isDatesValid();
@@ -54,21 +54,21 @@ const ResumeLoan = () => {
       if (raw) {
         const data = JSON.parse(raw);
         setResume(data);
-        
+
         // Load dates from sessionStorage (saved in OrdersCreateClient)
         const savedInitDate = sessionStorage.getItem('order_init_date');
         const savedReturnDate = sessionStorage.getItem('order_return_date');
-        
+
         if (savedInitDate && savedReturnDate) {
           setInitDate(savedInitDate);
           setReturnDate(savedReturnDate);
         } else {
           // Fallback: sensible defaults
           const today = new Date();
-          const iso = d => d.toISOString().slice(0,10);
+          const iso = d => d.toISOString().slice(0, 10);
           const init = iso(today);
           setInitDate(init);
-          const plus1 = new Date(today.getTime() + 1*24*60*60*1000);
+          const plus1 = new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000);
           setReturnDate(iso(plus1));
         }
       }
@@ -78,25 +78,34 @@ const ResumeLoan = () => {
   }, []);
 
   const calcTotal = () => {
-    if (total && Number(total) > 0) return Number(total);
     if (!resume || !Array.isArray(resume.items)) return 0;
-    return resume.items.reduce((s,it) => s + (Number(it.price || 0) * Number(it.qty || 1)), 0);
+
+    // Calculate difference in days
+    let days = 1;
+    if (initDate && returnDate) {
+      const dInit = new Date(initDate);
+      const dReturn = new Date(returnDate);
+      const diffMs = dReturn.getTime() - dInit.getTime();
+      days = Math.max(1, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+    }
+
+    return resume.items.reduce((s, it) => s + (Number(it.price || 0) * Number(it.qty || 1) * days), 0);
   };
 
   const confirmAndCreate = async () => {
     if (!resume || !resume.client || !resume.items || resume.items.length === 0) {
-      setAlert({ 
-        severity: 'error', 
-        message: 'Faltan datos del pedido. Verifica que hayas seleccionado un cliente y agregado herramientas. Regresa al paso anterior para completar la información.' 
+      setAlert({
+        severity: 'error',
+        message: 'Faltan datos del pedido. Verifica que hayas seleccionado un cliente y agregado herramientas. Regresa al paso anterior para completar la información.'
       });
       return;
     }
-    if (!initDate || !returnDate) { 
-      setAlert({ 
-        severity: 'error', 
+    if (!initDate || !returnDate) {
+      setAlert({
+        severity: 'error',
         message: 'Debes seleccionar ambas fechas: inicio y devolución. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.'
-      }); 
-      return; 
+      });
+      return;
     }
 
     // Validate dates: returnDate must be at least one day after initDate
@@ -105,17 +114,17 @@ const ResumeLoan = () => {
     const diffMs = dReturn.getTime() - dInit.getTime();
     const minDiff = 24 * 60 * 60 * 1000; // 1 day
     if (diffMs < minDiff) {
-      setAlert({ 
-        severity: 'error', 
+      setAlert({
+        severity: 'error',
         message: 'La fecha de devolución debe ser al menos 1 día después de la fecha inicial. Ajusta las fechas e intenta nuevamente.'
       });
       return;
     }
-    
+
     // Final validation: ensure dates are valid before sending
     if (!isDatesValid()) {
-      setAlert({ 
-        severity: 'error', 
+      setAlert({
+        severity: 'error',
         message: 'Fechas inválidas. La fecha inicial debe ser hoy y la devolución al menos 1 día después. Verifica las fechas seleccionadas.'
       });
       return;
@@ -166,17 +175,17 @@ const ResumeLoan = () => {
       sessionStorage.removeItem('order_items');
       sessionStorage.removeItem('order_init_date');
       sessionStorage.removeItem('order_return_date');
-      
+
       setAlert({ severity: 'success', message: 'Pedido creado y herramientas prestadas correctamente. Redirigiendo al inicio en 5...' });
       setCountdown(5);
-      
+
     } catch (e) {
       console.error('Error creating order', e?.response?.data || e.message || e);
       const backendMsg = e?.response?.data && (e.response.data.error || e.response.data.message || e.response.data);
-      
+
       // Enhanced error message with recovery suggestions
       let errorMsg = backendMsg || e.message || 'Error al crear el pedido.';
-      
+
       // Add recovery suggestions based on error type
       if (e?.response?.status === 409) {
         errorMsg += ' Una o más herramientas ya están prestadas. Verifica el inventario e intenta con otras herramientas.';
@@ -189,7 +198,7 @@ const ResumeLoan = () => {
       } else if (!e?.response) {
         errorMsg = 'No se pudo conectar con el servidor. Verifica tu conexión a internet e intenta nuevamente.';
       }
-      
+
       setAlert({ severity: 'error', message: errorMsg });
     } finally {
       setCreating(false);
@@ -238,18 +247,29 @@ const ResumeLoan = () => {
             <section style={{ flex: 1, background: '#fff', padding: 12, borderRadius: 8, border: '1px solid #e6e6e6' }}>
               <h4>Items</h4>
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {resume.items.map(it => (
-                  <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 8, borderRadius: 6, background: '#fafafa' }}>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <img src={it.image || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80'} alt={it.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 6 }} />
-                      <div>
-                        <div style={{ fontWeight: 700 }}>{it.name}</div>
-                        <div style={{ color: '#64748b' }}>Cantidad: {it.qty}</div>
+                {resume.items.map(it => {
+                  let diasArriendo = 1;
+                  if (initDate && returnDate) {
+                    const d1 = new Date(initDate);
+                    const d2 = new Date(returnDate);
+                    const diff = d2.getTime() - d1.getTime();
+                    diasArriendo = Math.max(1, Math.ceil(diff / (24 * 60 * 60 * 1000)));
+                  }
+                  return (
+                    <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 8, borderRadius: 6, background: '#fafafa' }}>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <img src={it.image || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80'} alt={it.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 6 }} />
+                        <div>
+                          <div style={{ fontWeight: 700 }}>{it.name}</div>
+                          <div style={{ color: '#64748b', fontSize: 13 }}>
+                            {it.qty} unidad{it.qty > 1 ? 'es' : ''} × {(it.price || 0).toLocaleString()} c/u × {diasArriendo} día{diasArriendo > 1 ? 's' : ''}
+                          </div>
+                        </div>
                       </div>
+                      <div style={{ fontWeight: 700 }}>${(Number(it.price || 0) * Number(it.qty || 1) * diasArriendo).toLocaleString()}</div>
                     </div>
-                    <div style={{ fontWeight: 700 }}>${(Number(it.price || 0) * Number(it.qty || 1)).toLocaleString()}</div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -260,8 +280,8 @@ const ResumeLoan = () => {
               <div style={{ marginTop: 16 }}>
                 <label>Fecha inicio: <input type="date" value={initDate} min={initDate} disabled /></label>
                 <label style={{ marginLeft: 12 }}>Fecha retorno: <input type="date" value={returnDate} min={(() => {
-                    try { const d = new Date(initDate); d.setDate(d.getDate() + 1); return d.toISOString().slice(0,10); } catch(e) { return '' }
-                  })()} disabled /></label>
+                  try { const d = new Date(initDate); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); } catch (e) { return '' }
+                })()} disabled /></label>
                 {dateError && <div style={{ color: '#b91c1c', marginTop: 6 }}>{dateError}</div>}
               </div>
 

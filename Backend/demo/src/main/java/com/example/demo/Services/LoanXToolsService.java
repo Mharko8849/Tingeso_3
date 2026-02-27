@@ -179,6 +179,7 @@ public class LoanXToolsService {
         if (!ret.isAfter(init)) {
             throw new RuntimeException("La fecha ingresada es inválida. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
         }
+        long days = java.time.temporal.ChronoUnit.DAYS.between(init, ret);
 
         // Availability
         if (!inventoryService.isAvailableTool(tool)) {
@@ -194,7 +195,7 @@ public class LoanXToolsService {
         LoanXToolsEntity lxt = new LoanXToolsEntity();
         lxt.setIdLoan(loan);
         lxt.setIdTool(tool);
-        lxt.setDebt((int) tool.getPriceRent());
+        lxt.setDebt((int) (tool.getPriceRent() * days));
         lxt.setFine(0);
         lxt.setNeedRepair(false);
 

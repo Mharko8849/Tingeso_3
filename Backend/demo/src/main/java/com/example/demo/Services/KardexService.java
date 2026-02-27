@@ -114,10 +114,7 @@ public class KardexService {
             kardexList = kardexList.stream()
                     .filter(kardex -> {
                         if (kardex.getDate() == null) return false;
-                        // Compare only the date part (ignore time)
-                        String kardexDateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(kardex.getDate());
-                        String initDateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(initDate);
-                        return kardexDateStr.compareTo(initDateStr) >= 0;
+                        return !kardex.getDate().before(initDate);
                     })
                     .toList();
         }
@@ -126,10 +123,7 @@ public class KardexService {
             kardexList = kardexList.stream()
                     .filter(kardex -> {
                         if (kardex.getDate() == null) return false;
-                        // Compare only the date part (ignore time)
-                        String kardexDateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(kardex.getDate());
-                        String finalDateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(finalDate);
-                        return kardexDateStr.compareTo(finalDateStr) <= 0;
+                        return !kardex.getDate().after(finalDate);
                     })
                     .toList();
         }

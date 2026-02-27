@@ -4,12 +4,13 @@ import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Locale;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping({"/api/auth", "/auth"})
 @CrossOrigin("*")
 public class AuthController {
 
@@ -33,7 +34,7 @@ public class AuthController {
     }
 
     /**
-     * Registro de Empleado (solo Admin)
+     * Registro de Empleado (solo Admin o SuperAdmin)
      */
     @PostMapping("/register/employee")
     public ResponseEntity<?> registerEmployee(@RequestBody UserEntity user) {

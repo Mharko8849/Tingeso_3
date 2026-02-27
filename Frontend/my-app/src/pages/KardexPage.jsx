@@ -115,16 +115,26 @@ const KardexPage = () => {
     if (typeFilter && String(m.type || '').toUpperCase() !== String(typeFilter).toUpperCase()) return false;
 
     // Apply date range filter client-side if provided
-    // m.date may include time; treat dateFrom as start of day and dateTo as end of day
-    if (dateFrom) {
-      const start = new Date(dateFrom + 'T00:00:00');
-      const md = m.date ? new Date(m.date) : null;
-      if (!md || md < start) return false;
+    // Extract YYYY-MM-DD robustly for comparison directly to dateFrom/dateTo strings
+    let mDateStr = m.date;
+    if (mDateStr) {
+      if (mDateStr.includes('T')) {
+        mDateStr = mDateStr.split('T')[0];
+      } else {
+        try {
+          // Si es un ISO completo, sacar solo la fecha local
+          mDateStr = new Date(m.date).toISOString().split('T')[0];
+        } catch (e) {
+          mDateStr = m.date;
+        }
+      }
     }
-    if (dateTo) {
-      const end = new Date(dateTo + 'T23:59:59.999');
-      const md = m.date ? new Date(m.date) : null;
-      if (!md || md > end) return false;
+
+    if (dateFrom && mDateStr) {
+      if (mDateStr < dateFrom) return false;
+    }
+    if (dateTo && mDateStr) {
+      if (mDateStr > dateTo) return false;
     }
 
     if (!q) return true;
@@ -172,7 +182,7 @@ const KardexPage = () => {
             <div>
               <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                 Kardex — Movimientos
-                <HelpIcon 
+                <HelpIcon
                   content="Kardex es el registro completo del inventario: entradas, salidas y ajustes."
                   position="right"
                 />
@@ -204,8 +214,8 @@ const KardexPage = () => {
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M21 4v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M21 4v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   Refrescar
                 </button>
@@ -245,7 +255,7 @@ const KardexPage = () => {
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 Tipo de Movimiento
-                <HelpIcon 
+                <HelpIcon
                   content="Préstamo • Devolución • Ingreso • Baja • Reparación • Pago"
                   position="bottom"
                 />
@@ -271,10 +281,10 @@ const KardexPage = () => {
               </select>
             </div>
 
-            <ReportRanking 
-              dateFrom={dateFrom} 
-              dateTo={dateTo} 
-              label="Generar Reporte Ranking (CSV)" 
+            <ReportRanking
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              label="Generar Reporte Ranking (CSV)"
               className="secondary-cta"
             />
           </div>
@@ -295,15 +305,15 @@ const KardexPage = () => {
               />
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                    <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
-                      <th style={{ padding: '8px 12px' }}>Fecha</th>
-                      <th style={{ padding: '8px 12px' }}>Empleado (ID)</th>
-                      <th style={{ padding: '8px 12px' }}>Herramienta (ID - Nombre)</th>
-                      <th style={{ padding: '8px 12px' }}>Usuario</th>
-                      <th style={{ padding: '8px 12px' }}>Tipo de Movimiento</th>
-                      <th style={{ padding: '8px 12px' }}>Cantidad</th>
-                      <th style={{ padding: '8px 12px' }}>Monto</th>
-                    </tr>
+                  <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
+                    <th style={{ padding: '8px 12px' }}>Fecha</th>
+                    <th style={{ padding: '8px 12px' }}>Empleado (ID)</th>
+                    <th style={{ padding: '8px 12px' }}>Herramienta (ID - Nombre)</th>
+                    <th style={{ padding: '8px 12px' }}>Usuario</th>
+                    <th style={{ padding: '8px 12px' }}>Tipo de Movimiento</th>
+                    <th style={{ padding: '8px 12px' }}>Cantidad</th>
+                    <th style={{ padding: '8px 12px' }}>Monto</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (

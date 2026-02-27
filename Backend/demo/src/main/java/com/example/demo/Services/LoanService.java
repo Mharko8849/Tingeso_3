@@ -221,6 +221,7 @@ public class LoanService {
         if (!ret.isAfter(init)) {
             throw new RuntimeException("La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
         }
+        long days = java.time.temporal.ChronoUnit.DAYS.between(init, ret);
 
         // Crear LoanXTools para cada herramienta
         int i = 0;
@@ -249,7 +250,7 @@ public class LoanService {
             LoanXToolsEntity lxt = new LoanXToolsEntity();
             lxt.setIdLoan(loan);
             lxt.setIdTool(tool);
-            lxt.setDebt((int) tool.getPriceRent());
+            lxt.setDebt((int) (tool.getPriceRent() * days));
             lxt.setFine(0);
             lxt.setNeedRepair(false);
             loanXToolsRepository.save(lxt);

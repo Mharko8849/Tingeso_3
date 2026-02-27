@@ -47,10 +47,10 @@ const OrdersCreateClient = () => {
   const handleClientSelect = (client) => {
     // Validar si el cliente está restringido
     if (client && client.stateClient === 'RESTRINGIDO') {
-      show({ 
-        severity: 'error', 
+      show({
+        severity: 'error',
         message: 'El usuario seleccionado se encuentra actualmente restringido.',
-        autoHideMs: 4500 
+        autoHideMs: 4500
       });
       return; // No permitir la selección
     }
@@ -74,7 +74,7 @@ const OrdersCreateClient = () => {
           sessionStorage.removeItem('order_resume');
           sessionStorage.removeItem('order_loan_id'); // No loan ID yet
         } catch (e) { console.warn('sessionStorage not available', e); }
-        
+
         // Navigate to tools step
         navigate('/admin/orders/create/tools');
       } catch (e) {
@@ -91,7 +91,7 @@ const OrdersCreateClient = () => {
     try {
       setInitDate(getTodayString());
       setReturnDate(getTomorrowString());
-    } catch(e) { /* ignore */ }
+    } catch (e) { /* ignore */ }
   }, []);
 
   const isDatesValid = () => {
@@ -99,8 +99,8 @@ const OrdersCreateClient = () => {
     try {
       const dInit = new Date(initDate);
       const dRet = new Date(returnDate);
-      return dRet.getTime() - dInit.getTime() >= 24*60*60*1000;
-    } catch(e) { return false; }
+      return dRet.getTime() - dInit.getTime() >= 24 * 60 * 60 * 1000;
+    } catch (e) { return false; }
   };
 
   // Helper: Get today's date in YYYY-MM-DD format (LOCAL timezone, not UTC)
@@ -126,14 +126,14 @@ const OrdersCreateClient = () => {
   const handleInitDateChange = (e) => {
     const selectedDate = e.target.value;
     const today = getTodayString();
-    
+
     // Si selecciona fecha pasada, establecer hoy
     if (selectedDate < today) {
       setInitDate(today);
       show({ severity: 'warning', message: 'No puedes seleccionar una fecha pasada. Se estableció la fecha de hoy.' });
     } else {
       setInitDate(selectedDate);
-      
+
       // Si la fecha de retorno ahora es anterior o igual a la de inicio, ajustarla
       if (returnDate <= selectedDate) {
         const newReturn = new Date(selectedDate + 'T00:00:00');
@@ -150,7 +150,7 @@ const OrdersCreateClient = () => {
 
   const handleReturnDateChange = (e) => {
     const selectedDate = e.target.value;
-    
+
     // La fecha de retorno debe ser al menos 1 día después de la de inicio
     if (!initDate) {
       // Si no hay fecha de inicio, establecer defaults
@@ -160,7 +160,7 @@ const OrdersCreateClient = () => {
       show({ severity: 'info', message: 'Se establecieron fechas por defecto.' });
       return;
     }
-    
+
     // Si selecciona fecha anterior o igual a la de inicio, ajustar a inicio + 1 día
     if (selectedDate <= initDate) {
       const minReturn = new Date(initDate + 'T00:00:00');
@@ -200,7 +200,7 @@ const OrdersCreateClient = () => {
                 <label style={{ fontSize: 16, fontWeight: 700 }}>Buscar cliente</label>
                 <div>
                   <button onClick={() => setShowRegister((s) => !s)} className="primary-cta" type="button">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5z" fill="#fff"/></svg>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5z" fill="#fff" /></svg>
                     <span style={{ marginLeft: 8 }}>Añadir Cliente</span>
                   </button>
                 </div>
@@ -234,22 +234,22 @@ const OrdersCreateClient = () => {
                       setSelected(toAppend);
                       // trigger client list reload so ClientSearch refetches and shows the new client
                       setClientListReload((s) => s + 1);
-                      try { 
-                        sessionStorage.setItem('order_selected_client', JSON.stringify(toAppend)); 
+                      try {
+                        sessionStorage.setItem('order_selected_client', JSON.stringify(toAppend));
                         // clear any previous pending order data
                         sessionStorage.removeItem('order_items');
                         sessionStorage.removeItem('order_resume');
                         sessionStorage.removeItem('order_loan_id');
-                      } catch (e) {}
+                      } catch (e) { }
                       setShowRegister(false);
                       show({ severity: 'success', message: 'La cuenta ha sido registrada exitosamente.' });
                     } catch (e) {
                       // Show user-friendly error message instead of HTML
-                      const errorMessage = e?.response?.data?.error 
-                        || e?.response?.data?.message 
-                        || e?.message 
+                      const errorMessage = e?.response?.data?.error
+                        || e?.response?.data?.message
+                        || e?.message
                         || 'No se pudo crear el cliente. Por favor verifica los datos e intenta nuevamente.';
-                      
+
                       console.error('Error creating client:', e);
                       setShowRegister(true);
                       show({ severity: 'error', message: errorMessage });
@@ -273,9 +273,9 @@ const OrdersCreateClient = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha inicio</label>
-                    <input 
-                      type="date" 
-                      value={initDate} 
+                    <input
+                      type="date"
+                      value={initDate}
                       min={getTodayString()}
                       onChange={handleInitDateChange}
                       style={{ width: '100%', padding: '6px 10px', fontSize: 14, borderRadius: 6, border: '1px solid #d1d5db' }}
@@ -284,9 +284,9 @@ const OrdersCreateClient = () => {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha retorno</label>
-                    <input 
-                      type="date" 
-                      value={returnDate} 
+                    <input
+                      type="date"
+                      value={returnDate}
                       min={initDate ? (() => {
                         const minReturn = new Date(initDate + 'T00:00:00');
                         minReturn.setDate(minReturn.getDate() + 1);
@@ -325,7 +325,7 @@ const OrdersCreateClient = () => {
                           sessionStorage.removeItem('order_items');
                           sessionStorage.removeItem('order_loan_id');
                           sessionStorage.removeItem('order_resume');
-                        } catch (e) {}
+                        } catch (e) { }
                       }}>Deseleccionar</button>
                       <button className="primary-cta" onClick={handleNext} disabled={!selected || creating || !isDatesValid()}>{creating ? 'Creando...' : 'Siguiente'}</button>
                     </div>
@@ -334,7 +334,7 @@ const OrdersCreateClient = () => {
                   <div style={{ color: '#666' }}>
                     No hay cliente seleccionado
 
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
                       <button className="link" onClick={goBack}>Cancelar</button>
                       <button className="primary-cta" onClick={handleNext} disabled={!selected || creating || !isDatesValid()}>{creating ? 'Creando...' : 'Siguiente'}</button>
                     </div>

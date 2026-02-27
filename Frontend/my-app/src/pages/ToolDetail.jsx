@@ -27,7 +27,7 @@ const ToolDetail = (props) => {
 
   const { keycloak, initialized } = useKeycloak();
   const user = getUser();
-  const { show } = useAlert();
+  const { showAlert } = useAlert();
 
   let rolesRaw = [];
   if (initialized && keycloak.authenticated && keycloak.tokenParsed && keycloak.tokenParsed.realm_access) {
@@ -35,7 +35,7 @@ const ToolDetail = (props) => {
   } else if (user && user.realm_access && Array.isArray(user.realm_access.roles)) {
     rolesRaw = user.realm_access.roles;
   }
-
+  
   const roles = rolesRaw.map((r) => String(r).toUpperCase());
   const isInternalUser =
     roles.includes('EMPLOYEE') || roles.includes('ADMIN') || roles.includes('SUPERADMIN');
@@ -46,21 +46,10 @@ const ToolDetail = (props) => {
     if (!id) return;
     setLoading(true);
     try {
-      // Try inventory first to get stock info
+      // There is no GET /api/tool/{id}. Use inventory filter to fetch a tool by id.
       const res = await api.get('/api/inventory/filter', { params: { idTool: id } });
       const arr = res.data || [];
-      let t = (arr[0] && arr[0].idTool) || null;
-
-      // If inventory returns empty, fall back to the tool endpoint directly
-      if (!t || !t.id) {
-        try {
-          const toolsRes = await api.get('/api/tool/');
-          const allTools = toolsRes.data || [];
-          t = allTools.find(tool => String(tool.id) === String(id)) || null;
-        } catch (toolErr) {
-          console.error('Failed to load tool from /api/tool/', toolErr);
-        }
-      }
+      const t = (arr[0] && arr[0].idTool) || {};
 
       if (!t || !t.id) {
         setTool(null);
@@ -165,7 +154,7 @@ const ToolDetail = (props) => {
       image: updated.imageUrl ? `/images/${updated.imageUrl}` : tool?.image,
     };
     setTool(mapped);
-    show({ message: 'Se ha guardado el cambio correctamente', severity: 'success', autoHideMs: 3500 });
+    showAlert('Se ha guardado el cambio correctamente', 'success');
   };
 
   const DEFAULT_IMAGE = '/images/NoImage.png';
@@ -238,17 +227,17 @@ const ToolDetail = (props) => {
                       const stateName = state.state;
                       const isDisponible = stateName === 'DISPONIBLE';
                       const showRow = isDisponible || isInternalUser;
-
+                      
                       if (!showRow) return null;
 
                       return (
                         <div className="td-stock-row" key={stateName}>
-                          <span
-                            style={{
+                          <span 
+                            style={{ 
                               display: 'inline-block',
-                              width: '16px',
-                              height: '16px',
-                              borderRadius: '50%',
+                              width: '16px', 
+                              height: '16px', 
+                              borderRadius: '50%', 
                               backgroundColor: state.color || '#6b7280',
                               boxShadow: `0 0 6px ${state.color || '#6b7280'}80`,
                               verticalAlign: 'middle'
@@ -268,12 +257,12 @@ const ToolDetail = (props) => {
                   {canEdit && (
                     <>
                       <button onClick={() => setShowAddStock(true)} type="button" className="td-quote inline-flex items-center gap-5 px-4 py-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         <span>Añadir Stock</span>
                       </button>
 
                       <button onClick={() => setShowEditTool(true)} type="button" className="td-quote inline-flex items-center gap-5 px-4 py-2">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#fff" /><path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#fff" /></svg>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#fff"/><path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#fff"/></svg>
                         <span>Editar Producto</span>
                       </button>
                     </>

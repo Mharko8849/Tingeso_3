@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/loantool")
+@RequestMapping({"/api/loantool", "/loantool"})
 @CrossOrigin("*")
 public class LoanXToolsController {
 

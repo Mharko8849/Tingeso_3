@@ -18,7 +18,7 @@ const Loans = () => {
   const [error, setError] = useState(null);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState(''); // '', ACTIVO, FINALIZADO, PENDIENTE, ATRASADO
-  
+
   // Pagination states
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(8);
@@ -30,16 +30,16 @@ const Loans = () => {
     setError(null);
     try {
       const params = { page, size: pageSize };
-      
+
       let endpoint = '/api/loan/paginated';
       if (status) {
         endpoint = '/api/loan/filter/paginated';
         params.state = status;
       }
-      
+
       const res = await api.get(endpoint, { params });
       const data = res.data;
-      
+
       // Extract pagination data from PageResponseDTO
       setLoans(Array.isArray(data.content) ? data.content : []);
       setTotalElements(data.totalElements || 0);
@@ -77,9 +77,17 @@ const Loans = () => {
     const term = q.toLowerCase();
     return loans.filter((l) => {
       const idStr = String(l.id || '');
-      const client = l.idUser;
-      const clientName = client ? ((client.name ? `${client.name} ${client.lastName || ''}` : (client.username || client.email || ''))) : '';
-      return idStr.includes(term) || clientName.toLowerCase().includes(term);
+
+      // Support both DTO format (clientName) and Entity format (idUser fallback)
+      let clientNameStr = '';
+      if (l.clientName || l.username || l.clientEmail) {
+        clientNameStr = l.clientName ? l.clientName.trim() : (l.username || l.clientEmail || '');
+      } else if (l.idUser) {
+        const client = l.idUser;
+        clientNameStr = client.name ? `${client.name} ${client.lastName || ''}` : (client.username || client.email || '');
+      }
+
+      return idStr.includes(term) || clientNameStr.toLowerCase().includes(term);
     });
   }, [loans, q]);
 
@@ -93,7 +101,7 @@ const Loans = () => {
             <div>
               <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                 Pedidos — Todos
-                <HelpIcon 
+                <HelpIcon
                   content="Activo • Finalizado • Pendiente • Atrasado"
                   position="right"
                 />
@@ -109,7 +117,16 @@ const Loans = () => {
             <input
               placeholder="Buscar por #pedido o cliente..."
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => {
+                setQ(e.target.value);
+                setPage(0);
+              }}
+              onKeyDown={(e) => {
+                // Redundant enter press as requested to ensure manual sync
+                if (e.key === 'Enter') {
+                  setPage(0);
+                }
+              }}
               style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db', minWidth: 260, backgroundColor: '#ffffff', color: '#000000' }}
             />
             <select
@@ -136,8 +153,8 @@ const Loans = () => {
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M21 4v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M21 4v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Refrescar
             </button>
@@ -172,9 +189,14 @@ const Loans = () => {
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
                     {filtered.map((l) => {
-                      const client = l.idUser;
-                      const clientName = client ? (client.name ? `${client.name} ${client.lastName || ''}` : (client.username || client.email)) : '—';
-                      
+                      let clientName = '—';
+                      if (l.clientName || l.username || l.clientEmail) {
+                        clientName = l.clientName ? l.clientName.trim() : (l.username || l.clientEmail || '—');
+                      } else if (l.idUser) {
+                        const client = l.idUser;
+                        clientName = client.name ? `${client.name} ${client.lastName || ''}` : (client.username || client.email || '—');
+                      }
+
                       return (
                         <div
                           key={l.id}

@@ -88,7 +88,7 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
     if (value === '' || /^\d+$/.test(value)) {
       setForm((s) => ({ ...s, [field]: value }));
     } else {
-      alert.show({ severity: 'warning', message: 'Debe ingresar solo números enteros positivos', autoHideMs: 3500 });
+      alert.show({ severity: 'warning', message: 'Debe ingresar valores enteros positivos', autoHideMs: 3500 });
     }
   };
 
@@ -206,8 +206,10 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
           <div className="mas-row">
             <label>Precio reposición</label>
             <input
-              type="text"
-              inputMode="numeric"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="0"
               value={form.repoCost}
               onChange={(e) => handleNumericInput('repoCost', e.target.value)}
             />
@@ -216,8 +218,10 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
           <div className="mas-row">
             <label>Precio arriendo</label>
             <input
-              type="text"
-              inputMode="numeric"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="0"
               value={form.priceRent}
               onChange={(e) => handleNumericInput('priceRent', e.target.value)}
             />
@@ -226,8 +230,10 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
           <div className="mas-row">
             <label>Tarifa multa por día</label>
             <input
-              type="text"
-              inputMode="numeric"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="0"
               value={form.priceFineAtDate}
               onChange={(e) => handleNumericInput('priceFineAtDate', e.target.value)}
             />

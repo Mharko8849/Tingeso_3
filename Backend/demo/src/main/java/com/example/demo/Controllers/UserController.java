@@ -13,7 +13,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping({"/api/user", "/user"})
 @CrossOrigin("*")
 public class UserController {
 
@@ -83,7 +83,20 @@ public class UserController {
     // Eliminar usuario por ID
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
-    public ResponseEntity<Boolean> deleteUserById(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUserById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        UserEntity requester = userService.getUserFromJwt(jwt);
+        UserEntity target = userService.findUserById(id);
+        
+        // Jerarquía de eliminación:
+        // - SUPERADMIN puede eliminar ADMIN o EMPLOYEE
+        // - ADMIN solo puede eliminar EMPLOYEE
+        if (target != null) {
+            if (("ADMIN".equals(target.getRol()) || "SUPERADMIN".equals(target.getRol())) 
+                && !"SUPERADMIN".equals(requester.getRol())) {
+                return ResponseEntity.status(403).body("Acceso denegado: Solo un SUPERADMIN puede eliminar administradores.");
+            }
+        }
+        
         return ResponseEntity.ok(userService.deleteUser(id));
     }
 

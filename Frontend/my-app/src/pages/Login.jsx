@@ -27,10 +27,10 @@ const Login = () => {
       // Use axios instance which points to backend (VITE env vars or defaults)
       const resp = await api.post('/api/auth/login', body);
       const data = resp.data;
-      
+
       // Extract user name for welcome message
       const userName = data?.user?.name || data?.name || identifier;
-      
+
       // store tokens locally (the backend returns a structure { token: { access_token, refresh_token }, user: {...} })
       // Support both old and new shapes for compatibility.
       if (data) {
@@ -47,7 +47,7 @@ const Login = () => {
           // also keep alias used elsewhere
           localStorage.setItem('app_token', data.token.access_token);
         }
-        
+
         // Store user data if available
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -55,10 +55,10 @@ const Login = () => {
       }
 
       // Show success alert with user's name
-      show({ 
-        message: `¡Bienvenido ${userName}! Sesión iniciada correctamente`, 
+      show({
+        message: `¡Bienvenido ${userName}! Sesión iniciada correctamente`,
         severity: 'success',
-        autoHideMs: 3500 
+        autoHideMs: 3500
       });
 
       // redirect to home using React Router
@@ -92,9 +92,9 @@ const Login = () => {
               <label>Usuario o Email</label>
               <div className="input-with-icon">
                 <span className="icon" aria-hidden>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8l9 6 9-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 8v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8l9 6 9-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M21 8v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </span>
-                <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="usuario o email" required />
+                <input id="identifier" name="identifier" value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="usuario o email" required />
               </div>
             </div>
 
@@ -102,15 +102,15 @@ const Login = () => {
               <label>Contraseña</label>
               <div className="input-with-icon">
                 <span className="icon" aria-hidden>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /><path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </span>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="tu contraseña" required />
+                <input id="password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="tu contraseña" required />
               </div>
             </div>
 
             <div className="actions">
-                <button className="primary-cta" type="submit" disabled={loading} style={{ width: '100%' , justifyContent: 'center' }}>{loading ? 'Entrando...' : 'Ingresar'}</button>
-         <button type="button" className="link" style={{ width: '100%' ,justifyContent: 'center'}} onClick={() => navigate('/register')}>Crear cuenta</button>
+              <button className="primary-cta" type="submit" disabled={loading} style={{ width: '100%', justifyContent: 'center' }}>{loading ? 'Entrando...' : 'Ingresar'}</button>
+              <button type="button" className="link" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/register')}>Crear cuenta</button>
             </div>
           </form>
 

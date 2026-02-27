@@ -41,15 +41,16 @@ public class SecurityConfig {
             .requestMatchers("/error").permitAll()
             // permitir endpoints de autenticación expuestos en /auth/**
             .requestMatchers("/auth/**").permitAll()
+            .requestMatchers("/api/auth/**").permitAll()
             // inventario visible para cualquiera
-            .requestMatchers("/api/inventory/**").permitAll()
             .requestMatchers("/inventory/**").permitAll()
+            .requestMatchers("/api/inventory/**").permitAll()
             // herramientas visibles para cualquiera (GET only, POST/PUT/DELETE requieren auth)
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/tool/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tool/**").permitAll()
             // ranking visible para cualquiera
-            .requestMatchers("/api/kardex/ranking").permitAll()
             .requestMatchers("/kardex/ranking").permitAll()
+            .requestMatchers("/api/kardex/ranking").permitAll()
             // categorias visibles para cualquiera
             .requestMatchers("/categories/**").permitAll()
             .requestMatchers("/api/categories/**").permitAll()

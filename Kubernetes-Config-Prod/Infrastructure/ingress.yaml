@@ -6,7 +6,7 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/rewrite-target: /api/$1
 spec:
   ingressClassName: nginx
   tls:
@@ -18,7 +18,6 @@ spec:
       http:
         paths:
           # All backend API calls go through /api/...
-          # The rewrite strips /api/ so backend receives the original path
           - path: /api/(.*)
             pathType: ImplementationSpecific
             backend:

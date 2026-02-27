@@ -49,7 +49,7 @@ const ModalAddStockTool = ({ open, onClose, toolId, onAdded }) => {
     if (/^\d+$/.test(rawValue)) {
       setQuantity(rawValue);
     } else {
-      show({ severity: 'warning', message: 'Debe ingresar solo números enteros positivos', autoHideMs: 3500 });
+      show({ severity: 'warning', message: 'Ingrese un valor válido: número entero mayor a 0.', autoHideMs: 3500 });
     }
   };
 
@@ -57,7 +57,7 @@ const ModalAddStockTool = ({ open, onClose, toolId, onAdded }) => {
     // Validate quantity
     const qty = Number(quantity || 0);
     if (!qty || qty < 1 || !Number.isInteger(qty)) {
-      show({ severity: 'warning', message: 'Debe ingresar solo números enteros positivos', autoHideMs: 3500 });
+      show({ severity: 'warning', message: 'La cantidad debe ser un número entero mayor a 0.', autoHideMs: 3500 });
       return;
     }
 
@@ -122,10 +122,12 @@ const ModalAddStockTool = ({ open, onClose, toolId, onAdded }) => {
         <div className="mas-row">
           <label>Cantidad</label>
           <input
-            type="text"
-            inputMode="numeric"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="1"
             value={quantity}
-            onChange={(e) => handleQuantityChange(e.target.value)}
+            onChange={(e) => handleNumericInput(e.target.value)}
             onBlur={() => {
               const num = Number(quantity || 0);
               if (quantity !== '' && (!num || num < 1)) setQuantity('1');
