@@ -3,7 +3,7 @@ package com.example.demo.Services;
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Repositories.UserRepository;
 import org.apache.catalina.User;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,12 +14,11 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private KeycloakAdminService keycloakAdminService;
+    private final UserRepository userRepository;
+    private final KeycloakAdminService keycloakAdminService;
     public UserEntity saveUser(UserEntity user) {
         return userRepository.save(user);
     }
@@ -94,6 +93,7 @@ public class UserService {
         return user;
     }
 
+    @Transactional(readOnly = true)
     public List<UserEntity> filterClient(String state){
         if(state==null || state.isBlank()){
             return getAllClients();
@@ -104,6 +104,7 @@ public class UserService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<UserEntity> filterEmployee(String role){
         if(role==null || role.isBlank()){
             return getAllEmployees();

@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false) // Disable security filters for simplicity in unit tests
-public class AuthControllerTest {
+class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,7 +41,7 @@ public class AuthControllerTest {
     private UserEntity user;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         user = new UserEntity();
         user.setId(1L);
         user.setUsername("testuser");
@@ -50,7 +50,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testRegisterClient() throws Exception {
+    void testRegisterClient() throws Exception {
         when(authService.registerClient(any(UserEntity.class))).thenReturn(user);
 
         mockMvc.perform(post("/api/auth/register")
@@ -61,7 +61,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testRegisterClient_Error() throws Exception {
+    void testRegisterClient_Error() throws Exception {
         when(authService.registerClient(any(UserEntity.class))).thenThrow(new RuntimeException("Error"));
 
         mockMvc.perform(post("/api/auth/register")
@@ -72,7 +72,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testRegisterEmployee() throws Exception {
+    void testRegisterEmployee() throws Exception {
         when(authService.registerEmployee(any(UserEntity.class))).thenReturn(user);
 
         mockMvc.perform(post("/api/auth/register/employee")
@@ -83,7 +83,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testRegisterEmployee_Error() throws Exception {
+    void testRegisterEmployee_Error() throws Exception {
         when(authService.registerEmployee(any(UserEntity.class))).thenThrow(new RuntimeException("Error"));
 
         mockMvc.perform(post("/api/auth/register/employee")
@@ -94,7 +94,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testRegisterAdmin() throws Exception {
+    void testRegisterAdmin() throws Exception {
         when(authService.registerAdmin(any(UserEntity.class))).thenReturn(user);
 
         mockMvc.perform(post("/api/auth/register/admin")
@@ -105,7 +105,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testRegisterAdmin_Error() throws Exception {
+    void testRegisterAdmin_Error() throws Exception {
         when(authService.registerAdmin(any(UserEntity.class))).thenThrow(new RuntimeException("Error"));
 
         mockMvc.perform(post("/api/auth/register/admin")
@@ -116,7 +116,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testLogin() throws Exception {
+    void testLogin() throws Exception {
         Map<String, Object> result = new HashMap<>();
         result.put("token", "fake-token");
         when(authService.login("testuser", "password")).thenReturn(result);
@@ -133,7 +133,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testLogin_MissingCredentials() throws Exception {
+    void testLogin_MissingCredentials() throws Exception {
         Map<String, String> body = new HashMap<>();
         body.put("username", "testuser");
 
@@ -145,7 +145,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testLogin_Error() throws Exception {
+    void testLogin_Error() throws Exception {
         when(authService.login("testuser", "password")).thenThrow(new RuntimeException("Invalid credentials"));
 
         Map<String, String> body = new HashMap<>();
@@ -157,5 +157,47 @@ public class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("Invalid credentials"));
+    }
+
+    @Test
+    void testRefreshToken_Success() throws Exception {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("access_token", "new-access");
+        tokens.put("refresh_token", "new-refresh");
+        when(authService.refresh("valid-refresh-token")).thenReturn(tokens);
+
+        Map<String, String> body = new HashMap<>();
+        body.put("refresh_token", "valid-refresh-token");
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token").value("new-access"));
+    }
+
+    @Test
+    void testRefreshToken_Missing() throws Exception {
+        Map<String, String> body = new HashMap<>();
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("refresh_token requerido"));
+    }
+
+    @Test
+    void testRefreshToken_Error() throws Exception {
+        when(authService.refresh("bad-token")).thenThrow(new RuntimeException("Token expired"));
+
+        Map<String, String> body = new HashMap<>();
+        body.put("refresh_token", "bad-token");
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("Token expired"));
     }
 }

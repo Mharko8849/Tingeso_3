@@ -4,7 +4,7 @@ import com.example.demo.Entities.InventoryEntity;
 import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Repositories.InventoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,19 +14,13 @@ import java.sql.Date;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class InventoryService {
 
-    @Autowired
-    private InventoryRepository inventoryRepository;
-
-    @Autowired
-    private ToolService toolService;
-
-    @Autowired
-    private KardexService kardexService;
-
-    @Autowired
-    private UserService userService;
+    private final InventoryRepository inventoryRepository;
+    private final ToolService toolService;
+    private final KardexService kardexService;
+    private final UserService userService;
 
     public InventoryEntity saveInventoryEntity(InventoryEntity inventoryEntity) {
         return inventoryRepository.save(inventoryEntity);
@@ -175,27 +169,30 @@ public class InventoryService {
 
 
 
-        if (asc != null && asc && desc != null && desc) {
-            asc = false;
-            desc = false;
+        boolean sortAsc = Boolean.TRUE.equals(asc);
+        boolean sortDesc = Boolean.TRUE.equals(desc);
+        boolean sortRecent = Boolean.TRUE.equals(recent);
+
+        if (sortAsc && sortDesc) {
+            sortAsc = false;
+            sortDesc = false;
         }
-        if (asc != null && asc && recent != null && recent) {
-            asc = false;
-            recent = false;
+        if (sortAsc && sortRecent) {
+            sortAsc = false;
+            sortRecent = false;
         }
-        if (desc != null && desc && recent != null && recent){
-            desc = false;
-            recent = false;
+        if (sortDesc && sortRecent) {
+            sortDesc = false;
+            sortRecent = false;
         }
 
         List<InventoryEntity> inventoryList;
 
-        if (recent != null && recent) {
+        if (sortRecent) {
             inventoryList = getMoreRecents();
-        }
-        else if (asc != null && asc) {
+        } else if (sortAsc) {
             inventoryList = getInventoryAscPrice();
-        } else if (desc != null && desc) {
+        } else if (sortDesc) {
             inventoryList = getInventoryDescPrice();
         } else {
             inventoryList = inventoryRepository.findAll();

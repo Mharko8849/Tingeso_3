@@ -1,5 +1,6 @@
 package com.example.demo.RepositoryTest;
 
+import com.example.demo.Entities.CategoryEntity;
 import com.example.demo.Entities.LoanEntity;
 import com.example.demo.Entities.LoanXToolsEntity;
 import com.example.demo.Entities.ToolEntity;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-public class LoanXToolsRepositoryTest {
+class LoanXToolsRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
@@ -24,34 +25,51 @@ public class LoanXToolsRepositoryTest {
     @Autowired
     private LoanXToolsRepository loanXToolsRepository;
 
-    @Test
-    public void testFindByIdLoan() {
+    private CategoryEntity createCategory(String name) {
+        CategoryEntity category = new CategoryEntity();
+        category.setName(name);
+        return entityManager.persist(category);
+    }
+
+    private ToolEntity createTool(CategoryEntity category) {
+        ToolEntity tool = new ToolEntity();
+        tool.setToolName("Hammer");
+        tool.setCategory(category);
+        tool.setRepoCost(100);
+        tool.setPriceRent(10);
+        tool.setPriceFineAtDate(5);
+        return entityManager.persist(tool);
+    }
+
+    private UserEntity createUser(String rut, String username, String email, String rol) {
         UserEntity user = new UserEntity();
         user.setName("Test");
         user.setLastName("User");
-        user.setRut("12345678-9");
-        user.setUsername("testuser");
-        user.setEmail("test@example.com");
+        user.setRut(rut);
+        user.setUsername(username);
+        user.setEmail(email);
         user.setPassword("password");
-        user.setRol("CLIENT");
+        user.setRol(rol);
         user.setStateClient("ACTIVO");
         user.setLoans(0);
-        entityManager.persist(user);
+        return entityManager.persist(user);
+    }
 
+    private LoanEntity createLoan(UserEntity user) {
         LoanEntity loan = new LoanEntity();
         loan.setIdUser(user);
         loan.setInitDate(Date.valueOf("2023-01-01"));
         loan.setReturnDate(Date.valueOf("2023-01-10"));
         loan.setStatus("ACTIVE");
-        entityManager.persist(loan);
+        return entityManager.persist(loan);
+    }
 
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    @Test
+    void testFindByIdLoan() {
+        UserEntity user = createUser("12345678-9", "testuser", "test@example.com", "CLIENT");
+        LoanEntity loan = createLoan(user);
+        CategoryEntity category = createCategory("Construction");
+        ToolEntity tool = createTool(category);
 
         LoanXToolsEntity lxt = new LoanXToolsEntity();
         lxt.setIdLoan(loan);
@@ -64,50 +82,16 @@ public class LoanXToolsRepositoryTest {
         entityManager.flush();
 
         List<LoanXToolsEntity> found = loanXToolsRepository.findByIdLoan(loan);
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByIdEmployeeDel() {
-        UserEntity user = new UserEntity();
-        user.setName("Test");
-        user.setLastName("User");
-        user.setRut("12345678-9");
-        user.setUsername("testuser");
-        user.setEmail("test@example.com");
-        user.setPassword("password");
-        user.setRol("CLIENT");
-        user.setStateClient("ACTIVO");
-        user.setLoans(0);
-        entityManager.persist(user);
-
-        UserEntity employee = new UserEntity();
-        employee.setName("Emp");
-        employee.setLastName("Loyee");
-        employee.setRut("11111111-1");
-        employee.setUsername("employee");
-        employee.setEmail("emp@example.com");
-        employee.setPassword("password");
-        employee.setRol("EMPLOYEE");
-        employee.setStateClient("ACTIVO");
-        employee.setLoans(0);
-        entityManager.persist(employee);
-
-        LoanEntity loan = new LoanEntity();
-        loan.setIdUser(user);
-        loan.setInitDate(Date.valueOf("2023-01-01"));
-        loan.setReturnDate(Date.valueOf("2023-01-10"));
-        loan.setStatus("ACTIVE");
-        entityManager.persist(loan);
-
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByIdEmployeeDel() {
+        UserEntity user = createUser("12345678-9", "testuser", "test@example.com", "CLIENT");
+        UserEntity employee = createUser("11111111-1", "employee", "emp@example.com", "EMPLOYEE");
+        LoanEntity loan = createLoan(user);
+        CategoryEntity category = createCategory("Construction2");
+        ToolEntity tool = createTool(category);
 
         LoanXToolsEntity lxt = new LoanXToolsEntity();
         lxt.setIdLoan(loan);
@@ -121,50 +105,16 @@ public class LoanXToolsRepositoryTest {
         entityManager.flush();
 
         List<LoanXToolsEntity> found = loanXToolsRepository.findByIdEmployeeDel(employee);
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByIdEmployeeRec() {
-        UserEntity user = new UserEntity();
-        user.setName("Test");
-        user.setLastName("User");
-        user.setRut("12345678-9");
-        user.setUsername("testuser");
-        user.setEmail("test@example.com");
-        user.setPassword("password");
-        user.setRol("CLIENT");
-        user.setStateClient("ACTIVO");
-        user.setLoans(0);
-        entityManager.persist(user);
-
-        UserEntity employee = new UserEntity();
-        employee.setName("Emp");
-        employee.setLastName("Loyee");
-        employee.setRut("11111111-1");
-        employee.setUsername("employee");
-        employee.setEmail("emp@example.com");
-        employee.setPassword("password");
-        employee.setRol("EMPLOYEE");
-        employee.setStateClient("ACTIVO");
-        employee.setLoans(0);
-        entityManager.persist(employee);
-
-        LoanEntity loan = new LoanEntity();
-        loan.setIdUser(user);
-        loan.setInitDate(Date.valueOf("2023-01-01"));
-        loan.setReturnDate(Date.valueOf("2023-01-10"));
-        loan.setStatus("ACTIVE");
-        entityManager.persist(loan);
-
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByIdEmployeeRec() {
+        UserEntity user = createUser("12345678-9", "testuser2", "test2@example.com", "CLIENT");
+        UserEntity employee = createUser("22222222-2", "employee2", "emp2@example.com", "EMPLOYEE");
+        LoanEntity loan = createLoan(user);
+        CategoryEntity category = createCategory("Construction3");
+        ToolEntity tool = createTool(category);
 
         LoanXToolsEntity lxt = new LoanXToolsEntity();
         lxt.setIdLoan(loan);
@@ -178,38 +128,15 @@ public class LoanXToolsRepositoryTest {
         entityManager.flush();
 
         List<LoanXToolsEntity> found = loanXToolsRepository.findByIdEmployeeRec(employee);
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByIdTool_CategoryAndIdLoan_IdUserAndIdLoan_RealReturnDateIsNull() {
-        UserEntity user = new UserEntity();
-        user.setName("Test");
-        user.setLastName("User");
-        user.setRut("12345678-9");
-        user.setUsername("testuser");
-        user.setEmail("test@example.com");
-        user.setPassword("password");
-        user.setRol("CLIENT");
-        user.setStateClient("ACTIVO");
-        user.setLoans(0);
-        entityManager.persist(user);
-
-        LoanEntity loan = new LoanEntity();
-        loan.setIdUser(user);
-        loan.setInitDate(Date.valueOf("2023-01-01"));
-        loan.setReturnDate(Date.valueOf("2023-01-10"));
-        loan.setStatus("ACTIVE");
-        entityManager.persist(loan);
-
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByIdTool_Category_NameAndIdLoan_IdUserAndIdLoan_RealReturnDateIsNull() {
+        UserEntity user = createUser("33333333-3", "testuser3", "test3@example.com", "CLIENT");
+        LoanEntity loan = createLoan(user);
+        CategoryEntity category = createCategory("Construction4");
+        ToolEntity tool = createTool(category);
 
         LoanXToolsEntity lxt = new LoanXToolsEntity();
         lxt.setIdLoan(loan);
@@ -221,39 +148,17 @@ public class LoanXToolsRepositoryTest {
         entityManager.persist(lxt);
         entityManager.flush();
 
-        List<LoanXToolsEntity> found = loanXToolsRepository.findByIdTool_CategoryAndIdLoan_IdUserAndIdLoan_RealReturnDateIsNull("Construction", user);
-
+        List<LoanXToolsEntity> found = loanXToolsRepository
+                .findByIdTool_Category_NameAndIdLoan_IdUserAndIdLoan_RealReturnDateIsNull("Construction4", user);
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByIdLoan_IdUserAndIdToolAndIdLoan_RealReturnDateIsNull() {
-        UserEntity user = new UserEntity();
-        user.setName("Test");
-        user.setLastName("User");
-        user.setRut("12345678-9");
-        user.setUsername("testuser");
-        user.setEmail("test@example.com");
-        user.setPassword("password");
-        user.setRol("CLIENT");
-        user.setStateClient("ACTIVO");
-        user.setLoans(0);
-        entityManager.persist(user);
-
-        LoanEntity loan = new LoanEntity();
-        loan.setIdUser(user);
-        loan.setInitDate(Date.valueOf("2023-01-01"));
-        loan.setReturnDate(Date.valueOf("2023-01-10"));
-        loan.setStatus("ACTIVE");
-        entityManager.persist(loan);
-
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByIdLoan_IdUserAndIdToolAndIdLoan_RealReturnDateIsNull() {
+        UserEntity user = createUser("44444444-4", "testuser4", "test4@example.com", "CLIENT");
+        LoanEntity loan = createLoan(user);
+        CategoryEntity category = createCategory("Construction5");
+        ToolEntity tool = createTool(category);
 
         LoanXToolsEntity lxt = new LoanXToolsEntity();
         lxt.setIdLoan(loan);
@@ -265,39 +170,17 @@ public class LoanXToolsRepositoryTest {
         entityManager.persist(lxt);
         entityManager.flush();
 
-        List<LoanXToolsEntity> found = loanXToolsRepository.findByIdLoan_IdUserAndIdToolAndIdLoan_RealReturnDateIsNull(user, tool);
-
+        List<LoanXToolsEntity> found = loanXToolsRepository
+                .findByIdLoan_IdUserAndIdToolAndIdLoan_RealReturnDateIsNull(user, tool);
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testExistActiveLoanWithTool() {
-        UserEntity user = new UserEntity();
-        user.setName("Test");
-        user.setLastName("User");
-        user.setRut("12345678-9");
-        user.setUsername("testuser");
-        user.setEmail("test@example.com");
-        user.setPassword("password");
-        user.setRol("CLIENT");
-        user.setStateClient("ACTIVO");
-        user.setLoans(0);
-        entityManager.persist(user);
-
-        LoanEntity loan = new LoanEntity();
-        loan.setIdUser(user);
-        loan.setInitDate(Date.valueOf("2023-01-01"));
-        loan.setReturnDate(Date.valueOf("2023-01-10"));
-        loan.setStatus("ACTIVE");
-        entityManager.persist(loan);
-
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testExistActiveLoanWithTool() {
+        UserEntity user = createUser("55555555-5", "testuser5", "test5@example.com", "CLIENT");
+        LoanEntity loan = createLoan(user);
+        CategoryEntity category = createCategory("Construction6");
+        ToolEntity tool = createTool(category);
 
         LoanXToolsEntity lxt = new LoanXToolsEntity();
         lxt.setIdLoan(loan);
@@ -310,7 +193,6 @@ public class LoanXToolsRepositoryTest {
         entityManager.flush();
 
         Boolean exists = loanXToolsRepository.existActiveLoanWithTool(user, tool);
-
         assertThat(exists).isTrue();
     }
 }

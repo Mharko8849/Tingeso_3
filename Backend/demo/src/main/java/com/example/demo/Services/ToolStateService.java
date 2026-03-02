@@ -6,7 +6,7 @@ import com.example.demo.Entities.ToolStateEntity;
 import com.example.demo.Repositories.InventoryRepository;
 import com.example.demo.Repositories.ToolRepository;
 import com.example.demo.Repositories.ToolStateRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -14,16 +14,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ToolStateService {
 
-    @Autowired
-    ToolStateRepository toolStateRepository;
-
-    @Autowired
-    ToolRepository toolRepository;
-
-    @Autowired
-    InventoryRepository inventoryRepository;
+    private final ToolStateRepository toolStateRepository;
+    private final ToolRepository toolRepository;
+    private final InventoryRepository inventoryRepository;
 
     public List<ToolStateEntity> getAllStates() {
         // Ordenar por ID ascendente

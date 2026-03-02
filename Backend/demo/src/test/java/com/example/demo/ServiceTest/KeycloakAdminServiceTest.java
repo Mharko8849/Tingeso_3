@@ -4,7 +4,6 @@ import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.KeycloakAdminService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.*;
@@ -18,25 +17,23 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-public class KeycloakAdminServiceTest {
+class KeycloakAdminServiceTest {
 
     @Mock
     private RestTemplate restTemplate;
 
-    @InjectMocks
     private KeycloakAdminService keycloakAdminService;
 
     private UserEntity user;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
-        
+        keycloakAdminService = new KeycloakAdminService(restTemplate);
         ReflectionTestUtils.setField(keycloakAdminService, "keycloakUrl", "http://localhost:8080");
         ReflectionTestUtils.setField(keycloakAdminService, "realm", "test-realm");
         ReflectionTestUtils.setField(keycloakAdminService, "clientId", "test-client");
         ReflectionTestUtils.setField(keycloakAdminService, "clientSecret", "test-secret");
-
         user = new UserEntity();
         user.setUsername("testuser");
         user.setEmail("test@example.com");
@@ -45,180 +42,250 @@ public class KeycloakAdminServiceTest {
         user.setPassword("password");
     }
 
+    private void mockAdminToken() {
+        Map<String, Object> tokenResponse = new HashMap<>();
+        tokenResponse.put("access_token", "admin-token");
+        when(restTemplate.exchange(
+                contains("/protocol/openid-connect/token"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(Map.class)
+        )).thenReturn(new ResponseEntity<>(tokenResponse, HttpStatus.OK));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void mockRolesList(String roleName) {
+        Map<String, Object> role = new HashMap<>();
+        role.put("id", "role-id-" + roleName);
+        role.put("name", roleName);
+        List<Map> allRoles = List.of(role);
+        when(restTemplate.exchange(
+                contains("/roles"),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(List.class)
+        )).thenReturn(new ResponseEntity<>(allRoles, HttpStatus.OK));
+    }
+
     @Test
-    public void testObtainAdminAccessToken_Success() {
-        Map<String, Object> responseBody = new HashMap<>();
-        responseBody.put("access_token", "admin-token");
-        ResponseEntity<Map> responseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
-
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(responseEntity);
-
+    void testObtainAdminAccessToken_Success() {
+        mockAdminToken();
         String token = keycloakAdminService.obtainAdminAccessToken();
         assertEquals("admin-token", token);
     }
 
     @Test
-    public void testObtainAdminAccessToken_Failure() {
+    void testObtainAdminAccessToken_Failure() {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new RuntimeException("Error"));
-
         assertThrows(RuntimeException.class, () -> keycloakAdminService.obtainAdminAccessToken());
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testCreateKeycloakUser_Success() throws Exception {
-        // Mock admin token
-        Map<String, Object> tokenResponse = new HashMap<>();
-        tokenResponse.put("access_token", "admin-token");
-        when(restTemplate.exchange(contains("/protocol/openid-connect/token"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(tokenResponse, HttpStatus.OK));
-
-        // Mock create user
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(new URI("http://localhost:8080/admin/realms/test-realm/users/user-id-123"));
+        mockAdminToken();
+        mockRolesList("CLIENT");
+        HttpHeaders createHeaders = new HttpHeaders();
+        createHeaders.setLocation(new URI("http://localhost:8080/admin/realms/test-realm/users/user-id-123"));
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(headers, HttpStatus.CREATED));
-
-        // Mock get role
-        Map<String, Object> roleResponse = new HashMap<>();
-        roleResponse.put("id", "role-id");
-        roleResponse.put("name", "CLIENT");
-        when(restTemplate.exchange(contains("/roles/CLIENT"), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(roleResponse, HttpStatus.OK));
-
-        // Mock assign role
+                .thenReturn(new ResponseEntity<>(null, createHeaders, HttpStatus.CREATED));
         when(restTemplate.postForEntity(contains("/role-mappings/realm"), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
-
         String userId = keycloakAdminService.createKeycloakUser(user, "CLIENT");
         assertEquals("user-id-123", userId);
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testCreateKeycloakUser_DefaultRole() throws Exception {
-        // Mock admin token
-        Map<String, Object> tokenResponse = new HashMap<>();
-        tokenResponse.put("access_token", "admin-token");
-        when(restTemplate.exchange(contains("/protocol/openid-connect/token"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(tokenResponse, HttpStatus.OK));
-
-        // Mock create user
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(new URI("http://localhost:8080/admin/realms/test-realm/users/user-id-123"));
+        mockAdminToken();
+        mockRolesList("CLIENT");
+        HttpHeaders createHeaders = new HttpHeaders();
+        createHeaders.setLocation(new URI("http://localhost:8080/admin/realms/test-realm/users/user-id-456"));
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(headers, HttpStatus.CREATED));
-
-        // Mock get role CLIENT (default)
-        Map<String, Object> roleResponse = new HashMap<>();
-        roleResponse.put("id", "role-id");
-        roleResponse.put("name", "CLIENT");
-        when(restTemplate.exchange(contains("/roles/CLIENT"), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(roleResponse, HttpStatus.OK));
-
-        // Mock assign role
+                .thenReturn(new ResponseEntity<>(null, createHeaders, HttpStatus.CREATED));
         when(restTemplate.postForEntity(contains("/role-mappings/realm"), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
-
         String userId = keycloakAdminService.createKeycloakUser(user, null);
-        assertEquals("user-id-123", userId);
+        assertEquals("user-id-456", userId);
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testCreateKeycloakUser_SearchFallback() throws Exception {
-        // Mock admin token
-        Map<String, Object> tokenResponse = new HashMap<>();
-        tokenResponse.put("access_token", "admin-token");
-        when(restTemplate.exchange(contains("/protocol/openid-connect/token"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(tokenResponse, HttpStatus.OK));
-
-        // Mock create user - NO Location header
-        HttpHeaders headers = new HttpHeaders();
+        mockAdminToken();
+        mockRolesList("CLIENT");
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(headers, HttpStatus.CREATED));
-
-        // Mock search user
+                .thenReturn(new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.CREATED));
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("id", "user-id-found");
-        List<Map<String, Object>> searchResult = List.of(userMap);
+        List<Map> searchResult = List.of(userMap);
         when(restTemplate.exchange(contains("/users?username="), eq(HttpMethod.GET), any(HttpEntity.class), eq(List.class)))
                 .thenReturn(new ResponseEntity<>(searchResult, HttpStatus.OK));
-
-        // Mock get role
-        Map<String, Object> roleResponse = new HashMap<>();
-        roleResponse.put("id", "role-id");
-        roleResponse.put("name", "CLIENT");
-        when(restTemplate.exchange(contains("/roles/CLIENT"), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(roleResponse, HttpStatus.OK));
-
-        // Mock assign role
         when(restTemplate.postForEntity(contains("/role-mappings/realm"), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
-
         String userId = keycloakAdminService.createKeycloakUser(user, "CLIENT");
         assertEquals("user-id-found", userId);
     }
 
     @Test
-    public void testCreateKeycloakUser_RoleNotFound() throws Exception {
-        // Mock admin token
-        Map<String, Object> tokenResponse = new HashMap<>();
-        tokenResponse.put("access_token", "admin-token");
-        when(restTemplate.exchange(contains("/protocol/openid-connect/token"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(tokenResponse, HttpStatus.OK));
+    @SuppressWarnings("unchecked")
+    public void testCreateKeycloakUser_RoleNotFound() {
+        mockAdminToken();
+        when(restTemplate.exchange(
+                contains("/roles"),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(List.class)
+        )).thenReturn(new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK));
+        assertThrows(RuntimeException.class, () -> keycloakAdminService.createKeycloakUser(user, "NONEXISTENT"));
+    }
 
-        // Mock create user
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(new URI("http://localhost:8080/admin/realms/test-realm/users/user-id-123"));
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCreateKeycloakUser_ConflictThrows() {
+        mockAdminToken();
+        mockRolesList("CLIENT");
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(headers, HttpStatus.CREATED));
-
-        // Mock get role - returns null body
-        when(restTemplate.exchange(contains("/roles/CLIENT"), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
-
+                .thenThrow(new org.springframework.web.client.HttpClientErrorException(
+                        HttpStatus.CONFLICT, "Conflict", "username conflict".getBytes(), null));
         assertThrows(RuntimeException.class, () -> keycloakAdminService.createKeycloakUser(user, "CLIENT"));
     }
 
     @Test
-    public void testDeleteKeycloakUser_Exception() {
-        // Mock admin token
-        Map<String, Object> tokenResponse = new HashMap<>();
-        tokenResponse.put("access_token", "admin-token");
-        when(restTemplate.exchange(contains("/protocol/openid-connect/token"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(tokenResponse, HttpStatus.OK));
-
-        when(restTemplate.exchange(contains("/users/user-id"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class)))
-                .thenThrow(new RuntimeException("Delete failed"));
-
-        // Should catch exception and log it, not throw
-        assertDoesNotThrow(() -> keycloakAdminService.deleteKeycloakUser("user-id"));
-    }
-
-    @Test
-    public void testDeleteKeycloakUser() {
-        // Mock admin token
-        Map<String, Object> tokenResponse = new HashMap<>();
-        tokenResponse.put("access_token", "admin-token");
-        when(restTemplate.exchange(contains("/protocol/openid-connect/token"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(tokenResponse, HttpStatus.OK));
-
+    void testDeleteKeycloakUser_Success() {
+        mockAdminToken();
         when(restTemplate.exchange(contains("/users/user-id"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
-
         assertDoesNotThrow(() -> keycloakAdminService.deleteKeycloakUser("user-id"));
     }
 
     @Test
-    public void testRequestPasswordGrant_Success() {
+    void testDeleteKeycloakUser_Exception() {
+        mockAdminToken();
+        when(restTemplate.exchange(contains("/users/user-id"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class)))
+                .thenThrow(new RuntimeException("Delete failed"));
+        assertThrows(RuntimeException.class, () -> keycloakAdminService.deleteKeycloakUser("user-id"));
+    }
+
+    @Test
+    void testRequestPasswordGrant_Success() {
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("access_token", "user-token");
-        ResponseEntity<Map> responseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
-
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(responseEntity);
-
+                .thenReturn(new ResponseEntity<>(responseBody, HttpStatus.OK));
         Map result = keycloakAdminService.requestPasswordGrant("user", "pass");
         assertEquals("user-token", result.get("access_token"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCheckUserExistsByUsername_Exists() {
+        mockAdminToken();
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("id", "some-id");
+        when(restTemplate.exchange(contains("/users?username="), eq(HttpMethod.GET), any(HttpEntity.class), eq(List.class)))
+                .thenReturn(new ResponseEntity<>(List.of(userMap), HttpStatus.OK));
+        assertTrue(keycloakAdminService.checkUserExistsByUsername("testuser"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCheckUserExistsByUsername_NotExists() {
+        mockAdminToken();
+        when(restTemplate.exchange(contains("/users?username="), eq(HttpMethod.GET), any(HttpEntity.class), eq(List.class)))
+                .thenReturn(new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK));
+        assertFalse(keycloakAdminService.checkUserExistsByUsername("nonexistent"));
+    }
+
+    @Test
+    void testCheckUserExistsByUsername_Error() {
+        mockAdminToken();
+        when(restTemplate.exchange(contains("/users?username="), eq(HttpMethod.GET), any(HttpEntity.class), eq(List.class)))
+                .thenThrow(new RuntimeException("Connection error"));
+        assertFalse(keycloakAdminService.checkUserExistsByUsername("testuser"));
+    }
+
+    @Test
+    void testRefreshToken_Success() {
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("access_token", "new-access-token");
+        responseBody.put("refresh_token", "new-refresh-token");
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(responseBody, HttpStatus.OK));
+        Map result = keycloakAdminService.refreshToken("valid-refresh-token");
+        assertNotNull(result);
+        assertEquals("new-access-token", result.get("access_token"));
+    }
+
+    @Test
+    void testRefreshToken_Failure() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
+                .thenThrow(new RuntimeException("Expired token"));
+        assertThrows(RuntimeException.class, () -> keycloakAdminService.refreshToken("bad-refresh-token"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCreateKeycloakUser_OtherClientError() {
+        mockAdminToken();
+        mockRolesList("CLIENT");
+        when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
+                .thenThrow(new org.springframework.web.client.HttpClientErrorException(
+                        HttpStatus.BAD_REQUEST, "Bad request", "email already taken".getBytes(), null));
+        assertThrows(RuntimeException.class, () -> keycloakAdminService.createKeycloakUser(user, "CLIENT"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCreateKeycloakUser_ConnectionError() {
+        mockAdminToken();
+        mockRolesList("CLIENT");
+        when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
+                .thenThrow(new RuntimeException("Connection refused"));
+        assertThrows(RuntimeException.class, () -> keycloakAdminService.createKeycloakUser(user, "CLIENT"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCreateKeycloakUser_RoleAssignFails() throws Exception {
+        mockAdminToken();
+        mockRolesList("CLIENT");
+        HttpHeaders createHeaders = new HttpHeaders();
+        createHeaders.setLocation(new URI("http://localhost:8080/admin/realms/test-realm/users/user-id-789"));
+        when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(null, createHeaders, HttpStatus.CREATED));
+        when(restTemplate.postForEntity(contains("/role-mappings/realm"), any(HttpEntity.class), eq(Void.class)))
+                .thenThrow(new RuntimeException("Role assign failed"));
+        // rollback: delete user
+        when(restTemplate.exchange(contains("/users/user-id-789"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+        assertThrows(RuntimeException.class, () -> keycloakAdminService.createKeycloakUser(user, "CLIENT"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCreateKeycloakUser_NullRoles() {
+        mockAdminToken();
+        // Return null body for roles
+        when(restTemplate.exchange(
+                contains("/roles"),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(List.class)
+        )).thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+        assertThrows(RuntimeException.class, () -> keycloakAdminService.createKeycloakUser(user, "CLIENT"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCreateKeycloakUser_ConflictWithUsername() {
+        mockAdminToken();
+        mockRolesList("CLIENT");
+        when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
+                .thenThrow(new org.springframework.web.client.HttpClientErrorException(
+                        HttpStatus.CONFLICT, "Conflict", "username testuser conflict".getBytes(), null));
+        assertThrows(RuntimeException.class, () -> keycloakAdminService.createKeycloakUser(user, "CLIENT"));
     }
 }

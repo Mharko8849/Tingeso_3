@@ -6,7 +6,7 @@ import com.example.demo.DTO.PageResponseDTO;
 import com.example.demo.Entities.*;
 import com.example.demo.Repositories.LoanRepository;
 import com.example.demo.Repositories.LoanXToolsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,22 +19,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class LoanService {
 
-    @Autowired
-    private LoanRepository loanRepository;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private LoanXToolsRepository loanXToolsRepository;
-
-    @Autowired
-    private ToolService toolService;
-
-    @Autowired
-    private InventoryService inventoryService;
+    private final LoanRepository loanRepository;
+    private final UserService userService;
+    private final LoanXToolsRepository loanXToolsRepository;
+    private final ToolService toolService;
+    private final InventoryService inventoryService;
 
     public LoanEntity saveLoan(LoanEntity loanEntity) {
         return loanRepository.save(loanEntity);
@@ -55,10 +47,10 @@ public class LoanService {
         return loanRepository.findByStatus(state);
     }
 
+    @Transactional(readOnly = true)
     public List<LoanEntity> getOverdueLoans(){
         Date actualDate = new Date(System.currentTimeMillis());
-        List<LoanEntity> loans = getAllLoans();
-        return loans.stream()
+        return loanRepository.findAll().stream()
                 .filter(loan -> loan.getReturnDate().before(actualDate))
                 .toList();
     }
@@ -154,21 +146,25 @@ public class LoanService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<LoanEntity> filter(String state){
-        if(state==null || state.isBlank()){
+        if (state == null || state.isBlank()) {
             return loanRepository.findAll();
-        }
-        else if(state.equals("ATRASADO")){
-            return getOverdueLoans();
-        }
-        else{
-            return getAllLoansByState(state);
+        } else if (state.equals("ATRASADO")) {
+            Date actualDate = new Date(System.currentTimeMillis());
+            return loanRepository.findAll().stream()
+                    .filter(loan -> loan.getReturnDate().before(actualDate))
+                    .toList();
+        } else {
+            return loanRepository.findByStatus(state);
         }
     }
 
+    @Transactional
     public boolean deleteLoan(Long loanId){
         try{
-            LoanEntity loan = getLoanById(loanId);
+            LoanEntity loan = loanRepository.findById(loanId)
+                    .orElseThrow(() -> new RuntimeException("No se encontró el pedido"));
             UserEntity user = loan.getIdUser();
 
             user.setLoans(user.getLoans() - 1);

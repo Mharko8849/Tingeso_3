@@ -1,7 +1,7 @@
 package com.example.demo.Services;
 
 import com.example.demo.Entities.UserEntity;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import org.slf4j.Logger;
@@ -10,15 +10,13 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private KeycloakAdminService keycloakAdminService;
+    private final UserService userService;
+    private final KeycloakAdminService keycloakAdminService;
 
 
     /**

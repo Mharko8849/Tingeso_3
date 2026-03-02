@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.doThrow;
 
-public class AuthServiceTest {
+class AuthServiceTest {
 
     @Mock
     private UserService userService;
@@ -35,7 +35,7 @@ public class AuthServiceTest {
     private UserEntity user;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         user = new UserEntity();
         user.setId(1L);
@@ -49,7 +49,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testRegisterWithRole_Success() throws Exception {
+    void testRegisterWithRole_Success() throws Exception {
         when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenReturn("keycloak-id");
         when(userService.saveUser(any(UserEntity.class))).thenReturn(user);
 
@@ -62,7 +62,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testRegisterWithRole_KeycloakFails() throws Exception {
+    void testRegisterWithRole_KeycloakFails() throws Exception {
         when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenThrow(new RuntimeException("Keycloak error"));
 
         assertThrows(RuntimeException.class, () -> {
@@ -71,7 +71,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testRegisterWithRole_RollbackFails() throws Exception {
+    void testRegisterWithRole_RollbackFails() throws Exception {
         when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenReturn("keycloak-id");
         when(userService.saveUser(any(UserEntity.class))).thenThrow(new RuntimeException("DB error"));
         doThrow(new RuntimeException("Rollback error")).when(keycloakAdminService).deleteKeycloakUser("keycloak-id");
@@ -84,7 +84,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testLogin_FallbackLogic_UserFoundButLoginFails() throws Exception {
+    void testLogin_FallbackLogic_UserFoundButLoginFails() throws Exception {
         // 1. Direct login fails
         when(keycloakAdminService.requestPasswordGrant("MixedCaseUser", "password"))
                 .thenThrow(new RuntimeException("Fail"));
@@ -108,7 +108,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testLogin_FallbackLogic_EmailFoundButLoginFails() throws Exception {
+    void testLogin_FallbackLogic_EmailFoundButLoginFails() throws Exception {
         // 1. Direct login fails
         when(keycloakAdminService.requestPasswordGrant("email@test.com", "password"))
                 .thenThrow(new RuntimeException("Fail"));
@@ -130,7 +130,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testRegisterClient() {
+    void testRegisterClient() {
         // We can't easily test the inner call to registerWithRole, so we'll just check if it runs without error
         // and assume the more detailed tests for registerWithRole cover the logic.
         // A more advanced approach would be to use a spy on authService.
@@ -139,19 +139,19 @@ public class AuthServiceTest {
     }
     
     @Test
-    public void testRegisterEmployee() {
+    void testRegisterEmployee() {
         when(userService.saveUser(any(UserEntity.class))).thenReturn(user);
         assertDoesNotThrow(() -> authService.registerEmployee(user));
     }
 
     @Test
-    public void testRegisterAdmin() {
+    void testRegisterAdmin() {
         when(userService.saveUser(any(UserEntity.class))).thenReturn(user);
         assertDoesNotThrow(() -> authService.registerAdmin(user));
     }
 
     @Test
-    public void testLogin_Success() throws Exception {
+    void testLogin_Success() throws Exception {
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", "test-token");
         
@@ -169,7 +169,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testLogin_InvalidCredentials() throws Exception {
+    void testLogin_InvalidCredentials() throws Exception {
         when(keycloakAdminService.requestPasswordGrant(anyString(), anyString())).thenThrow(new RuntimeException("Invalid credentials"));
         when(userService.getUserByUsername(anyString())).thenReturn(null);
         when(userService.getUserByEmail(anyString())).thenReturn(null);
@@ -180,7 +180,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testLogin_UserNotFoundInDb() throws Exception {
+    void testLogin_UserNotFoundInDb() throws Exception {
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", "test-token");
         when(keycloakAdminService.requestPasswordGrant(anyString(), anyString())).thenReturn(token);
@@ -193,7 +193,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testLogin_FallbackLogic() throws Exception {
+    void testLogin_FallbackLogic() throws Exception {
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", "test-token");
 
@@ -224,7 +224,7 @@ public class AuthServiceTest {
     }
     
     @Test
-    public void testLogin_FallbackToEmail() throws Exception {
+    void testLogin_FallbackToEmail() throws Exception {
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", "test-token");
 
@@ -249,5 +249,100 @@ public class AuthServiceTest {
 
         Map<String, Object> result = authService.login("email@test.com", "password");
         assertNotNull(result);
+    }
+
+    @Test
+    void testRefresh_Success() {
+        Map<String, Object> tokenResponse = new HashMap<>();
+        tokenResponse.put("access_token", "new-token");
+        when(keycloakAdminService.refreshToken("valid-token")).thenReturn(tokenResponse);
+
+        Map<String, Object> result = authService.refresh("valid-token");
+        assertNotNull(result);
+        assertTrue(result.containsKey("token"));
+    }
+
+    @Test
+    void testRefresh_NullToken() {
+        assertThrows(RuntimeException.class, () -> authService.refresh(null));
+    }
+
+    @Test
+    void testRefresh_BlankToken() {
+        assertThrows(RuntimeException.class, () -> authService.refresh("   "));
+    }
+
+    @Test
+    void testRefresh_Error() {
+        when(keycloakAdminService.refreshToken("bad-token")).thenThrow(new RuntimeException("Token expired"));
+        assertThrows(RuntimeException.class, () -> authService.refresh("bad-token"));
+    }
+
+    @Test
+    void testRegisterWithRole_UsernameAlreadyExists() {
+        // Existing user found by username → should throw
+        when(userService.getUserByUsername("testuser")).thenReturn(user);
+        assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));
+    }
+
+    @Test
+    void testRegisterWithRole_UsernameWithRutAlreadyExists() {
+        // Username contains "-" (RUT format) → different error message
+        user.setUsername("12345678-9");
+        when(userService.getUserByUsername("12345678-9")).thenReturn(user);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));
+        assertTrue(ex.getMessage().contains("RUT"));
+    }
+
+    @Test
+    void testRegisterWithRole_EmailAlreadyExists() {
+        // Username not found but email exists → should throw
+        when(userService.getUserByUsername(anyString())).thenReturn(null);
+        when(userService.getUserByEmail("test@example.com")).thenReturn(user);
+        assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));
+    }
+
+    @Test
+    void testRegisterWithRole_UserExistsInKeycloak() {
+        // User not in DB but exists in Keycloak → throws inconsistency error
+        when(userService.getUserByUsername(anyString())).thenReturn(null);
+        when(userService.getUserByEmail(anyString())).thenReturn(null);
+        when(keycloakAdminService.checkUserExistsByUsername("testuser")).thenReturn(true);
+        assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));
+    }
+
+    @Test
+    void testRegisterWithRole_RollbackSuccess() throws Exception {
+        // DB save fails, but Keycloak rollback succeeds
+        when(userService.getUserByUsername(anyString())).thenReturn(null);
+        when(userService.getUserByEmail(anyString())).thenReturn(null);
+        when(keycloakAdminService.checkUserExistsByUsername(anyString())).thenReturn(false);
+        when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenReturn("keycloak-id");
+        when(userService.saveUser(any(UserEntity.class))).thenThrow(new RuntimeException("DB error"));
+        // Rollback succeeds (doNothing is default for void methods)
+
+        assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));
+        verify(keycloakAdminService, times(1)).deleteKeycloakUser("keycloak-id");
+    }
+
+    @Test
+    void testRegisterWithRole_ValidateUser_MissingName() {
+        user.setName(null);
+        assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));
+    }
+
+    @Test
+    void testRegisterWithRole_ValidateUser_MissingPassword() {
+        user.setPassword("");
+        assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));
+    }
+
+    @Test
+    void testRegisterWithRole_ValidateUser_MultipleErrors() {
+        user.setName(null);
+        user.setLastName(null);
+        user.setRut(null);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));
+        assertNotNull(ex.getMessage());
     }
 }

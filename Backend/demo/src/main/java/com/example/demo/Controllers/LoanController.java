@@ -8,7 +8,7 @@ import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.LoanService;
 import com.example.demo.Services.ToolService;
 import com.example.demo.Services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,16 +20,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/loan")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class LoanController {
 
-    @Autowired
-    private LoanService loanService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ToolService toolService;
+    private final LoanService loanService;
+    private final UserService userService;
+    private final ToolService toolService;
 
     /*
     GET

@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-public class LoanRepositoryTest {
+class LoanRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
@@ -23,7 +23,7 @@ public class LoanRepositoryTest {
     private LoanRepository loanRepository;
 
     @Test
-    public void testFindByIdUser() {
+    void testFindByIdUser() {
         UserEntity user = new UserEntity();
         user.setName("Test");
         user.setLastName("User");
@@ -51,7 +51,7 @@ public class LoanRepositoryTest {
     }
 
     @Test
-    public void testFindByStatus() {
+    void testFindByStatus() {
         UserEntity user = new UserEntity();
         user.setName("Test");
         user.setLastName("User");
@@ -78,7 +78,7 @@ public class LoanRepositoryTest {
     }
 
     @Test
-    public void testFindByInitDateIsGreaterThanEqualAndReturnDateIsLessThanEqual() {
+    void testFindByInitDateIsGreaterThanEqualAndReturnDateIsLessThanEqual() {
         UserEntity user = new UserEntity();
         user.setName("Test");
         user.setLastName("User");
@@ -106,7 +106,7 @@ public class LoanRepositoryTest {
     }
 
     @Test
-    public void testFindByInitDateIsGreaterThanEqual() {
+    void testFindByInitDateIsGreaterThanEqual() {
         UserEntity user = new UserEntity();
         user.setName("Test");
         user.setLastName("User");
@@ -133,7 +133,7 @@ public class LoanRepositoryTest {
     }
 
     @Test
-    public void testFindByReturnDateGreaterThanEqual() {
+    void testFindByReturnDateGreaterThanEqual() {
         UserEntity user = new UserEntity();
         user.setName("Test");
         user.setLastName("User");
@@ -160,7 +160,7 @@ public class LoanRepositoryTest {
     }
 
     @Test
-    public void testFindByReturnDateGreaterThan() {
+    void testFindByReturnDateGreaterThan() {
         UserEntity user = new UserEntity();
         user.setName("Test");
         user.setLastName("User");
@@ -187,7 +187,7 @@ public class LoanRepositoryTest {
     }
 
     @Test
-    public void testFindByRealReturnDateLessThanEqual() {
+    void testFindByRealReturnDateLessThanEqual() {
         UserEntity user = new UserEntity();
         user.setName("Test");
         user.setLastName("User");

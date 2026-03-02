@@ -1,6 +1,6 @@
 package com.example.demo.ConfigTest;
 
-import com.example.demo.Config.SecurityConfig;
+import com.example.demo.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -14,17 +14,17 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SecurityConfigTest {
+class SecurityConfigTest {
 
     @Test
-    public void testCorsConfigurationSource() {
+    void testCorsConfigurationSource() {
         SecurityConfig securityConfig = new SecurityConfig();
         CorsConfigurationSource source = securityConfig.corsConfigurationSource();
         assertNotNull(source);
     }
 
     @Test
-    public void testJwtAuthConverter() {
+    void testJwtAuthConverter() {
         // Access the private method via reflection or just test the logic if extracted.
         // Since it's private and used inside filterChain, we can try to invoke it via reflection 
         // or just trust integration tests. 
@@ -63,7 +63,7 @@ public class SecurityConfigTest {
     }
     
     @Test
-    public void testJwtAuthConverter_NoRoles() throws Exception {
+    void testJwtAuthConverter_NoRoles() throws Exception {
         SecurityConfig securityConfig = new SecurityConfig();
         
         java.lang.reflect.Method method = SecurityConfig.class.getDeclaredMethod("jwtAuthConverter");

@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(InventoryController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithMockUser(username = "admin", roles = {"ADMIN", "SUPERADMIN"})
-public class InventoryControllerTest {
+class InventoryControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -54,7 +54,7 @@ public class InventoryControllerTest {
     private UserEntity user;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         inventory = new InventoryEntity();
         inventory.setId(1L);
         inventory.setStockTool(10);
@@ -64,54 +64,54 @@ public class InventoryControllerTest {
     }
 
     @Test
-    public void testGetAllInventory() throws Exception {
+    void testGetAllInventory() throws Exception {
         List<InventoryEntity> list = new ArrayList<>();
         list.add(inventory);
         when(inventoryService.getAllInventory()).thenReturn(list);
 
-        mockMvc.perform(get("/api/inventory/"))
+        mockMvc.perform(get("/inventory/"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test
-    public void testFilterInventory() throws Exception {
+    void testFilterInventory() throws Exception {
         List<InventoryEntity> list = new ArrayList<>();
         list.add(inventory);
-        when(inventoryService.filterInventory(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(list);
+        when(inventoryService.filterInventory(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(list);
 
-        mockMvc.perform(get("/api/inventory/filter")
+        mockMvc.perform(get("/inventory/filter")
                 .param("state", "DISPONIBLE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test
-    public void testAddStock() throws Exception {
+    void testAddStock() throws Exception {
         when(userService.findUserById(1L)).thenReturn(user);
         when(inventoryService.addStockToTool(eq(1L), eq(5), any(UserEntity.class))).thenReturn(inventory);
 
-        mockMvc.perform(post("/api/inventory/add-stock/1/1")
+        mockMvc.perform(post("/inventory/add-stock/1/1")
                 .param("quantity", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stockTool").value(10));
     }
 
     @Test
-    public void testAddStock_UserNotFound() throws Exception {
+    void testAddStock_UserNotFound() throws Exception {
         when(userService.findUserById(1L)).thenThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
 
-        mockMvc.perform(post("/api/inventory/add-stock/1/1")
+        mockMvc.perform(post("/inventory/add-stock/1/1")
                 .param("quantity", "5"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    public void testAddStock_Error() throws Exception {
+    void testAddStock_Error() throws Exception {
         when(userService.findUserById(1L)).thenReturn(user);
         when(inventoryService.addStockToTool(eq(1L), eq(5), any(UserEntity.class))).thenThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST));
 
-        mockMvc.perform(post("/api/inventory/add-stock/1/1")
+        mockMvc.perform(post("/inventory/add-stock/1/1")
                 .param("quantity", "5"))
                 .andExpect(status().isBadRequest());
     }

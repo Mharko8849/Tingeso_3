@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithMockUser(username = "admin", roles = {"ADMIN", "SUPERADMIN"})
-public class UserControllerTest {
+class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,14 +44,14 @@ public class UserControllerTest {
     private UserEntity user;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         user = new UserEntity();
         user.setId(1L);
         user.setUsername("testuser");
     }
 
     @Test
-    public void testGetAllUsers() throws Exception {
+    void testGetAllUsers() throws Exception {
         List<UserEntity> list = new ArrayList<>();
         list.add(user);
         when(userService.getUsers()).thenReturn((ArrayList<UserEntity>) list);
@@ -62,7 +62,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testGetUserById() throws Exception {
+    void testGetUserById() throws Exception {
         when(userService.findUserById(1L)).thenReturn(user);
 
         mockMvc.perform(get("/api/user/1"))
@@ -71,7 +71,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testGetAllEmployees() throws Exception {
+    void testGetAllEmployees() throws Exception {
         List<UserEntity> list = new ArrayList<>();
         list.add(user);
         when(userService.getAllEmployees()).thenReturn(list);
@@ -82,7 +82,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testGetAllClients() throws Exception {
+    void testGetAllClients() throws Exception {
         List<UserEntity> list = new ArrayList<>();
         list.add(user);
         when(userService.getAllClients()).thenReturn(list);
@@ -93,7 +93,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testFilterClients() throws Exception {
+    void testFilterClients() throws Exception {
         List<UserEntity> list = new ArrayList<>();
         list.add(user);
         when(userService.filterClient("ACTIVO")).thenReturn(list);
@@ -105,7 +105,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testFilterEmployees() throws Exception {
+    void testFilterEmployees() throws Exception {
         List<UserEntity> list = new ArrayList<>();
         list.add(user);
         when(userService.filterEmployee("EMPLOYEE")).thenReturn(list);
@@ -117,7 +117,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testUpdateUser() throws Exception {
+    void testUpdateUser() throws Exception {
         when(userService.updateUser(any(UserEntity.class))).thenReturn(user);
 
         mockMvc.perform(put("/api/user/")
@@ -128,11 +128,60 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testDeleteUserById() throws Exception {
+    void testDeleteUserById() throws Exception {
         when(userService.deleteUser(1L)).thenReturn(true);
 
         mockMvc.perform(delete("/api/user/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(true));
+    }
+
+    @Test
+    void testDeleteUserById_WithJwt_NotSuperAdmin() throws Exception {
+        // Requester is ADMIN trying to delete another ADMIN → 403
+        UserEntity requester = new UserEntity();
+        requester.setId(2L);
+        requester.setUsername("admin");
+        requester.setRol("ADMIN");
+
+        UserEntity target = new UserEntity();
+        target.setId(1L);
+        target.setRol("ADMIN");
+
+        when(userService.getUserFromJwt(any())).thenReturn(requester);
+        when(userService.findUserById(1L)).thenReturn(target);
+
+        mockMvc.perform(delete("/api/user/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testDeleteUserById_SuperAdmin_CanDeleteAdmin() throws Exception {
+        // SUPERADMIN can delete ADMIN
+        UserEntity requester = new UserEntity();
+        requester.setId(2L);
+        requester.setUsername("superadmin");
+        requester.setRol("SUPERADMIN");
+
+        UserEntity target = new UserEntity();
+        target.setId(1L);
+        target.setRol("ADMIN");
+
+        when(userService.getUserFromJwt(any())).thenReturn(requester);
+        when(userService.findUserById(1L)).thenReturn(target);
+        when(userService.deleteUser(1L)).thenReturn(true);
+
+        mockMvc.perform(delete("/api/user/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(true));
+    }
+
+    @Test
+    void testGetMe() throws Exception {
+        when(userService.getUserFromJwt(any())).thenReturn(user);
+
+        mockMvc.perform(get("/api/user/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
     }
 }

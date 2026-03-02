@@ -1,6 +1,8 @@
 package com.example.demo.ControllerTest;
 
 import com.example.demo.Controllers.LoanController;
+import com.example.demo.DTO.LoanDTO;
+import com.example.demo.DTO.PageResponseDTO;
 import com.example.demo.Entities.LoanEntity;
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.LoanService;
@@ -31,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(LoanController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithMockUser(username = "admin", roles = {"ADMIN", "SUPERADMIN"})
-public class LoanControllerTest {
+class LoanControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -55,7 +57,7 @@ public class LoanControllerTest {
     private UserEntity user;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         user = new UserEntity();
         user.setId(1L);
 
@@ -65,55 +67,55 @@ public class LoanControllerTest {
     }
 
     @Test
-    public void testGetAllLoansByUser() throws Exception {
+    void testGetAllLoansByUser() throws Exception {
         List<LoanEntity> list = new ArrayList<>();
         list.add(loan);
         when(userService.findUserById(1L)).thenReturn(user);
         when(loanService.getAllLoansByIdUser(user)).thenReturn(list);
 
-        mockMvc.perform(get("/api/loan/user/1"))
+        mockMvc.perform(get("/loan/user/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test
-    public void testGetLoanById() throws Exception {
+    void testGetLoanById() throws Exception {
         when(loanService.getLoanById(1L)).thenReturn(loan);
 
-        mockMvc.perform(get("/api/loan/1"))
+        mockMvc.perform(get("/loan/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
     }
 
     @Test
-    public void testGetAllLoans() throws Exception {
+    void testGetAllLoans() throws Exception {
         List<LoanEntity> list = new ArrayList<>();
         list.add(loan);
         when(loanService.getAllLoans()).thenReturn(list);
 
-        mockMvc.perform(get("/api/loan/"))
+        mockMvc.perform(get("/loan/"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test
-    public void testFilterLoans() throws Exception {
+    void testFilterLoans() throws Exception {
         List<LoanEntity> list = new ArrayList<>();
         list.add(loan);
         when(loanService.filter("ACTIVO")).thenReturn(list);
 
-        mockMvc.perform(get("/api/loan/filter")
+        mockMvc.perform(get("/loan/filter")
                 .param("state", "ACTIVO"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test
-    public void testCreateLoan() throws Exception {
+    void testCreateLoan() throws Exception {
         when(userService.findUserById(1L)).thenReturn(user);
         when(loanService.createLoan(any(UserEntity.class), any(UserEntity.class), any(Date.class), any(Date.class))).thenReturn(loan);
 
-        mockMvc.perform(post("/api/loan/create/1")
+        mockMvc.perform(post("/loan/create/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(user))
                 .param("initDate", "2023-01-01")
@@ -123,10 +125,10 @@ public class LoanControllerTest {
     }
 
     @Test
-    public void testCreateLoan_UserNotFound() throws Exception {
+    void testCreateLoan_UserNotFound() throws Exception {
         when(userService.findUserById(1L)).thenThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
 
-        mockMvc.perform(post("/api/loan/create/1")
+        mockMvc.perform(post("/loan/create/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(user))
                 .param("initDate", "2023-01-01")
@@ -135,11 +137,11 @@ public class LoanControllerTest {
     }
 
     @Test
-    public void testCreateLoan_Error() throws Exception {
+    void testCreateLoan_Error() throws Exception {
         when(userService.findUserById(1L)).thenReturn(user);
         when(loanService.createLoan(any(UserEntity.class), any(UserEntity.class), any(Date.class), any(Date.class))).thenThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST));
 
-        mockMvc.perform(post("/api/loan/create/1")
+        mockMvc.perform(post("/loan/create/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(user))
                 .param("initDate", "2023-01-01")
@@ -148,11 +150,111 @@ public class LoanControllerTest {
     }
 
     @Test
-    public void testDeleteLoanById() throws Exception {
+    void testDeleteLoanById() throws Exception {
         when(loanService.deleteLoan(1L)).thenReturn(true);
 
-        mockMvc.perform(delete("/api/loan/1"))
+        mockMvc.perform(delete("/loan/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(true));
+    }
+
+    @Test
+    void testGetAllLoansPaginated() throws Exception {
+        LoanDTO loanDTO = new LoanDTO();
+        loanDTO.setId(1L);
+        PageResponseDTO<LoanDTO> page = new PageResponseDTO<>(List.of(loanDTO), 0, 8, 1L, 1, true, true);
+        when(loanService.getAllLoansPaginated(0, 8)).thenReturn(page);
+
+        mockMvc.perform(get("/loan/paginated"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1));
+    }
+
+    @Test
+    void testGetLoansByUserPaginated() throws Exception {
+        LoanDTO loanDTO = new LoanDTO();
+        loanDTO.setId(1L);
+        PageResponseDTO<LoanDTO> page = new PageResponseDTO<>(List.of(loanDTO), 0, 8, 1L, 1, true, true);
+        when(userService.findUserById(1L)).thenReturn(user);
+        when(loanService.getLoansByUserPaginated(eq(user), eq(0), eq(8))).thenReturn(page);
+
+        mockMvc.perform(get("/loan/user/1/paginated"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1));
+    }
+
+    @Test
+    void testFilterLoansPaginated_WithState() throws Exception {
+        LoanDTO loanDTO = new LoanDTO();
+        loanDTO.setId(1L);
+        PageResponseDTO<LoanDTO> page = new PageResponseDTO<>(List.of(loanDTO), 0, 8, 1L, 1, true, true);
+        when(loanService.getLoansByStatePaginated(eq("ACTIVO"), eq(0), eq(8))).thenReturn(page);
+
+        mockMvc.perform(get("/loan/filter/paginated").param("state", "ACTIVO"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1));
+    }
+
+    @Test
+    void testFilterLoansPaginated_NoState() throws Exception {
+        LoanDTO loanDTO = new LoanDTO();
+        loanDTO.setId(1L);
+        PageResponseDTO<LoanDTO> page = new PageResponseDTO<>(List.of(loanDTO), 0, 8, 1L, 1, true, true);
+        when(loanService.getAllLoansPaginated(0, 8)).thenReturn(page);
+
+        mockMvc.perform(get("/loan/filter/paginated"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1));
+    }
+
+    @Test
+    void testCreateLoanWithTools_Success() throws Exception {
+        when(userService.findUserById(1L)).thenReturn(user);
+        when(loanService.createLoanWithTools(any(), any(), any(), any(), any())).thenReturn(loan);
+
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("clientId", 2);
+        body.put("initDate", "2024-01-01");
+        body.put("returnDate", "2024-01-10");
+        body.put("toolIds", List.of(1, 2));
+
+        mockMvc.perform(post("/loan/create-with-tools/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testCreateLoanWithTools_RuntimeException() throws Exception {
+        when(userService.findUserById(1L)).thenReturn(user);
+        when(loanService.createLoanWithTools(any(), any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("Client not found"));
+
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("clientId", 2);
+        body.put("initDate", "2024-01-01");
+        body.put("returnDate", "2024-01-10");
+        body.put("toolIds", List.of(1));
+
+        mockMvc.perform(post("/loan/create-with-tools/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testCreateLoanWithTools_EmployeeNotFound() throws Exception {
+        when(userService.findUserById(1L)).thenReturn(null);
+
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("clientId", 2);
+        body.put("initDate", "2024-01-01");
+        body.put("returnDate", "2024-01-10");
+        body.put("toolIds", List.of(1));
+
+        mockMvc.perform(post("/loan/create-with-tools/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest());
     }
 }

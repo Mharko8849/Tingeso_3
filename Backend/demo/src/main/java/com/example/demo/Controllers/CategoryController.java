@@ -2,7 +2,7 @@ package com.example.demo.Controllers;
 
 import com.example.demo.Entities.CategoryEntity;
 import com.example.demo.Services.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -12,10 +12,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/categories")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class CategoryController {
 
-    @Autowired
-    CategoryService categoryService;
+    private final CategoryService categoryService;
 
     @GetMapping("/")
     public List<CategoryEntity> getAllCategories() {

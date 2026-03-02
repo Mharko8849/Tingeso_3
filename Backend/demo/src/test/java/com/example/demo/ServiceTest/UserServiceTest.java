@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.doThrow;
 
-public class UserServiceTest {
+class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -37,7 +37,7 @@ public class UserServiceTest {
     private UserEntity admin;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         user = new UserEntity();
         user.setId(1L);
@@ -57,7 +57,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testSaveUser() {
+    void testSaveUser() {
         when(userRepository.save(any(UserEntity.class))).thenReturn(user);
         UserEntity savedUser = userService.saveUser(user);
         assertNotNull(savedUser);
@@ -65,7 +65,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testFindUserById() {
+    void testFindUserById() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         UserEntity foundUser = userService.findUserById(1L);
         assertNotNull(foundUser);
@@ -73,7 +73,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testFindUserById_NotFound() {
+    void testFindUserById_NotFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
         assertThrows(ResponseStatusException.class, () -> {
             userService.findUserById(1L);
@@ -81,7 +81,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetUsers() {
+    void testGetUsers() {
         ArrayList<UserEntity> users = new ArrayList<>();
         users.add(user);
         when(userRepository.findAll()).thenReturn(users);
@@ -90,7 +90,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetUsersByRol() {
+    void testGetUsersByRol() {
         List<UserEntity> users = new ArrayList<>();
         users.add(user);
         when(userRepository.findByRol("CLIENT")).thenReturn(users);
@@ -100,7 +100,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetAllEmployees() {
+    void testGetAllEmployees() {
         UserEntity employee = new UserEntity();
         employee.setRol("EMPLOYEE");
         UserEntity admin = new UserEntity();
@@ -115,7 +115,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetAllClients() {
+    void testGetAllClients() {
         List<UserEntity> clients = List.of(user);
         when(userRepository.findByRol("CLIENT")).thenReturn(clients);
         List<UserEntity> result = userService.getAllClients();
@@ -123,7 +123,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testUpdateUser() {
+    void testUpdateUser() {
         when(userRepository.save(any(UserEntity.class))).thenReturn(user);
         user.setName("Updated Name");
         UserEntity updatedUser = userService.updateUser(user);
@@ -131,7 +131,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testDeleteUser() {
+    void testDeleteUser() {
         user.setKeycloakId("keycloak-id");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         boolean result = userService.deleteUser(1L);
@@ -140,28 +140,28 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetUserByUsername() {
+    void testGetUserByUsername() {
         when(userRepository.findByUsernameIgnoreCase("testuser")).thenReturn(user);
         UserEntity result = userService.getUserByUsername("testuser");
         assertEquals(user, result);
     }
 
     @Test
-    public void testGetUserByEmail() {
+    void testGetUserByEmail() {
         when(userRepository.findByEmail("test@example.com")).thenReturn(user);
         UserEntity result = userService.getUserByEmail("test@example.com");
         assertEquals(user, result);
     }
 
     @Test
-    public void testGetUserByKeycloakId() {
+    void testGetUserByKeycloakId() {
         when(userRepository.findByKeycloakId("kc-id")).thenReturn(user);
         UserEntity result = userService.getUserByKeycloakId("kc-id");
         assertEquals(user, result);
     }
 
     @Test
-    public void testFilterClient_NullOrBlank() {
+    void testFilterClient_NullOrBlank() {
         List<UserEntity> clients = List.of(user);
         when(userRepository.findByRol("CLIENT")).thenReturn(clients);
         
@@ -170,7 +170,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testFilterEmployee_NullOrBlank() {
+    void testFilterEmployee_NullOrBlank() {
         UserEntity employee = new UserEntity();
         employee.setRol("EMPLOYEE");
         List<UserEntity> employees = List.of(employee);
@@ -182,7 +182,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testDeleteUser_DbException() {
+    void testDeleteUser_DbException() {
         user.setKeycloakId("keycloak-id");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         doThrow(new RuntimeException("DB Error")).when(userRepository).deleteById(1L);
@@ -192,7 +192,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testDeleteUser_KeycloakException() {
+    void testDeleteUser_KeycloakException() {
         user.setKeycloakId("keycloak-id");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         doThrow(new RuntimeException("KC Error")).when(keycloakAdminService).deleteKeycloakUser("keycloak-id");
@@ -203,7 +203,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testIsAdmin() {
+    void testIsAdmin() {
         UserEntity admin = new UserEntity();
         admin.setRol("ADMIN");
         assertDoesNotThrow(() -> userService.isAdmin(admin));
@@ -218,7 +218,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testValidateAdminOrEmployee() {
+    void testValidateAdminOrEmployee() {
         UserEntity admin = new UserEntity();
         admin.setRol("ADMIN");
         assertDoesNotThrow(() -> userService.validateAdminOrEmployee(admin));
@@ -237,7 +237,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testFilterEmployee() {
+    void testFilterEmployee() {
         UserEntity employee = new UserEntity();
         employee.setRol("EMPLOYEE");
         List<UserEntity> employeesAndAdmins = List.of(employee);
@@ -248,10 +248,62 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testCanDoAnotherLoan() {
+    void testCanDoAnotherLoan() {
         user.setLoans(4);
         assertTrue(userService.canDoAnotherLoan(user));
         user.setLoans(5);
         assertFalse(userService.canDoAnotherLoan(user));
+    }
+
+    @Test
+    void testGetUserFromJwt_NullJwt() {
+        assertThrows(ResponseStatusException.class, () -> userService.getUserFromJwt(null));
+    }
+
+    @Test
+    void testGetUserFromJwt_Success() {
+        org.springframework.security.oauth2.jwt.Jwt jwt = org.mockito.Mockito.mock(org.springframework.security.oauth2.jwt.Jwt.class);
+        when(jwt.getSubject()).thenReturn("keycloak-sub-id");
+        when(userRepository.findByKeycloakId("keycloak-sub-id")).thenReturn(user);
+        UserEntity result = userService.getUserFromJwt(jwt);
+        assertEquals(user, result);
+    }
+
+    @Test
+    void testGetUserFromJwt_NullSub() {
+        org.springframework.security.oauth2.jwt.Jwt jwt = org.mockito.Mockito.mock(org.springframework.security.oauth2.jwt.Jwt.class);
+        when(jwt.getSubject()).thenReturn(null);
+        assertThrows(ResponseStatusException.class, () -> userService.getUserFromJwt(jwt));
+    }
+
+    @Test
+    void testGetUserFromJwt_BlankSub() {
+        org.springframework.security.oauth2.jwt.Jwt jwt = org.mockito.Mockito.mock(org.springframework.security.oauth2.jwt.Jwt.class);
+        when(jwt.getSubject()).thenReturn("   ");
+        assertThrows(ResponseStatusException.class, () -> userService.getUserFromJwt(jwt));
+    }
+
+    @Test
+    void testGetUserFromJwt_UserNotFound() {
+        org.springframework.security.oauth2.jwt.Jwt jwt = org.mockito.Mockito.mock(org.springframework.security.oauth2.jwt.Jwt.class);
+        when(jwt.getSubject()).thenReturn("unknown-sub");
+        when(userRepository.findByKeycloakId("unknown-sub")).thenReturn(null);
+        assertThrows(ResponseStatusException.class, () -> userService.getUserFromJwt(jwt));
+    }
+
+    @Test
+    void testFilterClient_WithState() {
+        UserEntity activeClient = new UserEntity();
+        activeClient.setRol("CLIENT");
+        activeClient.setStateClient("ACTIVO");
+
+        UserEntity inactiveClient = new UserEntity();
+        inactiveClient.setRol("CLIENT");
+        inactiveClient.setStateClient("INACTIVO");
+
+        when(userRepository.findByRol("CLIENT")).thenReturn(List.of(activeClient, inactiveClient));
+        List<UserEntity> result = userService.filterClient("ACTIVO");
+        assertEquals(1, result.size());
+        assertEquals("ACTIVO", result.get(0).getStateClient());
     }
 }

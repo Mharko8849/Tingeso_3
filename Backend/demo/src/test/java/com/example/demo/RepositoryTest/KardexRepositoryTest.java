@@ -1,5 +1,6 @@
 package com.example.demo.RepositoryTest;
 
+import com.example.demo.Entities.CategoryEntity;
 import com.example.demo.Entities.KardexEntity;
 import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-public class KardexRepositoryTest {
+class KardexRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
@@ -23,16 +24,22 @@ public class KardexRepositoryTest {
     @Autowired
     private KardexRepository kardexRepository;
 
-    @Test
-    public void testFindByDate() {
+    private ToolEntity createTool() {
+        CategoryEntity category = new CategoryEntity();
+        category.setName("Construction");
+        entityManager.persist(category);
+
         ToolEntity tool = new ToolEntity();
         tool.setToolName("Hammer");
-        tool.setCategory("Construction");
+        tool.setCategory(category);
         tool.setRepoCost(100);
         tool.setPriceRent(10);
         tool.setPriceFineAtDate(5);
         entityManager.persist(tool);
+        return tool;
+    }
 
+    private UserEntity createEmployee() {
         UserEntity employee = new UserEntity();
         employee.setName("Emp");
         employee.setLastName("Loyee");
@@ -44,6 +51,13 @@ public class KardexRepositoryTest {
         employee.setStateClient("ACTIVO");
         employee.setLoans(0);
         entityManager.persist(employee);
+        return employee;
+    }
+
+    @Test
+    void testFindByDate() {
+        ToolEntity tool = createTool();
+        UserEntity employee = createEmployee();
 
         KardexEntity kardex = new KardexEntity();
         kardex.setIdTool(tool);
@@ -56,31 +70,13 @@ public class KardexRepositoryTest {
         entityManager.flush();
 
         List<KardexEntity> found = kardexRepository.findByDate(Date.valueOf("2023-01-01"));
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByIdUser() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
-
-        UserEntity employee = new UserEntity();
-        employee.setName("Emp");
-        employee.setLastName("Loyee");
-        employee.setRut("11111111-1");
-        employee.setUsername("employee");
-        employee.setEmail("emp@example.com");
-        employee.setPassword("password");
-        employee.setRol("EMPLOYEE");
-        employee.setStateClient("ACTIVO");
-        employee.setLoans(0);
-        entityManager.persist(employee);
+    void testFindByIdUser() {
+        ToolEntity tool = createTool();
+        UserEntity employee = createEmployee();
 
         UserEntity user = new UserEntity();
         user.setName("Test");
@@ -106,31 +102,13 @@ public class KardexRepositoryTest {
         entityManager.flush();
 
         List<KardexEntity> found = kardexRepository.findByIdUser(user);
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByType() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
-
-        UserEntity employee = new UserEntity();
-        employee.setName("Emp");
-        employee.setLastName("Loyee");
-        employee.setRut("11111111-1");
-        employee.setUsername("employee");
-        employee.setEmail("emp@example.com");
-        employee.setPassword("password");
-        employee.setRol("EMPLOYEE");
-        employee.setStateClient("ACTIVO");
-        employee.setLoans(0);
-        entityManager.persist(employee);
+    void testFindByType() {
+        ToolEntity tool = createTool();
+        UserEntity employee = createEmployee();
 
         KardexEntity kardex = new KardexEntity();
         kardex.setIdTool(tool);
@@ -143,31 +121,13 @@ public class KardexRepositoryTest {
         entityManager.flush();
 
         List<KardexEntity> found = kardexRepository.findByType("IN");
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByIdTool() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
-
-        UserEntity employee = new UserEntity();
-        employee.setName("Emp");
-        employee.setLastName("Loyee");
-        employee.setRut("11111111-1");
-        employee.setUsername("employee");
-        employee.setEmail("emp@example.com");
-        employee.setPassword("password");
-        employee.setRol("EMPLOYEE");
-        employee.setStateClient("ACTIVO");
-        employee.setLoans(0);
-        entityManager.persist(employee);
+    void testFindByIdTool() {
+        ToolEntity tool = createTool();
+        UserEntity employee = createEmployee();
 
         KardexEntity kardex = new KardexEntity();
         kardex.setIdTool(tool);
@@ -180,31 +140,13 @@ public class KardexRepositoryTest {
         entityManager.flush();
 
         List<KardexEntity> found = kardexRepository.findByIdTool(tool);
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByDateGreaterThan() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
-
-        UserEntity employee = new UserEntity();
-        employee.setName("Emp");
-        employee.setLastName("Loyee");
-        employee.setRut("11111111-1");
-        employee.setUsername("employee");
-        employee.setEmail("emp@example.com");
-        employee.setPassword("password");
-        employee.setRol("EMPLOYEE");
-        employee.setStateClient("ACTIVO");
-        employee.setLoans(0);
-        entityManager.persist(employee);
+    void testFindByDateGreaterThan() {
+        ToolEntity tool = createTool();
+        UserEntity employee = createEmployee();
 
         KardexEntity kardex = new KardexEntity();
         kardex.setIdTool(tool);
@@ -217,31 +159,13 @@ public class KardexRepositoryTest {
         entityManager.flush();
 
         List<KardexEntity> found = kardexRepository.findByDateGreaterThan(Date.valueOf("2023-01-01"));
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByDateLessThan() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
-
-        UserEntity employee = new UserEntity();
-        employee.setName("Emp");
-        employee.setLastName("Loyee");
-        employee.setRut("11111111-1");
-        employee.setUsername("employee");
-        employee.setEmail("emp@example.com");
-        employee.setPassword("password");
-        employee.setRol("EMPLOYEE");
-        employee.setStateClient("ACTIVO");
-        employee.setLoans(0);
-        entityManager.persist(employee);
+    void testFindByDateLessThan() {
+        ToolEntity tool = createTool();
+        UserEntity employee = createEmployee();
 
         KardexEntity kardex = new KardexEntity();
         kardex.setIdTool(tool);
@@ -254,31 +178,13 @@ public class KardexRepositoryTest {
         entityManager.flush();
 
         List<KardexEntity> found = kardexRepository.findByDateLessThan(Date.valueOf("2023-01-05"));
-
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByDateBetween() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
-
-        UserEntity employee = new UserEntity();
-        employee.setName("Emp");
-        employee.setLastName("Loyee");
-        employee.setRut("11111111-1");
-        employee.setUsername("employee");
-        employee.setEmail("emp@example.com");
-        employee.setPassword("password");
-        employee.setRol("EMPLOYEE");
-        employee.setStateClient("ACTIVO");
-        employee.setLoans(0);
-        entityManager.persist(employee);
+    void testFindByDateBetween() {
+        ToolEntity tool = createTool();
+        UserEntity employee = createEmployee();
 
         KardexEntity kardex = new KardexEntity();
         kardex.setIdTool(tool);
@@ -291,7 +197,6 @@ public class KardexRepositoryTest {
         entityManager.flush();
 
         List<KardexEntity> found = kardexRepository.findByDateBetween(Date.valueOf("2023-01-01"), Date.valueOf("2023-01-10"));
-
         assertThat(found).hasSize(1);
     }
 }

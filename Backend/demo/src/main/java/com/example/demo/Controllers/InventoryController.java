@@ -5,11 +5,11 @@ import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.InventoryService;
 import com.example.demo.Services.ToolService;
-import org.springframework.http.MediaType;
-import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.Services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -18,16 +18,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/inventory")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class InventoryController {
 
-    @Autowired
-    private InventoryService inventoryService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ToolService toolService;
+    private final InventoryService inventoryService;
+    private final UserService userService;
+    private final ToolService toolService;
 
     /*
      GET

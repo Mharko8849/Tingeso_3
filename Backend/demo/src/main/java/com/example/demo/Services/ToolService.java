@@ -10,7 +10,7 @@ import com.example.demo.Entities.ToolStateEntity;
 import com.example.demo.Repositories.InventoryRepository;
 import com.example.demo.Repositories.ToolRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,25 +25,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ToolService {
 
-    @Autowired
-    private ToolRepository toolRepository;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private InventoryRepository inventoryRepository;
-
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
-    private ToolStateService toolStateService;
-
-    @Autowired
-    private CategoryService categoryService;
+    private final ToolRepository toolRepository;
+    private final UserService userService;
+    private final InventoryRepository inventoryRepository;
+    private final FileStorageService fileStorageService;
+    private final ToolStateService toolStateService;
+    private final CategoryService categoryService;
 
     public ArrayList<ToolEntity> getAllTools() {
         return (ArrayList<ToolEntity>) toolRepository.findAll();

@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-public class ToolRepositoryTest {
+class ToolRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
@@ -29,7 +29,7 @@ public class ToolRepositoryTest {
     }
 
     @Test
-    public void testFindByToolName() {
+    void testFindByToolName() {
         CategoryEntity cat = createAndPersistCategory("Construction");
         
         ToolEntity tool = new ToolEntity();
@@ -47,7 +47,7 @@ public class ToolRepositoryTest {
     }
 
     @Test
-    public void testFindByCategory() {
+    void testFindByCategory() {
         CategoryEntity cat = createAndPersistCategory("Power Tools");
         
         ToolEntity tool = new ToolEntity();
@@ -66,7 +66,7 @@ public class ToolRepositoryTest {
     }
 
     @Test
-    public void testFindByPriceRentGreaterThanEqual() {
+    void testFindByPriceRentGreaterThanEqual() {
         CategoryEntity cat1 = createAndPersistCategory("Construction");
         CategoryEntity cat2 = createAndPersistCategory("Hand Tools");
         
@@ -94,7 +94,7 @@ public class ToolRepositoryTest {
     }
 
     @Test
-    public void testFindByPriceRentLessThanEqual() {
+    void testFindByPriceRentLessThanEqual() {
         CategoryEntity cat1 = createAndPersistCategory("Construction");
         CategoryEntity cat2 = createAndPersistCategory("Hand Tools");
         
@@ -122,7 +122,7 @@ public class ToolRepositoryTest {
     }
 
     @Test
-    public void testFindAllByCategory() {
+    void testFindAllByCategory() {
         CategoryEntity cat = createAndPersistCategory("Hand Tools");
         
         ToolEntity tool = new ToolEntity();
@@ -141,7 +141,7 @@ public class ToolRepositoryTest {
     }
 
     @Test
-    public void testFindByPriceRentGreaterThanEqualAndCategory() {
+    void testFindByPriceRentGreaterThanEqualAndCategory() {
         CategoryEntity cat = createAndPersistCategory("Power Tools");
         
         ToolEntity tool = new ToolEntity();
@@ -159,7 +159,7 @@ public class ToolRepositoryTest {
     }
 
     @Test
-    public void testFindByPriceRentLessThanEqualAndCategory() {
+    void testFindByPriceRentLessThanEqualAndCategory() {
         CategoryEntity cat = createAndPersistCategory("Power Tools");
         
         ToolEntity tool = new ToolEntity();
@@ -177,7 +177,7 @@ public class ToolRepositoryTest {
     }
 
     @Test
-    public void testFindAllByOrderByPriceRentDesc() {
+    void testFindAllByOrderByPriceRentDesc() {
         ToolEntity tool1 = new ToolEntity();
         tool1.setToolName("Cheap Tool");
         tool1.setPriceRent(10);

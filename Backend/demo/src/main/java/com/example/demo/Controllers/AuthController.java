@@ -2,7 +2,7 @@ package com.example.demo.Controllers;
 
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.AuthService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -12,10 +12,10 @@ import java.util.Locale;
 @RestController
 @RequestMapping({"/api/auth", "/auth"})
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
     /**
      * Registro de Cliente (desde frontend)

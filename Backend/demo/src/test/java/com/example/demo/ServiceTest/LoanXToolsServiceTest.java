@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class LoanXToolsServiceTest {
+class LoanXToolsServiceTest {
 
     @Mock
     private LoanXToolsRepository loanXToolsRepository;
@@ -49,7 +49,7 @@ public class LoanXToolsServiceTest {
     private UserEntity employee;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         user = new UserEntity();
         user.setId(1L);
@@ -85,21 +85,21 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testSaveLoanXToolsEntity() {
+    void testSaveLoanXToolsEntity() {
         when(loanXToolsRepository.save(any(LoanXToolsEntity.class))).thenReturn(lxt);
         LoanXToolsEntity result = loanXToolsService.saveLoanXToolsEntity(lxt);
         assertNotNull(result);
     }
 
     @Test
-    public void testFindLoanXToolsEntityById() {
+    void testFindLoanXToolsEntityById() {
         when(loanXToolsRepository.findById(1L)).thenReturn(Optional.of(lxt));
         LoanXToolsEntity result = loanXToolsService.findLoanXToolsEntityById(1L);
         assertNotNull(result);
     }
 
     @Test
-    public void testGetTotalDebt() {
+    void testGetTotalDebt() {
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
         when(loanXToolsRepository.findByIdLoan(loan)).thenReturn(list);
@@ -108,7 +108,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testGetTotalFine() {
+    void testGetTotalFine() {
         lxt.setFine(5);
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
@@ -118,7 +118,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testDeleteLoanXToolsById() {
+    void testDeleteLoanXToolsById() {
         when(userService.findUserById(2L)).thenReturn(employee);
         when(loanXToolsRepository.findById(1L)).thenReturn(Optional.of(lxt));
         loanXToolsService.deleteLoanXToolsById(2L, 1L);
@@ -126,7 +126,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testGiveLoanTool() {
+    void testGiveLoanTool() {
         when(userService.findUserById(2L)).thenReturn(employee);
         when(loanXToolsRepository.findById(1L)).thenReturn(Optional.of(lxt));
         when(loanService.getLoanById(1L)).thenReturn(loan);
@@ -141,7 +141,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testCreateLoanXTool() {
+    void testCreateLoanXTool() {
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(toolService.getToolById(1L)).thenReturn(tool);
         when(loanService.isUserRestringed(user)).thenReturn(false);
@@ -154,20 +154,20 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testCalculateFineByDate() {
+    void testCalculateFineByDate() {
         loan.setReturnDate(Date.valueOf("2020-01-01")); // Past date
         int fine = loanXToolsService.calculateFineByDate(lxt);
         assertTrue(fine > 0);
     }
 
     @Test
-    public void testCalculateFineByStateToolReturn() {
+    void testCalculateFineByStateToolReturn() {
         int fine = loanXToolsService.calculateFineByStateToolReturn(lxt, "IRREPARABLE");
         assertEquals(100, fine);
     }
 
     @Test
-    public void testReceiveLoanTool() {
+    void testReceiveLoanTool() {
         lxt.setToolActivity("PRESTADA");
         when(userService.findUserById(2L)).thenReturn(employee);
         when(loanXToolsRepository.findById(1L)).thenReturn(Optional.of(lxt));
@@ -182,7 +182,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testPayDebt() {
+    void testPayDebt() {
         lxt.setFine(10);
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
@@ -198,7 +198,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testDeleteLoanXToolsById_WithActivity() {
+    void testDeleteLoanXToolsById_WithActivity() {
         lxt.setToolActivity("PRESTADA");
         when(userService.findUserById(2L)).thenReturn(employee);
         when(loanXToolsRepository.findById(1L)).thenReturn(Optional.of(lxt));
@@ -207,7 +207,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testGiveLoanTool_Exceptions() {
+    void testGiveLoanTool_Exceptions() {
         when(userService.findUserById(2L)).thenReturn(employee);
         when(loanXToolsRepository.findById(1L)).thenReturn(Optional.of(lxt));
         when(loanService.getLoanById(1L)).thenReturn(loan);
@@ -228,7 +228,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testCreateLoanXTool_Exceptions() {
+    void testCreateLoanXTool_Exceptions() {
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(toolService.getToolById(1L)).thenReturn(tool);
 
@@ -254,12 +254,12 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testCalculateFineByStateToolReturn_Invalid() {
+    void testCalculateFineByStateToolReturn_Invalid() {
         assertThrows(RuntimeException.class, () -> loanXToolsService.calculateFineByStateToolReturn(lxt, "INVALID"));
     }
 
     @Test
-    public void testReceiveLoanTool_Exceptions() {
+    void testReceiveLoanTool_Exceptions() {
         when(userService.findUserById(2L)).thenReturn(employee);
         when(loanXToolsRepository.findById(1L)).thenReturn(Optional.of(lxt));
         when(loanService.getLoanById(1L)).thenReturn(loan);
@@ -274,7 +274,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testMapAndPayRepairTool() {
+    void testMapAndPayRepairTool() {
         // Mock payRepairTool logic via spy or just test the mapping logic if possible.
         // Since payRepairTool is transactional and in same class, mocking it is hard without spy.
         // We will test the full flow.
@@ -295,7 +295,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testMapAndPayRepairTool_InvalidInput() {
+    void testMapAndPayRepairTool_InvalidInput() {
         assertThrows(IllegalArgumentException.class, () -> loanXToolsService.mapAndPayRepairTool(1L, new java.util.HashMap<>()));
         
         java.util.Map<String, Object> body = new java.util.HashMap<>();
@@ -305,7 +305,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testCloseStrangeLoan() {
+    void testCloseStrangeLoan() {
         when(loanService.getLoanById(1L)).thenReturn(loan);
         when(loanXToolsRepository.findByIdLoan(loan)).thenReturn(new ArrayList<>());
         when(loanService.saveLoan(loan)).thenReturn(loan);
@@ -315,7 +315,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testGetAllLoanXToolsByIdUser() {
+    void testGetAllLoanXToolsByIdUser() {
         List<LoanEntity> loans = List.of(loan);
         when(loanService.getAllLoansByIdUser(user)).thenReturn(loans);
         when(loanXToolsRepository.findByIdLoan(loan)).thenReturn(List.of(lxt));
@@ -325,7 +325,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testGiveAllLoanTools() {
+    void testGiveAllLoanTools() {
         when(userService.findUserById(2L)).thenReturn(employee);
         when(loanXToolsRepository.findById(1L)).thenReturn(Optional.of(lxt));
         when(loanService.getLoanById(1L)).thenReturn(loan);
@@ -337,7 +337,7 @@ public class LoanXToolsServiceTest {
     }
     
     @Test
-    public void testMapAndReceiveAllTools() {
+    void testMapAndReceiveAllTools() {
         // Setup for receiveAllLoanTools
         lxt.setToolActivity("PRESTADA");
         List<LoanXToolsEntity> list = List.of(lxt);
@@ -358,14 +358,14 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testMapAndReceiveAllTools_InvalidKey() {
+    void testMapAndReceiveAllTools_InvalidKey() {
         java.util.Map<String, String> stateMap = new java.util.HashMap<>();
         stateMap.put("invalid", "SIN DAÑO");
         assertThrows(IllegalArgumentException.class, () -> loanXToolsService.mapAndReceiveAllTools(1L, 2L, stateMap));
     }
 
     @Test
-    public void testReceiveAllLoanTools_MismatchSize() {
+    void testReceiveAllLoanTools_MismatchSize() {
         List<LoanXToolsEntity> list = List.of(lxt);
         java.util.Map<Long, String> states = new java.util.HashMap<>();
         
@@ -373,7 +373,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testReceiveAllLoanTools_MissingId() {
+    void testReceiveAllLoanTools_MissingId() {
         List<LoanXToolsEntity> list = List.of(lxt);
         java.util.Map<Long, String> states = new java.util.HashMap<>();
         states.put(999L, "SIN DAÑO");
@@ -382,7 +382,7 @@ public class LoanXToolsServiceTest {
     }
 
     @Test
-    public void testNeedRepairTools() {
+    void testNeedRepairTools() {
         lxt.setNeedRepair(true);
         when(loanService.getLoanById(1L)).thenReturn(loan);
         when(loanXToolsRepository.findByIdLoan(loan)).thenReturn(List.of(lxt));

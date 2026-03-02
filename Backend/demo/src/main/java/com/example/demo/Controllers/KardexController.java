@@ -5,7 +5,7 @@ import com.example.demo.Services.KardexService;
 import com.example.demo.Services.ToolService;
 import com.example.demo.Services.UserService;
 import com.example.demo.DTO.PageResponseDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,16 +17,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/kardex")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class KardexController {
 
-    @Autowired
-    private KardexService kardexService;
-
-    @Autowired
-    private ToolService toolService;
-
-    @Autowired
-    private UserService userService;
+    private final KardexService kardexService;
+    private final ToolService toolService;
+    private final UserService userService;
 
     /*
     GET

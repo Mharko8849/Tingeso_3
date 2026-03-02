@@ -3,7 +3,7 @@ package com.example.demo.Controllers;
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.UserService;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,10 +15,10 @@ import java.util.List;
 @RestController
 @RequestMapping({"/api/user", "/user"})
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     /*
      * GET endpoints

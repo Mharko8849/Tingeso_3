@@ -6,7 +6,7 @@ import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Services.ToolService;
 import com.example.demo.Services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,12 +17,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/tool")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class ToolController {
 
-    @Autowired
-    private ToolService toolService;
-    @Autowired
-    private UserService userService;
+    private final ToolService toolService;
+    private final UserService userService;
 
     /*
      * GET: Traer todas las herramientas

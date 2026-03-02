@@ -2,7 +2,7 @@ package com.example.demo.Controllers;
 
 import com.example.demo.Entities.ToolStateEntity;
 import com.example.demo.Services.ToolStateService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,10 +10,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/tool-states")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class ToolStateController {
 
-    @Autowired
-    ToolStateService toolStateService;
+    private final ToolStateService toolStateService;
 
     @GetMapping("/")
     public List<ToolStateEntity> getAllStates() {

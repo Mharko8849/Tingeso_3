@@ -21,13 +21,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+
+import com.example.demo.DTO.PageResponseDTO;
+import com.example.demo.DTO.ToolDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-public class ToolServiceTest {
+class ToolServiceTest {
 
     @Mock
     private ToolRepository toolRepository;
@@ -55,7 +63,7 @@ public class ToolServiceTest {
     private CategoryEntity category;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         category = new CategoryEntity();
         category.setName("Construction");
@@ -76,7 +84,7 @@ public class ToolServiceTest {
     }
 
     @Test
-    public void testGetAllTools() {
+    void testGetAllTools() {
         ArrayList<ToolEntity> tools = new ArrayList<>();
         tools.add(tool);
         when(toolRepository.findAll()).thenReturn(tools);
@@ -85,7 +93,7 @@ public class ToolServiceTest {
     }
 
     @Test
-    public void testGetToolById() {
+    void testGetToolById() {
         when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
         ToolEntity result = toolService.getToolById(1L);
         assertNotNull(result);
@@ -93,7 +101,7 @@ public class ToolServiceTest {
     }
 
     @Test
-    public void testGetToolById_NotFound() {
+    void testGetToolById_NotFound() {
         when(toolRepository.findById(1L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> {
             toolService.getToolById(1L);
@@ -101,7 +109,7 @@ public class ToolServiceTest {
     }
 
     @Test
-    public void testCreateTool() {
+    void testCreateTool() {
         MultipartFile image = mock(MultipartFile.class);
         when(fileStorageService.saveFile(image)).thenReturn("image.jpg");
         when(categoryService.createCategory(any(CategoryEntity.class))).thenReturn(category);
@@ -116,7 +124,7 @@ public class ToolServiceTest {
     }
 
     @Test
-    public void testCreateTool_InvalidData() {
+    void testCreateTool_InvalidData() {
         MultipartFile image = mock(MultipartFile.class);
         
         ToolEntity invalidTool = new ToolEntity();
@@ -134,7 +142,7 @@ public class ToolServiceTest {
     }
 
     @Test
-    public void testUpdateTool() {
+    void testUpdateTool() {
         MultipartFile image = mock(MultipartFile.class);
         when(userService.findUserById(1L)).thenReturn(user);
         when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
@@ -159,7 +167,7 @@ public class ToolServiceTest {
     }
 
     @Test
-    public void testUpdateTool_PartialUpdate() {
+    void testUpdateTool_PartialUpdate() {
         when(userService.findUserById(1L)).thenReturn(user);
         when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
         when(toolRepository.save(any(ToolEntity.class))).thenReturn(tool);
@@ -175,9 +183,36 @@ public class ToolServiceTest {
     }
 
     @Test
-    public void testDeleteToolById_Exception() {
+    void testDeleteToolById_Exception() {
         doThrow(new RuntimeException()).when(toolRepository).deleteById(1L);
         boolean result = toolService.deleteToolById(1L);
         assertFalse(result);
+    }
+
+    @Test
+    void testDeleteToolById_Success() {
+        doNothing().when(toolRepository).deleteById(1L);
+        boolean result = toolService.deleteToolById(1L);
+        assertTrue(result);
+    }
+
+    @Test
+    void testGetAllToolsPaginated() {
+        Page<ToolEntity> page = new PageImpl<>(List.of(tool));
+        when(toolRepository.findAll(any(Pageable.class))).thenReturn(page);
+
+        PageResponseDTO<ToolDTO> result = toolService.getAllToolsPaginated(0, 8);
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+    }
+
+    @Test
+    void testGetToolsByCategoryPaginated() {
+        Page<ToolEntity> page = new PageImpl<>(List.of(tool));
+        when(toolRepository.findByCategory_Name(eq("Construction"), any(Pageable.class))).thenReturn(page);
+
+        PageResponseDTO<ToolDTO> result = toolService.getToolsByCategoryPaginated("Construction", 0, 8);
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
     }
 }

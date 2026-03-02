@@ -21,6 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.demo.DTO.PageResponseDTO;
+import com.example.demo.DTO.ToolDTO;
+
+import static org.mockito.ArgumentMatchers.anyInt;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -31,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(ToolController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithMockUser(username = "admin", roles = {"ADMIN", "SUPERADMIN"})
-public class ToolControllerTest {
+class ToolControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -52,7 +57,7 @@ public class ToolControllerTest {
     private UserEntity user;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         user = new UserEntity();
         user.setId(1L);
 
@@ -62,25 +67,25 @@ public class ToolControllerTest {
     }
 
     @Test
-    public void testGetAllTools() throws Exception {
+    void testGetAllTools() throws Exception {
         List<ToolEntity> list = new ArrayList<>();
         list.add(tool);
         when(toolService.getAllTools()).thenReturn((ArrayList<ToolEntity>) list);
 
-        mockMvc.perform(get("/api/tool/"))
+        mockMvc.perform(get("/tool/"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test
-    public void testAddTool() throws Exception {
+    void testAddTool() throws Exception {
         MockMultipartFile image = new MockMultipartFile("image", "image.jpg", "image/jpeg", "some-image".getBytes());
         MockMultipartFile toolPart = new MockMultipartFile("tool", "", "application/json", objectMapper.writeValueAsString(tool).getBytes());
 
         when(userService.findUserById(1L)).thenReturn(user);
         when(toolService.createTool(any(UserEntity.class), any(ToolEntity.class), any(MultipartFile.class))).thenReturn(tool);
 
-        mockMvc.perform(multipart("/api/tool/user/1")
+        mockMvc.perform(multipart("/tool/user/1")
                 .file(image)
                 .file(toolPart))
                 .andExpect(status().isOk())
@@ -88,40 +93,40 @@ public class ToolControllerTest {
     }
 
     @Test
-    public void testAddTool_UserNotFound() throws Exception {
+    void testAddTool_UserNotFound() throws Exception {
         MockMultipartFile image = new MockMultipartFile("image", "image.jpg", "image/jpeg", "some-image".getBytes());
         MockMultipartFile toolPart = new MockMultipartFile("tool", "", "application/json", objectMapper.writeValueAsString(tool).getBytes());
 
         when(userService.findUserById(1L)).thenThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
 
-        mockMvc.perform(multipart("/api/tool/user/1")
+        mockMvc.perform(multipart("/tool/user/1")
                 .file(image)
                 .file(toolPart))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    public void testAddTool_Error() throws Exception {
+    void testAddTool_Error() throws Exception {
         MockMultipartFile image = new MockMultipartFile("image", "image.jpg", "image/jpeg", "some-image".getBytes());
         MockMultipartFile toolPart = new MockMultipartFile("tool", "", "application/json", objectMapper.writeValueAsString(tool).getBytes());
 
         when(userService.findUserById(1L)).thenReturn(user);
         when(toolService.createTool(any(UserEntity.class), any(ToolEntity.class), any(MultipartFile.class))).thenThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST));
 
-        mockMvc.perform(multipart("/api/tool/user/1")
+        mockMvc.perform(multipart("/tool/user/1")
                 .file(image)
                 .file(toolPart))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    public void testUpdateTool() throws Exception {
+    void testUpdateTool() throws Exception {
         MockMultipartFile image = new MockMultipartFile("image", "image.jpg", "image/jpeg", "some-image".getBytes());
         MockMultipartFile toolPart = new MockMultipartFile("tool", "", "application/json", objectMapper.writeValueAsString(tool).getBytes());
 
         when(toolService.updateTool(eq(1L), eq(1L), any(ToolEntity.class), any(MultipartFile.class))).thenReturn(tool);
 
-        mockMvc.perform(multipart("/api/tool/1/user/1")
+        mockMvc.perform(multipart("/tool/1/user/1")
                 .file(image)
                 .file(toolPart)
                 .with(request -> {
@@ -133,11 +138,39 @@ public class ToolControllerTest {
     }
 
     @Test
-    public void testDeleteTool() throws Exception {
+    void testDeleteTool() throws Exception {
         when(toolService.deleteToolById(1L)).thenReturn(true);
 
-        mockMvc.perform(delete("/api/tool/1"))
+        mockMvc.perform(delete("/tool/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(true));
+    }
+
+    @Test
+    void testGetAllToolsPaginated() throws Exception {
+        ToolDTO toolDTO = new ToolDTO(1L, "Hammer", null, 0, 0, null, null, null, null, 0);
+        List<ToolDTO> content = List.of(toolDTO);
+        PageResponseDTO<ToolDTO> page = new PageResponseDTO<>(content, 0, 8, 1L, 1, true, true);
+        when(toolService.getAllToolsPaginated(anyInt(), anyInt())).thenReturn(page);
+
+        mockMvc.perform(get("/tool/paginated")
+                .param("page", "0")
+                .param("size", "8"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1));
+    }
+
+    @Test
+    void testGetToolsByCategoryPaginated() throws Exception {
+        ToolDTO toolDTO = new ToolDTO(1L, "Hammer", null, 0, 0, null, null, "Construction", null, 0);
+        List<ToolDTO> content = List.of(toolDTO);
+        PageResponseDTO<ToolDTO> page = new PageResponseDTO<>(content, 0, 8, 1L, 1, true, true);
+        when(toolService.getToolsByCategoryPaginated(eq("Construction"), anyInt(), anyInt())).thenReturn(page);
+
+        mockMvc.perform(get("/tool/category/Construction/paginated")
+                .param("page", "0")
+                .param("size", "8"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1));
     }
 }

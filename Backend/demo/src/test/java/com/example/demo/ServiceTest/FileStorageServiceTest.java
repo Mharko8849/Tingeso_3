@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FileStorageServiceTest {
+class FileStorageServiceTest {
 
 @TempDir
     Path tempDir;
@@ -20,12 +20,12 @@ public class FileStorageServiceTest {
     private FileStorageService fileStorageService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         fileStorageService = new FileStorageService(tempDir.toString());
     }
 
     @Test
-    public void testSaveFile() {
+    void testSaveFile() {
         MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test data".getBytes());
         String fileName = fileStorageService.saveFile(file);
         assertTrue(fileName.endsWith("_test.jpg"));
@@ -33,7 +33,7 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    public void testSaveFile_NullOrEmpty() {
+    void testSaveFile_NullOrEmpty() {
         assertNull(fileStorageService.saveFile(null));
         
         MockMultipartFile emptyFile = new MockMultipartFile("file", "", "image/jpeg", new byte[0]);
@@ -41,7 +41,7 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    public void testSaveFile_Exception() {
+    void testSaveFile_Exception() {
         // Create a service with a read-only directory or invalid path to trigger IOException
         // However, since we pass the path in constructor and it creates directories, it's tricky.
         // Instead, we can try to pass a file as the directory path if it exists, or use a non-writable path.

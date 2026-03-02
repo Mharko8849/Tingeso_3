@@ -1,8 +1,11 @@
 package com.example.demo.RepositoryTest;
 
+import com.example.demo.Entities.CategoryEntity;
 import com.example.demo.Entities.InventoryEntity;
 import com.example.demo.Entities.ToolEntity;
+import com.example.demo.Entities.ToolStateEntity;
 import com.example.demo.Repositories.InventoryRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -13,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-public class InventoryRepositoryTest {
+class InventoryRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
@@ -21,19 +24,43 @@ public class InventoryRepositoryTest {
     @Autowired
     private InventoryRepository inventoryRepository;
 
-    @Test
-    public void testFindByIdTool() {
+    private CategoryEntity category;
+    private ToolStateEntity availableState;
+    private ToolStateEntity brokenState;
+
+    @BeforeEach
+    void setUp() {
+        category = new CategoryEntity();
+        category.setName("Construction");
+        entityManager.persist(category);
+
+        availableState = new ToolStateEntity();
+        availableState.setState("AVAILABLE");
+        entityManager.persist(availableState);
+
+        brokenState = new ToolStateEntity();
+        brokenState.setState("BROKEN");
+        entityManager.persist(brokenState);
+    }
+
+    private ToolEntity createTool(String name) {
         ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
+        tool.setToolName(name);
+        tool.setCategory(category);
         tool.setRepoCost(100);
         tool.setPriceRent(10);
         tool.setPriceFineAtDate(5);
         entityManager.persist(tool);
+        return tool;
+    }
+
+    @Test
+    void testFindByIdTool() {
+        ToolEntity tool = createTool("Hammer");
 
         InventoryEntity inventory = new InventoryEntity();
         inventory.setIdTool(tool);
-        inventory.setToolState("AVAILABLE");
+        inventory.setToolState(availableState);
         inventory.setStockTool(10);
         entityManager.persist(inventory);
         entityManager.flush();
@@ -45,41 +72,29 @@ public class InventoryRepositoryTest {
     }
 
     @Test
-    public void testFindByIdToolAndToolState() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByIdToolAndToolState() {
+        ToolEntity tool = createTool("Hammer");
 
         InventoryEntity inventory = new InventoryEntity();
         inventory.setIdTool(tool);
-        inventory.setToolState("AVAILABLE");
+        inventory.setToolState(availableState);
         inventory.setStockTool(10);
         entityManager.persist(inventory);
         entityManager.flush();
 
-        InventoryEntity found = inventoryRepository.findByIdToolAndToolState(tool, "AVAILABLE");
+        InventoryEntity found = inventoryRepository.findByIdToolAndToolState_State(tool, "AVAILABLE");
 
         assertThat(found).isNotNull();
-        assertThat(found.getToolState()).isEqualTo("AVAILABLE");
+        assertThat(found.getToolState().getState()).isEqualTo("AVAILABLE");
     }
 
     @Test
-    public void testFindByStockToolGreaterThan() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByStockToolGreaterThan() {
+        ToolEntity tool = createTool("Hammer");
 
         InventoryEntity inventory = new InventoryEntity();
         inventory.setIdTool(tool);
-        inventory.setToolState("AVAILABLE");
+        inventory.setToolState(availableState);
         inventory.setStockTool(10);
         entityManager.persist(inventory);
         entityManager.flush();
@@ -90,73 +105,55 @@ public class InventoryRepositoryTest {
     }
 
     @Test
-    public void testFindByToolState() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByToolState() {
+        ToolEntity tool = createTool("Hammer");
 
         InventoryEntity inventory = new InventoryEntity();
         inventory.setIdTool(tool);
-        inventory.setToolState("BROKEN");
+        inventory.setToolState(brokenState);
         inventory.setStockTool(0);
         entityManager.persist(inventory);
         entityManager.flush();
 
-        List<InventoryEntity> found = inventoryRepository.findByToolState("BROKEN");
+        List<InventoryEntity> found = inventoryRepository.findByToolState_State("BROKEN");
 
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByIdTool_Category() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByIdTool_Category() {
+        ToolEntity tool = createTool("Hammer");
 
         InventoryEntity inventory = new InventoryEntity();
         inventory.setIdTool(tool);
-        inventory.setToolState("AVAILABLE");
+        inventory.setToolState(availableState);
         inventory.setStockTool(10);
         entityManager.persist(inventory);
         entityManager.flush();
 
-        List<InventoryEntity> found = inventoryRepository.findByIdTool_Category("Construction");
+        List<InventoryEntity> found = inventoryRepository.findByIdTool_Category_Name("Construction");
 
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindByToolStateAndIdTool_Category() {
-        ToolEntity tool = new ToolEntity();
-        tool.setToolName("Hammer");
-        tool.setCategory("Construction");
-        tool.setRepoCost(100);
-        tool.setPriceRent(10);
-        tool.setPriceFineAtDate(5);
-        entityManager.persist(tool);
+    void testFindByToolStateAndIdTool_Category() {
+        ToolEntity tool = createTool("Hammer");
 
         InventoryEntity inventory = new InventoryEntity();
         inventory.setIdTool(tool);
-        inventory.setToolState("AVAILABLE");
+        inventory.setToolState(availableState);
         inventory.setStockTool(10);
         entityManager.persist(inventory);
         entityManager.flush();
 
-        List<InventoryEntity> found = inventoryRepository.findByToolStateAndIdTool_Category("AVAILABLE", "Construction");
+        List<InventoryEntity> found = inventoryRepository.findByToolState_StateAndIdTool_Category_Name("AVAILABLE", "Construction");
 
         assertThat(found).hasSize(1);
     }
 
     @Test
-    public void testFindAllByOrderByIdTool_PriceRentAsc() {
+    void testFindAllByOrderByIdTool_PriceRentAsc() {
         ToolEntity tool1 = new ToolEntity();
         tool1.setToolName("Cheap");
         tool1.setPriceRent(10);
@@ -189,7 +186,7 @@ public class InventoryRepositoryTest {
     }
 
     @Test
-    public void testFindAllByOrderByIdTool_PriceRentDesc() {
+    void testFindAllByOrderByIdTool_PriceRentDesc() {
         ToolEntity tool1 = new ToolEntity();
         tool1.setToolName("Cheap");
         tool1.setPriceRent(10);

@@ -5,7 +5,7 @@ import com.example.demo.Entities.ToolEntity;
 import com.example.demo.Entities.UserEntity;
 import com.example.demo.Repositories.KardexRepository;
 import com.example.demo.Repositories.ToolRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,13 +26,15 @@ import java.util.stream.Collectors;
 import java.util.Collections;
 
 @Service
+@RequiredArgsConstructor
 public class KardexService {
 
-    @Autowired
-    private KardexRepository kardexRepository;
+    private static final String DATE_FORMAT = "yyyy-MM-dd";
+    private static final String TOTAL_LOANS_KEY = "totalLoans";
+    private static final String TOOL_KEY = "tool";
 
-    @Autowired
-    private ToolRepository toolRepository;
+    private final KardexRepository kardexRepository;
+    private final ToolRepository toolRepository;
 
     public KardexEntity saveKardexEntity(KardexEntity kardexEntity) {
         return kardexRepository.save(kardexEntity);
@@ -153,29 +155,31 @@ public class KardexService {
 
         if (initDate != null) {
             kardexList = kardexList.stream()
-                    .filter(kardex -> {
-                        if (kardex.getDate() == null) return false;
-                        // Compare only the date part (ignore time)
-                        String kardexDateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(kardex.getDate());
-                        String initDateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(initDate);
-                        return kardexDateStr.compareTo(initDateStr) >= 0;
-                    })
+                    .filter(kardex -> isOnOrAfterDate(kardex, initDate))
                     .toList();
         }
 
         if (finalDate != null) {
             kardexList = kardexList.stream()
-                    .filter(kardex -> {
-                        if (kardex.getDate() == null) return false;
-                        // Compare only the date part (ignore time)
-                        String kardexDateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(kardex.getDate());
-                        String finalDateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(finalDate);
-                        return kardexDateStr.compareTo(finalDateStr) <= 0;
-                    })
+                    .filter(kardex -> isOnOrBeforeDate(kardex, finalDate))
                     .toList();
         }
 
         return kardexList;
+    }
+
+    private boolean isOnOrAfterDate(KardexEntity kardex, Date initDate) {
+        if (kardex.getDate() == null) return false;
+        String kardexDateStr = new java.text.SimpleDateFormat(DATE_FORMAT).format(kardex.getDate());
+        String initDateStr = new java.text.SimpleDateFormat(DATE_FORMAT).format(initDate);
+        return kardexDateStr.compareTo(initDateStr) >= 0;
+    }
+
+    private boolean isOnOrBeforeDate(KardexEntity kardex, Date finalDate) {
+        if (kardex.getDate() == null) return false;
+        String kardexDateStr = new java.text.SimpleDateFormat(DATE_FORMAT).format(kardex.getDate());
+        String finalDateStr = new java.text.SimpleDateFormat(DATE_FORMAT).format(finalDate);
+        return kardexDateStr.compareTo(finalDateStr) <= 0;
     }
 
     /**
@@ -185,7 +189,12 @@ public class KardexService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getRankingToolsByDateRange(Date initDate, Date finalDate) {
         if (initDate == null || finalDate == null) {
-            return getRankingTools();
+            // Fallback: use this month's date range instead of calling another transactional method
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            initDate = new Date(calendar.getTimeInMillis());
+            calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+            finalDate = new Date(calendar.getTimeInMillis());
         }
 
         List<Object[]> rows = kardexRepository.getRankingByDateRangeQuery(initDate, finalDate);
@@ -193,8 +202,8 @@ public class KardexService {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object[] row : rows) {
             Map<String, Object> map = new HashMap<>();
-            map.put("tool", row[0]);
-            map.put("totalLoans", row[1]);
+            map.put(TOOL_KEY, row[0]);
+            map.put(TOTAL_LOANS_KEY, row[1]);
             result.add(map);
         }
         return result;
@@ -218,8 +227,8 @@ public class KardexService {
         List<Map<String, Object>> content = new ArrayList<>();
         for (Object[] row : rankingPage.getContent()) {
             Map<String, Object> map = new HashMap<>();
-            map.put("tool", row[0]);
-            map.put("totalLoans", row[1]);
+            map.put(TOOL_KEY, row[0]);
+            map.put(TOTAL_LOANS_KEY, row[1]);
             content.add(map);
         }
 
@@ -227,15 +236,15 @@ public class KardexService {
         // rellenar con herramientas con totalLoans = 0 para que el carrusel siempre tenga contenido.
         if (content.size() < size) {
             List<Long> existingIds = content.stream()
-                    .map(m -> ((ToolEntity) m.get("tool")).getId())
+                    .map(m -> ((ToolEntity) m.get(TOOL_KEY)).getId())
                     .collect(Collectors.toList());
             List<ToolEntity> allTools = toolRepository.findAll();
             for (ToolEntity tool : allTools) {
                 if (content.size() >= size) break;
                 if (!existingIds.contains(tool.getId())) {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("tool", tool);
-                    map.put("totalLoans", 0);
+                    map.put(TOOL_KEY, tool);
+                    map.put(TOTAL_LOANS_KEY, 0);
                     content.add(map);
                 }
             }
@@ -260,7 +269,12 @@ public class KardexService {
     public PageResponseDTO<Map<String, Object>> getRankingToolsByDateRangePaginated(
             Date initDate, Date finalDate, int page, int size) {
         if (initDate == null || finalDate == null) {
-            return getRankingToolsPaginated(page, size);
+            // Fallback: use this month's date range instead of calling another transactional method
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            initDate = new Date(calendar.getTimeInMillis());
+            calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+            finalDate = new Date(calendar.getTimeInMillis());
         }
 
         Pageable pageable = PageRequest.of(page, size);
@@ -269,8 +283,8 @@ public class KardexService {
         List<Map<String, Object>> content = new ArrayList<>();
         for (Object[] row : rankingPage.getContent()) {
             Map<String, Object> map = new HashMap<>();
-            map.put("tool", row[0]);
-            map.put("totalLoans", row[1]);
+            map.put(TOOL_KEY, row[0]);
+            map.put(TOTAL_LOANS_KEY, row[1]);
             content.add(map);
         }
         return new PageResponseDTO<>(
@@ -305,8 +319,8 @@ public class KardexService {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object[] row : rows) {
             Map<String, Object> map = new HashMap<>();
-            map.put("tool", row[0]);
-            map.put("totalLoans", row[1]);
+            map.put(TOOL_KEY, row[0]);
+            map.put(TOTAL_LOANS_KEY, row[1]);
             result.add(map);
         }
 
@@ -316,15 +330,15 @@ public class KardexService {
             int targetSize = Math.min(10, allTools.size());
 
             List<Long> existingIds = result.stream()
-                    .map(m -> ((ToolEntity) m.get("tool")).getId())
+                    .map(m -> ((ToolEntity) m.get(TOOL_KEY)).getId())
                     .collect(Collectors.toList());
 
             for (ToolEntity tool : allTools) {
                 if (result.size() >= targetSize) break;
                 if (!existingIds.contains(tool.getId())) {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("tool", tool);
-                    map.put("totalLoans", 0);
+                    map.put(TOOL_KEY, tool);
+                    map.put(TOTAL_LOANS_KEY, 0);
                     result.add(map);
                 }
             }

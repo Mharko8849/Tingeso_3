@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(LoanXToolsController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithMockUser(username = "admin", roles = {"ADMIN", "SUPERADMIN"})
-public class LoanXToolsControllerTest {
+class LoanXToolsControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -63,7 +63,7 @@ public class LoanXToolsControllerTest {
     private ToolEntity tool;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         user = new UserEntity();
         user.setId(1L);
 
@@ -80,7 +80,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testGetAllLoanTools() throws Exception {
+    void testGetAllLoanTools() throws Exception {
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
         when(loanXToolsService.getAllLoanXTools()).thenReturn(list);
@@ -91,7 +91,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testGetByLoan() throws Exception {
+    void testGetByLoan() throws Exception {
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
         when(loanService.getLoanById(1L)).thenReturn(loan);
@@ -103,7 +103,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testIsToolLoaned() throws Exception {
+    void testIsToolLoaned() throws Exception {
         when(userService.findUserById(1L)).thenReturn(user);
         when(toolService.getToolById(1L)).thenReturn(tool);
         when(loanXToolsService.isToolLoanedToUser(tool, user)).thenReturn(true);
@@ -114,7 +114,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testFineById() throws Exception {
+    void testFineById() throws Exception {
         when(loanXToolsService.findLoanXToolsEntityById(1L)).thenReturn(lxt);
         when(loanXToolsService.calculateFine(lxt, "SIN DAÑO")).thenReturn(10);
 
@@ -125,7 +125,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testGetTotal() throws Exception {
+    void testGetTotal() throws Exception {
         when(loanService.getLoanById(1L)).thenReturn(loan);
         when(loanXToolsService.getTotalDebt(loan)).thenReturn(100);
 
@@ -135,7 +135,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testGetTotalFine() throws Exception {
+    void testGetTotalFine() throws Exception {
         when(loanService.getLoanById(1L)).thenReturn(loan);
         when(loanXToolsService.getTotalFine(loan)).thenReturn(50);
 
@@ -145,7 +145,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testGetAllLoanToolsByUser() throws Exception {
+    void testGetAllLoanToolsByUser() throws Exception {
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
         when(userService.findUserById(1L)).thenReturn(user);
@@ -157,7 +157,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testGetAllRepairTools() throws Exception {
+    void testGetAllRepairTools() throws Exception {
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
         when(loanXToolsService.needRepairTools(1L)).thenReturn(list);
@@ -168,7 +168,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testGiveLoanTool() throws Exception {
+    void testGiveLoanTool() throws Exception {
         when(userService.findUserById(1L)).thenReturn(user);
         when(loanXToolsService.giveLoanTool(user, 1L)).thenReturn(lxt);
 
@@ -178,7 +178,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testCreateLoanXTool() throws Exception {
+    void testCreateLoanXTool() throws Exception {
         when(loanXToolsService.createLoanXTool(1L, 1L)).thenReturn(lxt);
 
         mockMvc.perform(post("/api/loantool/create/1/1"))
@@ -187,7 +187,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testGiveLoanTools() throws Exception {
+    void testGiveLoanTools() throws Exception {
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
         List<Long> ids = new ArrayList<>();
@@ -203,7 +203,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testReceiveLoanTool() throws Exception {
+    void testReceiveLoanTool() throws Exception {
         when(loanXToolsService.receiveLoanTool(1L, 1L, "SIN DAÑO")).thenReturn(lxt);
 
         mockMvc.perform(post("/api/loantool/receive/1/user/1")
@@ -213,7 +213,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testReceiveAllTools() throws Exception {
+    void testReceiveAllTools() throws Exception {
         List<LoanXToolsEntity> list = new ArrayList<>();
         list.add(lxt);
         Map<String, String> state = new HashMap<>();
@@ -228,7 +228,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testPayDebt() throws Exception {
+    void testPayDebt() throws Exception {
         when(loanXToolsService.payDebt(1L, 1L)).thenReturn(true);
 
         mockMvc.perform(post("/api/loantool/paydebt/1/user/1"))
@@ -237,7 +237,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testPayRepair() throws Exception {
+    void testPayRepair() throws Exception {
         Map<String, Object> body = new HashMap<>();
         body.put("adminUser", 1);
         body.put("cost", 100);
@@ -251,7 +251,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testCloseStrangeLoan() throws Exception {
+    void testCloseStrangeLoan() throws Exception {
         when(loanXToolsService.closeStrangeLoan(1L)).thenReturn(loan);
 
         mockMvc.perform(post("/api/loantool/close/loan/1"))
@@ -260,7 +260,7 @@ public class LoanXToolsControllerTest {
     }
 
     @Test
-    public void testDeleteLoanXTool() throws Exception {
+    void testDeleteLoanXTool() throws Exception {
         mockMvc.perform(delete("/api/loantool/1/user/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(true));

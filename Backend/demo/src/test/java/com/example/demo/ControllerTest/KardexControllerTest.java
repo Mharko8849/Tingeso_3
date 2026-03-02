@@ -1,6 +1,7 @@
 package com.example.demo.ControllerTest;
 
 import com.example.demo.Controllers.KardexController;
+import com.example.demo.DTO.PageResponseDTO;
 import com.example.demo.Entities.KardexEntity;
 import com.example.demo.Services.KardexService;
 import com.example.demo.Services.ToolService;
@@ -30,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(KardexController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithMockUser(username = "admin", roles = {"ADMIN", "SUPERADMIN"})
-public class KardexControllerTest {
+class KardexControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -53,53 +54,61 @@ public class KardexControllerTest {
     private KardexEntity kardex;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         kardex = new KardexEntity();
         kardex.setId(1L);
         kardex.setType("IN");
     }
 
     @Test
-    public void testGetAllKardex() throws Exception {
+    void testGetAllKardex() throws Exception {
         List<KardexEntity> list = new ArrayList<>();
         list.add(kardex);
         when(kardexService.getAllKardex()).thenReturn(list);
 
-        mockMvc.perform(get("/api/kardex/"))
+        mockMvc.perform(get("/kardex/"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
 
     @Test
-    public void testGetKardexById() throws Exception {
+    void testGetKardexById() throws Exception {
         when(kardexService.getKardexById(1L)).thenReturn(kardex);
 
-        mockMvc.perform(get("/api/kardex/1"))
+        mockMvc.perform(get("/kardex/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
     }
 
     @Test
-    public void testFilterKardex() throws Exception {
-        List<KardexEntity> list = new ArrayList<>();
-        list.add(kardex);
-        when(kardexService.filterKardex(any(), any(), any(), any(), any(), any())).thenReturn(list);
+    void testFilterKardex() throws Exception {
+        List<KardexEntity> content = new ArrayList<>();
+        content.add(kardex);
+        PageResponseDTO<KardexEntity> page = new PageResponseDTO<>(content, 0, 20, 1L, 1, true, true);
+        when(kardexService.filterKardexPaginated(any(), any(), any(), any(), any(), any(), anyInt(), anyInt())).thenReturn(page);
 
-        mockMvc.perform(get("/api/kardex/filter")
+        mockMvc.perform(get("/kardex/filter")
                 .param("type", "IN"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1));
+                .andExpect(jsonPath("$.content[0].id").value(1));
     }
 
     @Test
-    public void testGetRankingByDateRange() throws Exception {
+    void testFilterKardex_InvalidDate() throws Exception {
+        mockMvc.perform(get("/kardex/filter")
+                .param("initDate", "invalid-date"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testGetRankingByDateRange() throws Exception {
         List<Map<String, Object>> list = new ArrayList<>();
         Map<String, Object> map = new HashMap<>();
         map.put("tool", "Hammer");
         list.add(map);
         when(kardexService.getRankingToolsByDateRange(any(), any())).thenReturn(list);
 
-        mockMvc.perform(get("/api/kardex/ranking/range")
+        mockMvc.perform(get("/kardex/ranking/range")
                 .param("initDate", "2023-01-01")
                 .param("finalDate", "2023-01-31"))
                 .andExpect(status().isOk())
@@ -107,15 +116,77 @@ public class KardexControllerTest {
     }
 
     @Test
-    public void testGetRanking() throws Exception {
+    void testGetRanking() throws Exception {
         List<Map<String, Object>> list = new ArrayList<>();
         Map<String, Object> map = new HashMap<>();
         map.put("tool", "Hammer");
         list.add(map);
         when(kardexService.getRankingTools()).thenReturn(list);
 
-        mockMvc.perform(get("/api/kardex/ranking"))
+        mockMvc.perform(get("/kardex/ranking"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].tool").value("Hammer"));
+    }
+
+    @Test
+    void testGetAllKardexPaginated() throws Exception {
+        List<KardexEntity> content = new ArrayList<>();
+        content.add(kardex);
+        PageResponseDTO<KardexEntity> page = new PageResponseDTO<>(content, 0, 20, 1L, 1, true, true);
+        when(kardexService.getAllKardexPaginated(anyInt(), anyInt())).thenReturn(page);
+
+        mockMvc.perform(get("/kardex/paginated")
+                .param("page", "0")
+                .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1));
+    }
+
+    @Test
+    void testGetRankingPaginated() throws Exception {
+        List<Map<String, Object>> content = new ArrayList<>();
+        Map<String, Object> map = new HashMap<>();
+        map.put("tool", "Hammer");
+        map.put("totalLoans", 5);
+        content.add(map);
+        PageResponseDTO<Map<String, Object>> page = new PageResponseDTO<>(content, 0, 10, 1L, 1, true, true);
+        when(kardexService.getRankingToolsPaginated(anyInt(), anyInt())).thenReturn(page);
+
+        mockMvc.perform(get("/kardex/ranking/paginated")
+                .param("page", "0")
+                .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].tool").value("Hammer"));
+    }
+
+    @Test
+    void testGetRankingByDateRangePaginated() throws Exception {
+        List<Map<String, Object>> content = new ArrayList<>();
+        Map<String, Object> map = new HashMap<>();
+        map.put("tool", "Saw");
+        map.put("totalLoans", 3);
+        content.add(map);
+        PageResponseDTO<Map<String, Object>> page = new PageResponseDTO<>(content, 0, 10, 1L, 1, true, true);
+        when(kardexService.getRankingToolsByDateRangePaginated(any(), any(), anyInt(), anyInt())).thenReturn(page);
+
+        mockMvc.perform(get("/kardex/ranking/range/paginated")
+                .param("initDate", "2023-01-01")
+                .param("finalDate", "2023-01-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].tool").value("Saw"));
+    }
+
+    @Test
+    void testGetRankingByDateRangePaginated_InvalidDate() throws Exception {
+        mockMvc.perform(get("/kardex/ranking/range/paginated")
+                .param("initDate", "not-a-date"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testGetRankingByDateRange_InvalidDate() throws Exception {
+        mockMvc.perform(get("/kardex/ranking/range")
+                .param("initDate", "not-a-date"))
+                .andExpect(status().isBadRequest());
     }
 }

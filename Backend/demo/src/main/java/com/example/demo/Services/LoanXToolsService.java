@@ -3,9 +3,11 @@ package com.example.demo.Services;
 import com.example.demo.Entities.*;
 import com.example.demo.Repositories.LoanRepository;
 import com.example.demo.Repositories.LoanXToolsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Date;
 import java.util.HashMap;
@@ -14,22 +16,19 @@ import java.util.ArrayList;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class LoanXToolsService {
 
-    @Autowired
-    private LoanXToolsRepository loanXToolsRepository;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private InventoryService inventoryService;
-    @Autowired
-    private KardexService kardexService;
-    @Autowired
-    private LoanRepository loanRepository;
-    @Autowired
-    private ToolService toolService;
-    @Autowired
-    private LoanService loanService;
+    private static final String STATUS_ACTIVO = "ACTIVO";
+    private static final String STATE_CLIENT_ACTIVO = "ACTIVO";
+
+    private final LoanXToolsRepository loanXToolsRepository;
+    private final UserService userService;
+    private final InventoryService inventoryService;
+    private final KardexService kardexService;
+    private final LoanRepository loanRepository;
+    private final ToolService toolService;
+    private final LoanService loanService;
 
     public LoanXToolsEntity saveLoanXToolsEntity(LoanXToolsEntity loanXToolsEntity) {
         return loanXToolsRepository.save(loanXToolsEntity);
@@ -113,7 +112,7 @@ public class LoanXToolsService {
 
         UserEntity user = getUserEntityByIdLoanXTool(idLoanXTool);
 
-        if (!loanXToolsEntity.getIdLoan().getStatus().equals("ACTIVO")) {
+        if (!loanXToolsEntity.getIdLoan().getStatus().equals(STATUS_ACTIVO)) {
             throw new RuntimeException("El pedido ya se encuentra finalizado.");
         }
 
@@ -143,12 +142,30 @@ public class LoanXToolsService {
     @Transactional
     public List<LoanXToolsEntity> giveAllLoanTools(UserEntity idUser, List<Long> ids){
         List<LoanXToolsEntity> results = new ArrayList<>();
+        userService.validateAdminOrEmployee(idUser);
         int i = 0;
         while (i < ids.size()) {
             Long id = ids.get(i);
-            LoanXToolsEntity updated = giveLoanTool(idUser, id);
-            results.add(updated);
-            i+=1;
+            LoanXToolsEntity loanXToolsEntity = findLoanXToolsEntityById(id);
+            UserEntity user = getUserEntityByIdLoanXTool(id);
+
+            if (!loanXToolsEntity.getIdLoan().getStatus().equals(STATUS_ACTIVO)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El pedido ya se encuentra finalizado.");
+            }
+            if (loanXToolsEntity.getToolActivity() != null && !loanXToolsEntity.getToolActivity().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El pedido ya cuenta con actividades previas, por lo tanto no puede ser entregado.");
+            }
+            if (!inventoryService.isAvailableTool(loanXToolsEntity.getIdTool())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encuentra stock disponible para ese producto");
+            }
+
+            Date actualDate = new Date(System.currentTimeMillis());
+            inventoryService.loanTool(loanXToolsEntity.getIdTool().getId());
+            loanXToolsEntity.setToolActivity("PRESTADA");
+            loanXToolsEntity.setIdEmployeeDel(idUser);
+            kardexService.createKardexEntity(loanXToolsEntity.getIdTool(), "PRESTAMO", actualDate, 1, null, user, idUser);
+            results.add(loanXToolsRepository.save(loanXToolsEntity));
+            i += 1;
         }
         return results;
     }
@@ -384,7 +401,7 @@ public class LoanXToolsService {
             if (totalFine == 0 && !anyNeedRepair) {
                 loan.setStatus("FINALIZADO");
                 if(!userHaveDebt(client)){
-                    client.setStateClient("ACTIVO");
+                    client.setStateClient(STATE_CLIENT_ACTIVO);
                 }
             }
             else {
@@ -473,7 +490,7 @@ public class LoanXToolsService {
                 i+=1;
             }
             if (!userHaveDebt(user) && !needRepairToolByLoan(loanId)) {
-                user.setStateClient("ACTIVO");
+                user.setStateClient(STATE_CLIENT_ACTIVO);
             }
 
             userService.saveUser(user);
@@ -522,7 +539,7 @@ public class LoanXToolsService {
         if (hadRepairPending) {
             // Verificar si podemos liberar al usuario (solo si no tiene más deudas en ningún préstamo)
             if (!userHaveDebt(user)) {
-                user.setStateClient("ACTIVO");
+                user.setStateClient(STATE_CLIENT_ACTIVO);
             }
             userService.saveUser(user);
 
@@ -541,7 +558,7 @@ public class LoanXToolsService {
     public LoanEntity closeStrangeLoan(Long loanId) {
         LoanEntity loan = loanService.getLoanById(loanId);
         List<LoanXToolsEntity> lxt =  getAllLoanXToolsByIdLoan(loan);
-        if (loan.getStatus().equals("ACTIVO") && lxt.isEmpty()) {
+        if (loan.getStatus().equals(STATUS_ACTIVO) && lxt.isEmpty()) {
             loan.setStatus("FINALIZADO");
         }
         return loanService.saveLoan(loan);
