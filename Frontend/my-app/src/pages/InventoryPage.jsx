@@ -122,8 +122,8 @@ const InventoryPage = ({ category = null }) => {
       if (appliedFilters?.popular) {
         try {
           // Fetch ranking data to know which tools are popular
-          const rankingResp = await api.get("/api/kardex/ranking");
-          const rankingList = rankingResp.data; // List of { tool: {...}, totalLoans: X }
+          const rankingResp = await api.get("/api/kardex/ranking/paginated?page=0&size=100");
+          const rankingList = rankingResp.data.content || []; // PageResponseDTO — list is in .content
           
           // Create a map of toolId -> totalLoans for quick lookup
           const popularityMap = new Map();

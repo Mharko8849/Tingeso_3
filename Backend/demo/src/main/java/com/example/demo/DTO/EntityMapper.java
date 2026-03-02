@@ -94,4 +94,20 @@ public class EntityMapper {
         response.setFirst(page.isFirst());
         return response;
     }
+
+    /**
+     * Convierte cualquier Page<T> a PageResponseDTO<T> sin transformar los elementos.
+     * Útil para KardexEntity, UserEntity u otras entidades que se devuelven directamente.
+     */
+    public static <T> PageResponseDTO<T> toRawPageResponseDTO(Page<T> page) {
+        PageResponseDTO<T> response = new PageResponseDTO<>();
+        response.setContent(page.getContent());
+        response.setPageNumber(page.getNumber());
+        response.setPageSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+        response.setLast(page.isLast());
+        response.setFirst(page.isFirst());
+        return response;
+    }
 }

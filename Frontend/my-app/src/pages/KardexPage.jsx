@@ -11,6 +11,8 @@ import { useAlert } from '../components/Alerts/useAlert';
 
 const KardexPage = () => {
   const [movements, setMovements] = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [serverTotalPages, setServerTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [q, setQ] = useState('');
@@ -25,20 +27,28 @@ const KardexPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const params = {};
-      const typeVal = overrides.type ?? typeFilter;
-      const fromVal = overrides.from ?? dateFrom;
-      const toVal = overrides.to ?? dateTo;
+      const typeVal = overrides.type !== undefined ? overrides.type : typeFilter;
+      const fromVal = overrides.from !== undefined ? overrides.from : dateFrom;
+      const toVal = overrides.to !== undefined ? overrides.to : dateTo;
+      const pageNum = (overrides.page !== undefined ? overrides.page : page) - 1; // backend es 0-based
+      const sizeNum = overrides.pageSize !== undefined ? overrides.pageSize : pageSize;
 
+      const params = { page: pageNum, size: sizeNum };
       if (typeVal) params.type = typeVal;
       if (fromVal) params.initDate = fromVal;
       if (toVal) params.finalDate = toVal;
 
       const resp = await api.get('/api/kardex/filter', { params });
-      setMovements(Array.isArray(resp.data) ? resp.data : resp.data?.movements || []);
+      const data = resp.data;
+      // El backend devuelve PageResponseDTO { content, totalElements, totalPages, ... }
+      setMovements(Array.isArray(data) ? data : (data?.content || []));
+      setTotalElements(Array.isArray(data) ? data.length : (data?.totalElements || 0));
+      setServerTotalPages(Array.isArray(data) ? 1 : (data?.totalPages || 1));
     } catch (err) {
       console.error('Error fetching /api/kardex/filter', err);
       setMovements([]);
+      setTotalElements(0);
+      setServerTotalPages(1);
       setError('No se pudo obtener movimientos del servidor');
     } finally {
       setLoading(false);
@@ -115,26 +125,16 @@ const KardexPage = () => {
     if (typeFilter && String(m.type || '').toUpperCase() !== String(typeFilter).toUpperCase()) return false;
 
     // Apply date range filter client-side if provided
-    // Extract YYYY-MM-DD robustly for comparison directly to dateFrom/dateTo strings
-    let mDateStr = m.date;
-    if (mDateStr) {
-      if (mDateStr.includes('T')) {
-        mDateStr = mDateStr.split('T')[0];
-      } else {
-        try {
-          // Si es un ISO completo, sacar solo la fecha local
-          mDateStr = new Date(m.date).toISOString().split('T')[0];
-        } catch (e) {
-          mDateStr = m.date;
-        }
-      }
+    // m.date may include time; treat dateFrom as start of day and dateTo as end of day
+    if (dateFrom) {
+      const start = new Date(dateFrom + 'T00:00:00');
+      const md = m.date ? new Date(m.date) : null;
+      if (!md || md < start) return false;
     }
-
-    if (dateFrom && mDateStr) {
-      if (mDateStr < dateFrom) return false;
-    }
-    if (dateTo && mDateStr) {
-      if (mDateStr > dateTo) return false;
+    if (dateTo) {
+      const end = new Date(dateTo + 'T23:59:59.999');
+      const md = m.date ? new Date(m.date) : null;
+      if (!md || md > end) return false;
     }
 
     if (!q) return true;
@@ -164,12 +164,12 @@ const KardexPage = () => {
     );
   });
 
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  // Paginación server-side: total y páginas vienen del servidor
+  const total = totalElements;
+  const totalPages = Math.max(1, serverTotalPages);
   const safePage = Math.min(Math.max(1, page), totalPages);
-  const start = (safePage - 1) * pageSize;
-  const end = start + pageSize;
-  const pagedMovements = filtered.slice(start, end);
+  // El servidor ya pagina — pagedMovements es solo la página actual filtrada por q
+  const pagedMovements = filtered;
 
 
   return (
@@ -182,7 +182,7 @@ const KardexPage = () => {
             <div>
               <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                 Kardex — Movimientos
-                <HelpIcon
+                <HelpIcon 
                   content="Kardex es el registro completo del inventario: entradas, salidas y ajustes."
                   position="right"
                 />
@@ -214,8 +214,8 @@ const KardexPage = () => {
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M21 4v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M21 4v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   Refrescar
                 </button>
@@ -227,7 +227,7 @@ const KardexPage = () => {
                     setDateTo('');
                     setTypeFilter('');
                     setPage(1);
-                    fetchKardex({ type: '', from: '', to: '' });
+                    fetchKardex({ type: '', from: '', to: '', page: 1 });
                   }}
                   className="secondary-cta"
                   type="button"
@@ -255,7 +255,7 @@ const KardexPage = () => {
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 Tipo de Movimiento
-                <HelpIcon
+                <HelpIcon 
                   content="Préstamo • Devolución • Ingreso • Baja • Reparación • Pago"
                   position="bottom"
                 />
@@ -266,7 +266,7 @@ const KardexPage = () => {
                   const v = e.target.value;
                   setTypeFilter(v);
                   setPage(1);
-                  fetchKardex({ type: v });
+                  fetchKardex({ type: v, page: 1 });
                 }}
                 style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db' }}
               >
@@ -281,10 +281,10 @@ const KardexPage = () => {
               </select>
             </div>
 
-            <ReportRanking
-              dateFrom={dateFrom}
-              dateTo={dateTo}
-              label="Generar Reporte Ranking (CSV)"
+            <ReportRanking 
+              dateFrom={dateFrom} 
+              dateTo={dateTo} 
+              label="Generar Reporte Ranking (CSV)" 
               className="secondary-cta"
             />
           </div>
@@ -298,22 +298,22 @@ const KardexPage = () => {
                 page={safePage}
                 pageSize={pageSize}
                 total={total}
-                onPageChange={(p) => setPage(p)}
-                onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); }}
+                onPageChange={(p) => { setPage(p); fetchKardex({ page: p }); }}
+                onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); fetchKardex({ page: 1, pageSize: ps }); }}
                 showPageSizeControls
                 showSummary={false}
               />
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
-                    <th style={{ padding: '8px 12px' }}>Fecha</th>
-                    <th style={{ padding: '8px 12px' }}>Empleado (ID)</th>
-                    <th style={{ padding: '8px 12px' }}>Herramienta (ID - Nombre)</th>
-                    <th style={{ padding: '8px 12px' }}>Usuario</th>
-                    <th style={{ padding: '8px 12px' }}>Tipo de Movimiento</th>
-                    <th style={{ padding: '8px 12px' }}>Cantidad</th>
-                    <th style={{ padding: '8px 12px' }}>Monto</th>
-                  </tr>
+                    <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
+                      <th style={{ padding: '8px 12px' }}>Fecha</th>
+                      <th style={{ padding: '8px 12px' }}>Empleado (ID)</th>
+                      <th style={{ padding: '8px 12px' }}>Herramienta (ID - Nombre)</th>
+                      <th style={{ padding: '8px 12px' }}>Usuario</th>
+                      <th style={{ padding: '8px 12px' }}>Tipo de Movimiento</th>
+                      <th style={{ padding: '8px 12px' }}>Cantidad</th>
+                      <th style={{ padding: '8px 12px' }}>Monto</th>
+                    </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
@@ -337,8 +337,8 @@ const KardexPage = () => {
                 page={safePage}
                 pageSize={pageSize}
                 total={total}
-                onPageChange={(p) => setPage(p)}
-                onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); }}
+                onPageChange={(p) => { setPage(p); fetchKardex({ page: p }); }}
+                onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); fetchKardex({ page: 1, pageSize: ps }); }}
                 showPageSizeControls={false}
                 showSummary
               />

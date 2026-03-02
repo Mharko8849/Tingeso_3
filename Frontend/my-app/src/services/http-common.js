@@ -5,9 +5,9 @@ import { showGlobalAlert } from '../components/Alerts/AlertContext';
 const backendServer = import.meta.env.VITE_BACKEND_SERVER;
 const backendPort = import.meta.env.VITE_BACKEND_PORT;
 
-const baseURL = backendServer && backendPort
-  ? `http://${backendServer}:${backendPort}`
-  : '';  // empty = relative URLs, resolved by ingress in both dev and prod
+const baseURL = backendServer && backendPort 
+  ? `http://${backendServer}:${backendPort}` 
+  : 'https://toolrent.192.168.39.122.nip.io';
 
 const api = axios.create({
   baseURL: baseURL,
@@ -156,11 +156,11 @@ api.interceptors.response.use(
 
     } catch (refreshError) {
       console.warn("Token refresh failed", refreshError);
-
+      
       // Clear all auth data
       processQueue(refreshError, null);
       isRefreshing = false;
-
+      
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('app_token');

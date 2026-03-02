@@ -9,7 +9,14 @@ import java.sql.Date;
 
 @Data
 @Entity
-@Table(name="kardex")
+@Table(
+    name = "kardex",
+    indexes = {
+        @Index(name = "idx_kardex_type", columnList = "type"),
+        @Index(name = "idx_kardex_date", columnList = "date"),
+        @Index(name = "idx_kardex_idTool", columnList = "idTool")
+    }
+)
 @NoArgsConstructor
 @AllArgsConstructor
 

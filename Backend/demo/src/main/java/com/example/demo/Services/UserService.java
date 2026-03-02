@@ -5,6 +5,7 @@ import com.example.demo.Repositories.UserRepository;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,14 +32,17 @@ public class UserService {
     /**
      * Funcion que trae a todos los usuarios del sistema
      */
+    @Transactional(readOnly = true)
     public ArrayList<UserEntity> getUsers() {
         return (ArrayList<UserEntity>) userRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<UserEntity> getUsersByRol(String rol) {
         return userRepository.findByRol(rol);
     }
 
+    @Transactional(readOnly = true)
     public List<UserEntity> getAllEmployees() {
         List<UserEntity> employees = getUsersByRol("EMPLOYEE");
         List<UserEntity> admins = getUsersByRol("ADMIN");
@@ -50,6 +54,7 @@ public class UserService {
         return users;
     }
 
+    @Transactional(readOnly = true)
     public List<UserEntity> getAllClients(){
         return getUsersByRol("CLIENT");
     }

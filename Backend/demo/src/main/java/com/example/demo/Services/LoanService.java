@@ -40,14 +40,17 @@ public class LoanService {
         return loanRepository.save(loanEntity);
     }
 
+    @Transactional(readOnly = true)
     public List<LoanEntity> getAllLoansByIdUser(UserEntity idUser) {
         return loanRepository.findByIdUser(idUser);
     }
 
+    @Transactional(readOnly = true)
     public LoanEntity getLoanById(Long idLoan) {
         return loanRepository.findById(idLoan).orElseThrow(() -> new RuntimeException("No se encontró el pedido"));
     }
 
+    @Transactional(readOnly = true)
     public List<LoanEntity> getAllLoansByState(String state) {
         return loanRepository.findByStatus(state);
     }
@@ -60,6 +63,7 @@ public class LoanService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<LoanEntity> getAllLoans() {
         return loanRepository.findAll();
     }
@@ -67,6 +71,7 @@ public class LoanService {
     /**
      * Obtiene préstamos paginados ordenados por ID descendente (más recientes primero)
      */
+    @Transactional(readOnly = true)
     public PageResponseDTO<LoanDTO> getAllLoansPaginated(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<LoanEntity> loanPage = loanRepository.findAllByOrderByIdDesc(pageable);
@@ -76,6 +81,7 @@ public class LoanService {
     /**
      * Obtiene préstamos filtrados por estado con paginación
      */
+    @Transactional(readOnly = true)
     public PageResponseDTO<LoanDTO> getLoansByStatePaginated(String state, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<LoanEntity> loanPage = loanRepository.findByStatus(state, pageable);
@@ -85,6 +91,7 @@ public class LoanService {
     /**
      * Obtiene préstamos de un usuario con paginación
      */
+    @Transactional(readOnly = true)
     public PageResponseDTO<LoanDTO> getLoansByUserPaginated(UserEntity user, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<LoanEntity> loanPage = loanRepository.findByIdUser(user, pageable);
@@ -221,7 +228,6 @@ public class LoanService {
         if (!ret.isAfter(init)) {
             throw new RuntimeException("La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
         }
-        long days = java.time.temporal.ChronoUnit.DAYS.between(init, ret);
 
         // Crear LoanXTools para cada herramienta
         int i = 0;
@@ -250,7 +256,7 @@ public class LoanService {
             LoanXToolsEntity lxt = new LoanXToolsEntity();
             lxt.setIdLoan(loan);
             lxt.setIdTool(tool);
-            lxt.setDebt((int) (tool.getPriceRent() * days));
+            lxt.setDebt((int) tool.getPriceRent());
             lxt.setFine(0);
             lxt.setNeedRepair(false);
             loanXToolsRepository.save(lxt);

@@ -19,22 +19,19 @@ const ReportLoans = ({ rows = [], filename }) => {
     const today = new Date().toISOString().slice(0, 10);
 
     const mapped = rows.map(l => {
+      // Handle different client field names: client, idUser, user
+      const clientObj = l.client || l.idUser || l.user;
       let clientName = '—';
-
-      if (l.clientName || l.username || l.clientEmail) {
-        clientName = l.clientName ? l.clientName.trim() : (l.username || l.clientEmail || '—');
-      } else {
-        const clientObj = l.client || l.idUser || l.user;
-        if (clientObj) {
-          if (typeof clientObj === 'object') {
-            if (clientObj.name) {
-              clientName = `${clientObj.name} ${clientObj.lastName || ''}`.trim();
-            } else {
-              clientName = clientObj.username || clientObj.email || '—';
-            }
+      
+      if (clientObj) {
+        if (typeof clientObj === 'object') {
+          if (clientObj.name) {
+            clientName = `${clientObj.name} ${clientObj.lastName || ''}`.trim();
           } else {
-            clientName = String(clientObj);
+            clientName = clientObj.username || clientObj.email || '—';
           }
+        } else {
+          clientName = String(clientObj);
         }
       }
 
@@ -49,7 +46,7 @@ const ReportLoans = ({ rows = [], filename }) => {
     });
 
     const csv = buildCsv(headers, mapped);
-    const name = filename || `reporte_pedidos_${new Date().toISOString().slice(0, 10)}.csv`;
+    const name = filename || `reporte_pedidos_${new Date().toISOString().slice(0,10)}.csv`;
     downloadBlob(csv, name);
     show({ severity: 'success', message: 'Reporte de pedidos generado correctamente' });
   };

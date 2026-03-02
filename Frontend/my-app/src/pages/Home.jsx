@@ -39,10 +39,9 @@ const Home = () => {
   useEffect(() => {
     const fetchRanking = async () => {
       try {
-        const response = await api.get("/api/kardex/ranking");
-        // Backend returns a list of maps { tool: {...}, totalLoans: X }
-        // ToolCarousel expects an array of tools with properties like name, price, image
-        const tools = response.data.map(item => ({
+        const response = await api.get("/api/kardex/ranking/paginated?page=0&size=10");
+        // Backend returns PageResponseDTO — the list is in .content
+        const tools = (response.data.content || []).map(item => ({
           ...item.tool,
           name: item.tool.toolName || item.tool.name,
           price: item.tool.priceRent || item.tool.price,

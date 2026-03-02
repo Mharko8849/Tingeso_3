@@ -26,10 +26,10 @@ const ReportRanking = ({ rows = [], filename, dateFrom, dateTo, label = "Generar
             if (dateFrom) params.initDate = dateFrom;
             if (dateTo) params.finalDate = dateTo;
             
-            const resp = await api.get('/api/kardex/ranking/range', { params });
-            // Transform backend format to flat structure for CSV
-            // Backend returns List<Map<String, Object>> where tool is an object
-            dataToProcess = resp.data.map(item => {
+            // Use paginated endpoint with large page size for full CSV export
+            const resp = await api.get('/api/kardex/ranking/range/paginated', { params: { ...params, page: 0, size: 500 } });
+            // Backend returns PageResponseDTO — list is in .content
+            dataToProcess = (resp.data.content || []).map(item => {
                 const t = item.tool || {};
                 // Handle category which might be an object with a 'name' property or a string
                 let categoryName = '—';
