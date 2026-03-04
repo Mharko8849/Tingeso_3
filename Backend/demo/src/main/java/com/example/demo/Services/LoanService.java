@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +38,7 @@ public class LoanService {
 
     @Transactional(readOnly = true)
     public LoanEntity getLoanById(Long idLoan) {
-        return loanRepository.findById(idLoan).orElseThrow(() -> new RuntimeException("No se encontró el pedido"));
+        return loanRepository.findById(idLoan).orElseThrow(() -> new IllegalStateException("No se encontró el pedido"));
     }
 
     @Transactional(readOnly = true)
@@ -134,15 +133,15 @@ public class LoanService {
 
     public void validateConditions(UserEntity idUser, Date initDate, Date returnDate) {
         if (isUserRestringed(idUser)) {
-            throw new RuntimeException("El usuario se encuentra restringido.");
+            throw new IllegalStateException("El usuario se encuentra restringido.");
         }
 
         if (!userService.canDoAnotherLoan(idUser)) {
-            throw new RuntimeException("El usuario ya cuenta con 5 prestamos.");
+            throw new IllegalStateException("El usuario ya cuenta con 5 prestamos.");
         }
 
         if (!isValidDate(initDate, returnDate)) {
-            throw new RuntimeException("La fecha ingresada es inválida. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
+            throw new IllegalStateException("La fecha ingresada es inválida. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
         }
     }
 
@@ -164,7 +163,7 @@ public class LoanService {
     public boolean deleteLoan(Long loanId){
         try{
             LoanEntity loan = loanRepository.findById(loanId)
-                    .orElseThrow(() -> new RuntimeException("No se encontró el pedido"));
+                    .orElseThrow(() -> new IllegalStateException("No se encontró el pedido"));
             UserEntity user = loan.getIdUser();
 
             user.setLoans(user.getLoans() - 1);
@@ -195,7 +194,7 @@ public class LoanService {
         // Buscar el cliente
         UserEntity client = userService.findUserById(clientId);
         if (client == null) {
-            throw new RuntimeException("Cliente no encontrado");
+            throw new IllegalStateException("Cliente no encontrado");
         }
 
         // Validar condiciones del préstamo
@@ -203,7 +202,7 @@ public class LoanService {
 
         // Validar que se proporcionaron herramientas
         if (toolIds == null || toolIds.isEmpty()) {
-            throw new RuntimeException("Debe proporcionar al menos una herramienta");
+            throw new IllegalStateException("Debe proporcionar al menos una herramienta");
         }
 
         // Incrementar contador de préstamos del cliente
@@ -222,7 +221,7 @@ public class LoanService {
         java.time.LocalDate init = initDate.toLocalDate();
         java.time.LocalDate ret = returnDate.toLocalDate();
         if (!ret.isAfter(init)) {
-            throw new RuntimeException("La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
+            throw new IllegalStateException("La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
         }
 
         // Crear LoanXTools para cada herramienta
@@ -233,19 +232,19 @@ public class LoanService {
             // Buscar la herramienta
             ToolEntity tool = toolService.getToolById(toolId);
             if (tool == null) {
-                throw new RuntimeException("Herramienta no encontrada: " + toolId);
+                throw new IllegalStateException("Herramienta no encontrada: " + toolId);
             }
 
             // Validar disponibilidad
             if (!inventoryService.isAvailableTool(tool)) {
-                throw new RuntimeException("La herramienta " + tool.getToolName() + " no está disponible");
+                throw new IllegalStateException("La herramienta " + tool.getToolName() + " no está disponible");
             }
 
             // Validar que el cliente no tenga ya esta herramienta prestada
             List<LoanXToolsEntity> existingLoans = loanXToolsRepository
                     .findByIdLoan_IdUserAndIdToolAndIdLoan_RealReturnDateIsNull(client, tool);
             if (!existingLoans.isEmpty()) {
-                throw new RuntimeException("El cliente ya tiene un préstamo activo de la herramienta: " + tool.getToolName());
+                throw new IllegalStateException("El cliente ya tiene un préstamo activo de la herramienta: " + tool.getToolName());
             }
 
             // Crear LoanXToolsEntity

@@ -49,7 +49,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void testRegisterWithRole_Success() throws Exception {
+    void testRegisterWithRole_Success() {
         when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenReturn("keycloak-id");
         when(userService.saveUser(any(UserEntity.class))).thenReturn(user);
 
@@ -62,8 +62,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void testRegisterWithRole_KeycloakFails() throws Exception {
-        when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenThrow(new RuntimeException("Keycloak error"));
+    void testRegisterWithRole_KeycloakFails() {
+        when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenThrow(new IllegalStateException("Keycloak error"));
 
         assertThrows(RuntimeException.class, () -> {
             authService.registerWithRole(user, "CLIENT");
@@ -71,10 +71,10 @@ class AuthServiceTest {
     }
 
     @Test
-    void testRegisterWithRole_RollbackFails() throws Exception {
+    void testRegisterWithRole_RollbackFails() {
         when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenReturn("keycloak-id");
-        when(userService.saveUser(any(UserEntity.class))).thenThrow(new RuntimeException("DB error"));
-        doThrow(new RuntimeException("Rollback error")).when(keycloakAdminService).deleteKeycloakUser("keycloak-id");
+        when(userService.saveUser(any(UserEntity.class))).thenThrow(new IllegalStateException("DB error"));
+        doThrow(new IllegalStateException("Rollback error")).when(keycloakAdminService).deleteKeycloakUser("keycloak-id");
 
         assertThrows(RuntimeException.class, () -> {
             authService.registerWithRole(user, "CLIENT");
@@ -84,10 +84,10 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLogin_FallbackLogic_UserFoundButLoginFails() throws Exception {
+    void testLogin_FallbackLogic_UserFoundButLoginFails() {
         // 1. Direct login fails
         when(keycloakAdminService.requestPasswordGrant("MixedCaseUser", "password"))
-                .thenThrow(new RuntimeException("Fail"));
+                .thenThrow(new IllegalStateException("Fail"));
 
         // 2. Fallback to username lookup
         UserEntity userByUsername = new UserEntity();
@@ -98,7 +98,7 @@ class AuthServiceTest {
 
         // 3. Login with email from found user FAILS
         when(keycloakAdminService.requestPasswordGrant("email@test.com", "password"))
-                .thenThrow(new RuntimeException("Fail again"));
+                .thenThrow(new IllegalStateException("Fail again"));
 
         // 4. Fallback to email lookup
         when(userService.getUserByEmail("MixedCaseUser")).thenReturn(null);
@@ -108,10 +108,10 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLogin_FallbackLogic_EmailFoundButLoginFails() throws Exception {
+    void testLogin_FallbackLogic_EmailFoundButLoginFails() {
         // 1. Direct login fails
         when(keycloakAdminService.requestPasswordGrant("email@test.com", "password"))
-                .thenThrow(new RuntimeException("Fail"));
+                .thenThrow(new IllegalStateException("Fail"));
 
         // 2. Fallback to username lookup fails
         when(userService.getUserByUsername(anyString())).thenReturn(null);
@@ -124,7 +124,7 @@ class AuthServiceTest {
 
         // 4. Login with username from found user FAILS
         when(keycloakAdminService.requestPasswordGrant("user", "password"))
-                .thenThrow(new RuntimeException("Fail again"));
+                .thenThrow(new IllegalStateException("Fail again"));
 
         assertThrows(RuntimeException.class, () -> authService.login("email@test.com", "password"));
     }
@@ -151,7 +151,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLogin_Success() throws Exception {
+    void testLogin_Success() {
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", "test-token");
         
@@ -169,8 +169,8 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLogin_InvalidCredentials() throws Exception {
-        when(keycloakAdminService.requestPasswordGrant(anyString(), anyString())).thenThrow(new RuntimeException("Invalid credentials"));
+    void testLogin_InvalidCredentials() {
+        when(keycloakAdminService.requestPasswordGrant(anyString(), anyString())).thenThrow(new IllegalStateException("Invalid credentials"));
         when(userService.getUserByUsername(anyString())).thenReturn(null);
         when(userService.getUserByEmail(anyString())).thenReturn(null);
         
@@ -180,7 +180,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLogin_UserNotFoundInDb() throws Exception {
+    void testLogin_UserNotFoundInDb() {
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", "test-token");
         when(keycloakAdminService.requestPasswordGrant(anyString(), anyString())).thenReturn(token);
@@ -193,13 +193,13 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLogin_FallbackLogic() throws Exception {
+    void testLogin_FallbackLogic() {
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", "test-token");
 
         // 1. Direct login fails
         when(keycloakAdminService.requestPasswordGrant("MixedCaseUser", "password"))
-                .thenThrow(new RuntimeException("Fail"));
+                .thenThrow(new IllegalStateException("Fail"));
 
         // 2. Fallback to username lookup
         UserEntity userByUsername = new UserEntity();
@@ -224,13 +224,13 @@ class AuthServiceTest {
     }
     
     @Test
-    void testLogin_FallbackToEmail() throws Exception {
+    void testLogin_FallbackToEmail() {
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", "test-token");
 
         // 1. Direct login fails
         when(keycloakAdminService.requestPasswordGrant("email@test.com", "password"))
-                .thenThrow(new RuntimeException("Fail"));
+                .thenThrow(new IllegalStateException("Fail"));
 
         // 2. Fallback to username lookup fails
         when(userService.getUserByUsername(anyString())).thenReturn(null);
@@ -274,7 +274,7 @@ class AuthServiceTest {
 
     @Test
     void testRefresh_Error() {
-        when(keycloakAdminService.refreshToken("bad-token")).thenThrow(new RuntimeException("Token expired"));
+        when(keycloakAdminService.refreshToken("bad-token")).thenThrow(new IllegalStateException("Token expired"));
         assertThrows(RuntimeException.class, () -> authService.refresh("bad-token"));
     }
 
@@ -312,13 +312,13 @@ class AuthServiceTest {
     }
 
     @Test
-    void testRegisterWithRole_RollbackSuccess() throws Exception {
+    void testRegisterWithRole_RollbackSuccess() {
         // DB save fails, but Keycloak rollback succeeds
         when(userService.getUserByUsername(anyString())).thenReturn(null);
         when(userService.getUserByEmail(anyString())).thenReturn(null);
         when(keycloakAdminService.checkUserExistsByUsername(anyString())).thenReturn(false);
         when(keycloakAdminService.createKeycloakUser(any(UserEntity.class), anyString())).thenReturn("keycloak-id");
-        when(userService.saveUser(any(UserEntity.class))).thenThrow(new RuntimeException("DB error"));
+        when(userService.saveUser(any(UserEntity.class))).thenThrow(new IllegalStateException("DB error"));
         // Rollback succeeds (doNothing is default for void methods)
 
         assertThrows(RuntimeException.class, () -> authService.registerWithRole(user, "CLIENT"));

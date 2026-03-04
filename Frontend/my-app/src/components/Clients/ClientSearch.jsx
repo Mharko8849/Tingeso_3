@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import Badge from '../Badges/Badge';
 import { statusToBadgeVariant } from '../Badges/statusToBadge';
@@ -22,13 +23,13 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
       }
     };
     fetchClients();
-    return () => { mounted = false };
+    return () => { mounted = false; };
   }, [reloadKey]);
 
   const filtered = clients.filter((c) => {
     if (!query) return true;
     const s = query.toLowerCase();
-    return (String(c.username || '') + ' ' + String(c.name || '') + ' ' + String(c.lastName || '') + ' ' + String(c.email || '')).toLowerCase().includes(s);
+    return (`${String(c.username || '')  } ${  String(c.name || '')  } ${  String(c.lastName || '')  } ${  String(c.email || '')}`).toLowerCase().includes(s);
   });
 
   // Reset to page 1 when search query changes
@@ -41,11 +42,11 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
   return (
     <div>
       {!hideHeader && <>
-        <label>Buscar cliente</label>
-        <input placeholder="buscar por nombre/usuario/email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6, backgroundColor: '#ffffff', color: '#000000' }} />
+        <label htmlFor="client-search-input">Buscar cliente</label>
+        <input id="client-search-input" placeholder="buscar por nombre/usuario/email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6, backgroundColor: '#ffffff', color: '#000000' }} />
       </>}
       {hideHeader && (
-        <input placeholder="buscar por nombre/usuario/email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6, backgroundColor: '#ffffff', color: '#000000' }} />
+        <input id="client-search-input" placeholder="buscar por nombre/usuario/email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6, backgroundColor: '#ffffff', color: '#000000' }} />
       )}
 
       <div style={{ marginTop: 8, border: '1px solid #eee', borderRadius: 6, padding: 10, boxSizing: 'border-box' }}>
@@ -65,13 +66,14 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
           {paged.map((c) => {
             const isSel = selected?.id === c.id;
             return (
-              <div
+              <button
+                type="button"
                 key={c.id}
-                onClick={() => onSelect && onSelect(isSel ? null : c)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onSelect && onSelect(isSel ? null : c); } }}
+                onClick={() => onSelect?.(isSel ? null : c)}
                 style={{
+                  all: 'unset',
+                  boxSizing: 'border-box',
+                  width: '100%',
                   padding: 14,
                   borderRadius: 8,
                   border: '1px solid #e6e6e6',
@@ -112,7 +114,7 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
                     <div style={{ fontSize: 14, color: isSel ? '#065f46' : '#374151', whiteSpace: 'nowrap' }}>{c.stateClient || ''}</div>
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -133,6 +135,13 @@ const ClientSearch = ({ selected, onSelect, reloadKey, hideHeader = false }) => 
       </div>
     </div>
   );
+};
+
+ClientSearch.propTypes = {
+  hideHeader: PropTypes.bool,
+  onSelect: PropTypes.func,
+  reloadKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  selected: PropTypes.object,
 };
 
 export default ClientSearch;

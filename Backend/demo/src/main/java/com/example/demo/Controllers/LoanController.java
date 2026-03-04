@@ -23,6 +23,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class LoanController {
 
+    private static final String ERROR_KEY = "error";
+
     private final LoanService loanService;
     private final UserService userService;
     private final ToolService toolService;
@@ -135,7 +137,7 @@ public class LoanController {
      */
     @PostMapping("/create-with-tools/{employeeId}")
     @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE', 'SUPERADMIN')")
-    public ResponseEntity<?> createLoanWithTools(
+    public ResponseEntity<Object> createLoanWithTools(
             @PathVariable Long employeeId,
             @RequestBody Map<String, Object> body) {
 
@@ -149,13 +151,13 @@ public class LoanController {
             List<Integer> toolIdsInt = (List<Integer>) body.get("toolIds");
             List<Long> toolIds = toolIdsInt.stream()
                     .map(Integer::longValue)
-                    .collect(java.util.stream.Collectors.toList());
+                    .toList();
 
             // Buscar el empleado
             UserEntity employee = userService.findUserById(employeeId);
             if (employee == null) {
                 return ResponseEntity.badRequest().body(
-                        Map.of("error", "Empleado no encontrado")
+                        Map.of(ERROR_KEY, "Empleado no encontrado")
                 );
             }
 
@@ -166,15 +168,15 @@ public class LoanController {
 
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(
-                    Map.of("error", "Datos inválidos: " + ex.getMessage())
+                    Map.of(ERROR_KEY, "Datos inválidos: " + ex.getMessage())
             );
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(
-                    Map.of("error", ex.getMessage())
+                    Map.of(ERROR_KEY, ex.getMessage())
             );
         } catch (Exception ex) {
             return ResponseEntity.status(500).body(
-                    Map.of("error", "Error interno del servidor: " + ex.getMessage())
+                    Map.of(ERROR_KEY, "Error interno del servidor: " + ex.getMessage())
             );
         }
     }

@@ -4,7 +4,7 @@ import './forms.css';
 import UserRegisterForm from '../components/Register/UserRegisterForm';
 import TransitionAlert from '../components/Alerts/TransitionAlert';
 const Register = () => {
-  const [alert, setAlert] = useState(null); // { severity: 'success'|'error', message }
+  const [alert, setAlert] = useState(null);
 
   const submit = async (form) => {
     // parent-level submit: posts to public register endpoint
@@ -34,7 +34,7 @@ const Register = () => {
     // success: show success alert and go back to the previous page after a short delay
     setAlert({ severity: 'success', message: 'Registro exitoso. Volviendo a la página anterior...' });
     setTimeout(() => {
-      try { window.history.back(); } catch (e) { window.location.href = '/'; }
+      try { globalThis.history.back(); } catch (error_) { console.debug(error_); globalThis.location.href = '/'; }
     }, 1200);
   };
 
@@ -45,7 +45,7 @@ const Register = () => {
         <div style={{ maxWidth: 900, margin: '0 auto 12px' }}>
           <TransitionAlert alert={alert} onClose={() => setAlert(null)} autoHideMs={4000} />
         </div>
-        <UserRegisterForm title="Crear cuenta" submitLabel="Crear cuenta" requirePassword={true} defaultRole={"CLIENT"} hideRoleField={true} onSubmit={submit} />
+        <UserRegisterForm title="Crear cuenta" submitLabel="Crear cuenta" requirePassword={true} defaultRole={'CLIENT'} hideRoleField={true} onSubmit={submit} />
       </main>
     </div>
   );

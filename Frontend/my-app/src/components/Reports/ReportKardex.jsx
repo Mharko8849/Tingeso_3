@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { buildCsv, downloadBlob } from '../Common/csvUtils';
 import { useAlert } from '../Alerts/useAlert';
 
@@ -21,8 +22,7 @@ const ReportKardex = ({ rows = [], filename }) => {
       try {
         const d = new Date(s);
         return d.toLocaleString();
-      } catch (e) {
-        return s;
+      } catch (error_) { console.debug(error_); return s;
       }
     };
 
@@ -31,7 +31,8 @@ const ReportKardex = ({ rows = [], filename }) => {
       if (typeof u === 'object') {
         const id = u.id ?? u._id ?? null;
         const name = u.name || u.username || u.lastName || '';
-        return id ? `${id}${name ? ` - ${name}` : ''}` : (name || JSON.stringify(u));
+        if (id) { const suffix = name ? ` - ${name}` : ''; return `${id}${suffix}`; }
+        return name || JSON.stringify(u);
       }
       return String(u);
     };
@@ -41,7 +42,8 @@ const ReportKardex = ({ rows = [], filename }) => {
       if (typeof t === 'object') {
         const id = t.id ?? t._id ?? null;
         const name = t.toolName || t.name || '';
-        return id ? `${id}${name ? ` - ${name}` : ''}` : (name || JSON.stringify(t));
+        if (id) { const suffix = name ? ` - ${name}` : ''; return `${id}${suffix}`; }
+        return name || JSON.stringify(t);
       }
       return String(t);
     };
@@ -61,7 +63,7 @@ const ReportKardex = ({ rows = [], filename }) => {
         renderUser(user),
         String(m.type || '').toUpperCase(),
         m.qty ?? m.quantity ?? m.cantidad ?? m.cant ?? '—',
-        m.cost ?? m.amount ?? m.balance ?? m.stock ?? '—'
+        m.cost ?? m.amount ?? m.balance ?? m.stock ?? '—',
       ];
     });
     
@@ -76,6 +78,11 @@ const ReportKardex = ({ rows = [], filename }) => {
                 <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>Generar Reporte (CSV)</button>
   );
+};
+
+ReportKardex.propTypes = {
+  filename: PropTypes.string,
+  rows: PropTypes.array,
 };
 
 export default ReportKardex;

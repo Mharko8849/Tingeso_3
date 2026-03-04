@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import LoadingSpinner from '../components/Loading/LoadingSpinner';
@@ -18,7 +19,6 @@ const ToolDetail = (props) => {
   const [tool, setTool] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [invEntries, setInvEntries] = useState([]);
   const [stockSummary, setStockSummary] = useState({ DISPONIBLE: 0, PRESTADA: 0, EN_REPARACION: 0, DADA_DE_BAJA: 0 });
   const [toolStates, setToolStates] = useState([]);
   const [showAddStock, setShowAddStock] = useState(false);
@@ -30,16 +30,16 @@ const ToolDetail = (props) => {
   const { showAlert } = useAlert();
 
   let rolesRaw = [];
-  if (initialized && keycloak.authenticated && keycloak.tokenParsed && keycloak.tokenParsed.realm_access) {
+  if (initialized && keycloak.authenticated && keycloak.tokenParsed?.realm_access) {
     rolesRaw = keycloak.tokenParsed.realm_access.roles || [];
-  } else if (user && user.realm_access && Array.isArray(user.realm_access.roles)) {
+  } else if (user?.realm_access && Array.isArray(user.realm_access.roles)) {
     rolesRaw = user.realm_access.roles;
   }
   
-  const roles = rolesRaw.map((r) => String(r).toUpperCase());
+  const roles = new Set(rolesRaw.map((r) => String(r).toUpperCase()));
   const isInternalUser =
-    roles.includes('EMPLOYEE') || roles.includes('ADMIN') || roles.includes('SUPERADMIN');
-  const canEdit = isInternalUser && (roles.includes('ADMIN') || roles.includes('SUPERADMIN'));
+    roles.has('EMPLOYEE') || roles.has('ADMIN') || roles.has('SUPERADMIN');
+  const canEdit = isInternalUser && (roles.has('ADMIN') || roles.has('SUPERADMIN'));
   const canEditFine = canEdit;
 
   const fetchTool = async () => {
@@ -49,9 +49,9 @@ const ToolDetail = (props) => {
       // There is no GET /api/tool/{id}. Use inventory filter to fetch a tool by id.
       const res = await api.get('/api/inventory/filter', { params: { idTool: id } });
       const arr = res.data || [];
-      const t = (arr[0] && arr[0].idTool) || {};
+      const t = arr[0]?.idTool || {};
 
-      if (!t || !t.id) {
+      if (!t?.id) {
         setTool(null);
         setError('Herramienta no encontrada');
         return;
@@ -70,7 +70,11 @@ const ToolDetail = (props) => {
       const mapped = {
         id: t.id,
         name: t.toolName ?? t.name ?? '',
-        price: typeof t.priceRent === 'number' ? t.priceRent : (typeof t.price === 'number' ? t.price : null),
+        price: (() => {
+          if (typeof t.priceRent === 'number') return t.priceRent;
+          if (typeof t.price === 'number') return t.price;
+          return null;
+        })(),
         category: (typeof t.category === 'string' ? t.category : t.category?.name) || '',
         description: '',
         specs: [],
@@ -80,7 +84,6 @@ const ToolDetail = (props) => {
       };
 
       setTool(mapped);
-      setInvEntries(arr);
       setStockSummary(summary);
       setError(null);
     } catch (err) {
@@ -111,14 +114,8 @@ const ToolDetail = (props) => {
 
   const priceLabel = tool && typeof tool.price === 'number' ? `$${tool.price.toLocaleString()}` : '';
   const categoryLabel = tool ? tool.category || '' : '';
-  const fineValue = tool ? (typeof tool.priceFineAtDate === 'number' ? tool.priceFineAtDate : null) : null;
+  const fineValue = tool && typeof tool.priceFineAtDate === 'number' ? tool.priceFineAtDate : null;
   const fineLabel = typeof fineValue === 'number' ? `$${fineValue.toLocaleString()}` : '—';
-
-  // Helper to get color for a state from backend
-  const getStateColor = (stateName) => {
-    const state = toolStates.find(s => s.state === stateName);
-    return state?.color || '#6b7280';
-  };
 
   // Format state name: first letter uppercase, rest lowercase, handle spaces
   const formatStateName = (stateName) => {
@@ -138,10 +135,7 @@ const ToolDetail = (props) => {
     const mapped = {
       ...tool,
       name: updated.toolName ?? updated.name ?? tool?.name,
-      price:
-        typeof updated.priceRent === 'number'
-          ? updated.priceRent
-          : (typeof updated.price === 'number' ? updated.price : tool?.price),
+      price: (() => { if (typeof updated.priceRent === 'number') { return updated.priceRent; } if (typeof updated.price === 'number') { return updated.price; } return tool?.price; })(),
       category: updated.category ?? tool?.category,
       repoCost:
         typeof updated.repoCost === 'number'
@@ -186,18 +180,17 @@ const ToolDetail = (props) => {
               <div className="td-side">
                 <div className="td-header">
                   <h1 className="td-title m-0">{tool.name}</h1>
-                  <BackButton onClick={() => window.history.back()} />
+                  <BackButton onClick={() => globalThis.history.back()} />
                 </div>
 
                 <div className="td-price">{priceLabel}</div>
-
 
                 <div className="td-specs">
                   <h4 style={{ margin: 0 }}>Características</h4>
 
                   <ul>
-                    {tool.specs && tool.specs.map((s, i) => (
-                      <li key={i}><strong>{s[0]}:</strong> {s[1]}</li>
+{tool.specs?.map((s) => (
+                            <li key={s[0]}><strong>{s[0]}:</strong> {s[1]}</li>
                     ))}
 
                     {categoryLabel && (
@@ -240,7 +233,7 @@ const ToolDetail = (props) => {
                               borderRadius: '50%', 
                               backgroundColor: state.color || '#6b7280',
                               boxShadow: `0 0 6px ${state.color || '#6b7280'}80`,
-                              verticalAlign: 'middle'
+                              verticalAlign: 'middle',
                             }}
                           />
                           <span className="ml-2">{formatStateName(stateName)}:</span>
@@ -283,6 +276,10 @@ const ToolDetail = (props) => {
       </main>
     </div>
   );
+};
+
+ToolDetail.propTypes = {
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default ToolDetail;

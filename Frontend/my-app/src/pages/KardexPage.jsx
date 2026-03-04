@@ -1,13 +1,35 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
-import { default as ReportKardex } from '../components/Reports/ReportKardex';
-import { default as ReportRanking } from '../components/Reports/ReportRanking';
+import ReportKardex from '../components/Reports/ReportKardex';
+import ReportRanking from '../components/Reports/ReportRanking';
 import PaginationBar from '../components/Common/PaginationBar';
 import { HelpIcon } from '../components/Common/Tooltip';
 import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
 import { useAlert } from '../components/Alerts/useAlert';
+
+// Small reusable date picker for Desde/Hasta
+const DatePicker = ({ value, onChange, min, max, ariaLabel }) => (
+  <input
+    type="date"
+    aria-label={ariaLabel}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    min={min}
+    max={max}
+    style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #d1d5db' }}
+  />
+);
+
+DatePicker.propTypes = {
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+  min: PropTypes.string,
+  max: PropTypes.string,
+  ariaLabel: PropTypes.string,
+};
 
 const KardexPage = () => {
   const [movements, setMovements] = useState([]);
@@ -21,7 +43,7 @@ const KardexPage = () => {
   const [typeFilter, setTypeFilter] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const { show } = useAlert();
+  useAlert();
 
   const fetchKardex = async (overrides = {}) => {
     setLoading(true);
@@ -57,29 +79,16 @@ const KardexPage = () => {
 
   useEffect(() => {
     fetchKardex();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatDate = (s) => {
     try {
       const d = new Date(s).toISOString().split('T')[0];
       return d;
-    } catch (e) {
-      return s;
+    } catch (error_) { console.debug(error_); return s;
     }
   };
-
-  // Small reusable date picker component used for both Desde/Hasta
-  const DatePicker = ({ value, onChange, min, max, ariaLabel }) => (
-    <input
-      type="date"
-      aria-label={ariaLabel}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      min={min}
-      max={max}
-      style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #d1d5db' }}
-    />
-  );
 
   // Keep Desde <= Hasta. ISO date strings compare lexicographically so this is safe.
   const handleFromChange = (val) => {
@@ -104,7 +113,8 @@ const KardexPage = () => {
     if (typeof u === 'object') {
       const id = u.id ?? u._id ?? null;
       const name = u.name || u.username || u.lastName || '';
-      return id ? `${id}${name ? ` - ${name}` : ''}` : (name || JSON.stringify(u));
+      if (id) { const suffix = name ? ` - ${name}` : ''; return `${id}${suffix}`; }
+      return name || JSON.stringify(u);
     }
     return String(u);
   };
@@ -114,7 +124,8 @@ const KardexPage = () => {
     if (typeof t === 'object') {
       const id = t.id ?? t._id ?? null;
       const name = t.toolName || t.name || '';
-      return id ? `${id}${name ? ` - ${name}` : ''}` : (name || JSON.stringify(t));
+      if (id) { const suffix = name ? ` - ${name}` : ''; return `${id}${suffix}`; }
+      return name || JSON.stringify(t);
     }
     return String(t);
   };
@@ -127,12 +138,12 @@ const KardexPage = () => {
     // Apply date range filter client-side if provided
     // m.date may include time; treat dateFrom as start of day and dateTo as end of day
     if (dateFrom) {
-      const start = new Date(dateFrom + 'T00:00:00');
+      const start = new Date(`${dateFrom  }T00:00:00`);
       const md = m.date ? new Date(m.date) : null;
       if (!md || md < start) return false;
     }
     if (dateTo) {
-      const end = new Date(dateTo + 'T23:59:59.999');
+      const end = new Date(`${dateTo  }T23:59:59.999`);
       const md = m.date ? new Date(m.date) : null;
       if (!md || md > end) return false;
     }
@@ -170,7 +181,6 @@ const KardexPage = () => {
   const safePage = Math.min(Math.max(1, page), totalPages);
   // El servidor ya pagina — pagedMovements es solo la página actual filtrada por q
   const pagedMovements = filtered;
-
 
   return (
     <div className="bg-gray-50 min-h-screen">

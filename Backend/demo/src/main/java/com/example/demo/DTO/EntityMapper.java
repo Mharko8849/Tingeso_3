@@ -10,7 +10,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class EntityMapper {
-    
+
+    private EntityMapper() {
+        // Utility class - instantiation not needed
+    }
+
     /**
      * Convierte LoanEntity a LoanDTO
      */

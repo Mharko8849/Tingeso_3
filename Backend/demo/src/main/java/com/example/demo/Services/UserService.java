@@ -17,6 +17,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final String ROLE_ADMIN = "ADMIN";
+    private static final String ROLE_CLIENT = "CLIENT";
+    private static final String ROLE_EMPLOYEE = "EMPLOYEE";
+
     private final UserRepository userRepository;
     private final KeycloakAdminService keycloakAdminService;
     public UserEntity saveUser(UserEntity user) {
@@ -43,19 +47,15 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserEntity> getAllEmployees() {
-        List<UserEntity> employees = getUsersByRol("EMPLOYEE");
-        List<UserEntity> admins = getUsersByRol("ADMIN");
-
         List<UserEntity> users = new ArrayList<>();
-        users.addAll(employees);
-        users.addAll(admins);
-
+        users.addAll(userRepository.findByRol(ROLE_EMPLOYEE));
+        users.addAll(userRepository.findByRol(ROLE_ADMIN));
         return users;
     }
 
     @Transactional(readOnly = true)
     public List<UserEntity> getAllClients(){
-        return getUsersByRol("CLIENT");
+        return userRepository.findByRol(ROLE_CLIENT);
     }
 
     public UserEntity updateUser(UserEntity user) {
@@ -96,22 +96,25 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<UserEntity> filterClient(String state){
         if(state==null || state.isBlank()){
-            return getAllClients();
+            return userRepository.findByRol(ROLE_CLIENT);
         }
         else{
-            List<UserEntity> clients = getAllClients();
-            return clients.stream().filter(userEntity -> userEntity.getStateClient().equals(state)).toList();
+            return userRepository.findByRol(ROLE_CLIENT).stream()
+                .filter(userEntity -> userEntity.getStateClient().equals(state)).toList();
         }
     }
 
     @Transactional(readOnly = true)
     public List<UserEntity> filterEmployee(String role){
+        List<UserEntity> allEmployees = new ArrayList<>();
+        allEmployees.addAll(userRepository.findByRol(ROLE_EMPLOYEE));
+        allEmployees.addAll(userRepository.findByRol(ROLE_ADMIN));
         if(role==null || role.isBlank()){
-            return getAllEmployees();
+            return allEmployees;
         }
         else{
-            List<UserEntity> employees = getAllEmployees();
-            return employees.stream().filter(userEntity -> userEntity.getRol().equals(role)).toList();
+            return allEmployees.stream()
+                .filter(userEntity -> userEntity.getRol().equals(role)).toList();
         }
     }
 
@@ -123,11 +126,7 @@ public class UserService {
 
             // Primero borrar en Keycloak si tenemos el ID
             if (user != null && user.getKeycloakId() != null && !user.getKeycloakId().isBlank()) {
-                try {
-                    keycloakAdminService.deleteKeycloakUser(user.getKeycloakId());
-                } catch (Exception ex) {
-                    // Continuar incluso si falla el borrado en Keycloak
-                }
+                deleteKeycloakUserSafely(user.getKeycloakId());
             }
 
             // Luego borrar en la BD local
@@ -138,16 +137,24 @@ public class UserService {
         }
     }
 
+    private void deleteKeycloakUserSafely(String keycloakId) {
+        try {
+            keycloakAdminService.deleteKeycloakUser(keycloakId);
+        } catch (Exception ignored) {
+            // Continuar incluso si falla el borrado en Keycloak
+        }
+    }
+
     public void isAdmin(UserEntity user) {
-        if (!user.getRol().equals("ADMIN") && !user.getRol().equals("SUPERADMIN")) {
-            throw new RuntimeException("Acceso denegado. Se requiere rol ADMIN");
+        if (!user.getRol().equals(ROLE_ADMIN) && !user.getRol().equals("SUPERADMIN")) {
+            throw new IllegalStateException("Acceso denegado. Se requiere rol ADMIN");
         }
     }
 
     public void validateAdminOrEmployee(UserEntity user) {
-        if (!user.getRol().equals("ADMIN") &&
-                !user.getRol().equals("EMPLOYEE") && !user.getRol().equals("SUPERADMIN")) {
-            throw new RuntimeException("No cuenta con los permisos suficientes.");
+        if (!user.getRol().equals(ROLE_ADMIN) &&
+                !user.getRol().equals(ROLE_EMPLOYEE) && !user.getRol().equals("SUPERADMIN")) {
+            throw new IllegalStateException("No cuenta con los permisos suficientes.");
         }
     }
 

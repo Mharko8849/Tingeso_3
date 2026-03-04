@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import '../Stock/ModalAddStockTool.css';
 import ModalAddToolState from './ModalAddToolState';
@@ -14,7 +15,7 @@ const ModalToolStatesList = ({ open, onClose }) => {
       const response = await api.get('/api/tool-states/');
       setStates(response.data);
     } catch (error) {
-      console.error("Error fetching tool states", error);
+      console.error('Error fetching tool states', error);
     } finally {
       setLoading(false);
     }
@@ -30,17 +31,17 @@ const ModalToolStatesList = ({ open, onClose }) => {
 
   return (
     <>
-      <div className="mas-backdrop" onClick={onClose} style={{ zIndex: 10000 }}>
-        <div className="mas-modal" style={{ width: '500px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+      <div className="mas-backdrop" style={{ zIndex: 10000 }}>
+    <button type="button" onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+        <div className="mas-modal" style={{ width: '500px', position: 'relative' }}>
           <button className="mas-close" onClick={onClose} aria-label="Cerrar">
             ×
           </button>
           <h3 className="mas-title">Estados de Herramientas</h3>
           
           <div className="mas-content" style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '20px' }}>
-            {loading ? (
-              <p>Cargando estados...</p>
-            ) : states.length > 0 ? (
+            {loading && <p>Cargando estados...</p>}
+            {!loading && states.length > 0 && (
               <ul style={{ listStyleType: 'disc', paddingLeft: '20px' }}>
                 {states.map((state) => (
                   <li key={state.id} style={{ marginBottom: '8px', fontSize: '16px' }}>
@@ -48,7 +49,8 @@ const ModalToolStatesList = ({ open, onClose }) => {
                   </li>
                 ))}
               </ul>
-            ) : (
+            )}
+            {!loading && states.length === 0 && (
               <p style={{ fontStyle: 'italic', color: '#666' }}>
                 Aún no se han registrado estados para las herramientas
               </p>
@@ -74,6 +76,11 @@ const ModalToolStatesList = ({ open, onClose }) => {
       />
     </>
   );
+};
+
+ModalToolStatesList.propTypes = {
+  onClose: PropTypes.func,
+  open: PropTypes.bool,
 };
 
 export default ModalToolStatesList;

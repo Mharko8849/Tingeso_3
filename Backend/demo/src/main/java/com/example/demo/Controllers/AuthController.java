@@ -15,6 +15,8 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String ERROR_KEY = "error";
+
     private final AuthService authService;
 
     /**
@@ -22,13 +24,13 @@ public class AuthController {
      * Rol forzado: CLIENT
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registerClient(@RequestBody UserEntity user) {
+    public ResponseEntity<Object> registerClient(@RequestBody UserEntity user) {
         try {
             UserEntity created = authService.registerClient(user);
             return ResponseEntity.ok(created);
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", ex.getMessage())
+                    java.util.Map.of(ERROR_KEY, ex.getMessage())
             );
         }
     }
@@ -37,13 +39,13 @@ public class AuthController {
      * Registro de Empleado (solo Admin o SuperAdmin)
      */
     @PostMapping("/register/employee")
-    public ResponseEntity<?> registerEmployee(@RequestBody UserEntity user) {
+    public ResponseEntity<Object> registerEmployee(@RequestBody UserEntity user) {
         try {
             UserEntity created = authService.registerEmployee(user);
             return ResponseEntity.ok(created);
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", ex.getMessage())
+                    java.util.Map.of(ERROR_KEY, ex.getMessage())
             );
         }
     }
@@ -52,13 +54,13 @@ public class AuthController {
      * Registro de Admin (solo SuperAdmin)
      */
     @PostMapping("/register/admin")
-    public ResponseEntity<?> registerAdmin(@RequestBody UserEntity user) {
+    public ResponseEntity<Object> registerAdmin(@RequestBody UserEntity user) {
         try {
             UserEntity created = authService.registerAdmin(user);
             return ResponseEntity.ok(created);
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", ex.getMessage())
+                    java.util.Map.of(ERROR_KEY, ex.getMessage())
             );
         }
     }
@@ -67,12 +69,12 @@ public class AuthController {
      * Login
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody java.util.Map<String,String> body) {
+    public ResponseEntity<Object> login(@RequestBody java.util.Map<String,String> body) {
         String identifier = body.get("username").toLowerCase(Locale.ROOT);
         String password = body.get("password");
 
         if (identifier == null || password == null) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", "username y password requeridos"));
+            return ResponseEntity.badRequest().body(java.util.Map.of(ERROR_KEY, "username y password requeridos"));
         }
 
         try {
@@ -81,13 +83,13 @@ public class AuthController {
         } catch (RuntimeException ex) {
             String msg = ex.getMessage();
             if ("Usuario no registrado".equals(msg)) {
-                return ResponseEntity.status(404).body(java.util.Map.of("error", msg));
+                return ResponseEntity.status(404).body(java.util.Map.of(ERROR_KEY, msg));
             } else if ("Credenciales inválidas.".equals(msg)) {
-                return ResponseEntity.status(401).body(java.util.Map.of("error", msg));
+                return ResponseEntity.status(401).body(java.util.Map.of(ERROR_KEY, msg));
             }
-            return ResponseEntity.status(401).body(java.util.Map.of("error", msg));
+            return ResponseEntity.status(401).body(java.util.Map.of(ERROR_KEY, msg));
         } catch (Exception ex) {
-            return ResponseEntity.status(401).body(java.util.Map.of("error", ex.getMessage()));
+            return ResponseEntity.status(401).body(java.util.Map.of(ERROR_KEY, ex.getMessage()));
         }
     }
 
@@ -95,20 +97,20 @@ public class AuthController {
      * Refresh: usa refresh_token para obtener nuevos tokens
      */
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody java.util.Map<String,String> body) {
+    public ResponseEntity<Object> refresh(@RequestBody java.util.Map<String,String> body) {
         String refreshToken = body.get("refresh_token");
 
         if (refreshToken == null || refreshToken.isBlank()) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", "refresh_token requerido"));
+            return ResponseEntity.badRequest().body(java.util.Map.of(ERROR_KEY, "refresh_token requerido"));
         }
 
         try {
             java.util.Map<String,Object> result = authService.refresh(refreshToken);
             return ResponseEntity.ok(result);
         } catch (RuntimeException ex) {
-            return ResponseEntity.status(401).body(java.util.Map.of("error", ex.getMessage()));
+            return ResponseEntity.status(401).body(java.util.Map.of(ERROR_KEY, ex.getMessage()));
         } catch (Exception ex) {
-            return ResponseEntity.status(401).body(java.util.Map.of("error", "No se pudo refrescar el token"));
+            return ResponseEntity.status(401).body(java.util.Map.of(ERROR_KEY, "No se pudo refrescar el token"));
         }
     }
 }

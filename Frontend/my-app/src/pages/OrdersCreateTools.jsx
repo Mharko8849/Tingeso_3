@@ -10,14 +10,14 @@ import TransitionAlert from '../components/Alerts/TransitionAlert';
 
 const OrdersCreateTools = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 500000 });
+  const [filters] = useState({ minPrice: 0, maxPrice: 500000 });
   const [tools, setTools] = useState([]);
   const [loadingTools, setLoadingTools] = useState(false);
 
   const [selectedClient, setSelectedClient] = useState(null);
   const [items, setItems] = useState([]);
-  const [creating, setCreating] = useState(false);
   const [alert, setAlert] = useState(null);
+  const [creating] = useState(false);
 
   useEffect(() => {
     try {
@@ -26,9 +26,9 @@ const OrdersCreateTools = () => {
       // restore any locally selected items
       const its = sessionStorage.getItem('order_items');
       if (its) {
-        try { setItems(JSON.parse(its)); } catch (e) { /* ignore parse errors */ }
+        try { setItems(JSON.parse(its)); } catch (error_) { console.debug(error_); }
       }
-    } catch (e) { console.warn('could not read selected client', e); }
+    } catch (error_) { console.debug(error_); console.warn('could not read selected client'); }
     fetchTools(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -54,7 +54,7 @@ const OrdersCreateTools = () => {
         inv = tools.map(tool => ({
           idTool: tool,
           toolState: { state: 'DISPONIBLE' },
-          stockTool: 0
+          stockTool: 0,
         }));
       }
 
@@ -90,7 +90,7 @@ const OrdersCreateTools = () => {
   };
 
   const addTool = (t) => {
-    if (!t || !t.id) return;
+    if (!t?.id) return;
     // Business rule: only one unit per tool per client/order allowed.
     const exists = items.find(p => p.id === t.id);
     if (exists) {
@@ -100,7 +100,7 @@ const OrdersCreateTools = () => {
     // Validate with backend that the client doesn't already have this tool in another active loan
     (async () => {
       try {
-        if (!selectedClient || !selectedClient.id) {
+        if (!selectedClient?.id) {
           setAlert({ severity: 'error', message: 'No hay cliente seleccionado. Vuelve atrás.' });
           return;
         }
@@ -127,24 +127,27 @@ const OrdersCreateTools = () => {
 
       // include price if available (from the tool object or from current tools list)
       const toolObj = tools.find(x => x.id === t.id);
-      const price = (t.price !== undefined && t.price !== null) ? t.price : (toolObj ? toolObj.price : 0);
+      let price;
+      if (t.price !== undefined && t.price !== null) { price = t.price; }
+      else if (toolObj) { price = toolObj.price; }
+      else { price = 0; }
       const image = toolObj ? toolObj.image : (t.image || '/NoImage.png');
       const newItem = { id: t.id, name: t.name, qty: 1, stock: t.stock, image, price };
       const next = [newItem, ...items];
       setItems(next);
-      try { sessionStorage.setItem('order_items', JSON.stringify(next)); } catch (e) { /* ignore */ }
+      try { sessionStorage.setItem('order_items', JSON.stringify(next)); } catch (error_) { console.debug(error_); }
       // show immediate success feedback to the user
       setAlert({ severity: 'success', message: 'Herramienta agregada al pedido.' });
     })();
   };
 
   // Quantity limited to 1 per business rules.
-  const changeQty = (id, qty) => setItems(s => s.map(i => i.id === id ? { ...i, qty: 1 } : i));
+  const changeQty = (id, _qty) => setItems(s => s.map(i => i.id === id ? { ...i, qty: 1 } : i));
   const removeItem = async (id) => {
     // Option B: LoanXTools are local until confirm; removing item just updates local state
     const next = items.filter(i => i.id !== id);
     setItems(next);
-    try { sessionStorage.setItem('order_items', JSON.stringify(next)); } catch (e) { /* ignore */ }
+    try { sessionStorage.setItem('order_items', JSON.stringify(next)); } catch (error_) { console.debug(error_); }
   };
 
   const goBackSelectClient = async () => {
@@ -158,7 +161,7 @@ const OrdersCreateTools = () => {
       sessionStorage.removeItem('order_resume');
       sessionStorage.removeItem('order_init_date');
       sessionStorage.removeItem('order_return_date');
-    } catch (e) {}
+    } catch (error_) { console.debug(error_); }
 
     navigate('/admin/orders/create');
   };
@@ -222,7 +225,7 @@ const OrdersCreateTools = () => {
           sessionStorage.removeItem('order_loan_id');
           sessionStorage.removeItem('order_init_date');
           sessionStorage.removeItem('order_return_date');
-        } catch (e) {}
+        } catch (error_) { console.debug(error_); }
         navigate('/admin/orders/create');
       }} creating={creating} />
     </div>

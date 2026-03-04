@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import Badge from '../Badges/Badge';
 import api from '../../services/http-common';
 import ToolCard from '../Tools/ToolCard';
@@ -17,12 +18,11 @@ const OrderBuilder = ({ onClose, onCreated }) => {
   const [toolsPage, setToolsPage] = useState(1);
   const [toolsPageSize, setToolsPageSize] = useState(8);
 
-  const [items, setItems] = useState([]); // { id, name, qty }
+  const [items, setItems] = useState([]);
   const [alert, setAlert] = useState(null);
   const { show } = useAlert();
 
   useEffect(() => {
-    // fetch clients (admins can view all clients)
     const fetchClients = async () => {
       try {
         const resp = await api.get('/api/user/clients');
@@ -75,11 +75,11 @@ const OrderBuilder = ({ onClose, onCreated }) => {
   const filteredClients = clients.filter((c) => {
     if (!clientQuery) return true;
     const s = clientQuery.toLowerCase();
-    return (String(c.username || '') + ' ' + String(c.name || '') + ' ' + String(c.lastName || '') + ' ' + String(c.email || '')).toLowerCase().includes(s);
+    return (`${String(c.username || '')  } ${  String(c.name || '')  } ${  String(c.lastName || '')  } ${  String(c.email || '')}`).toLowerCase().includes(s);
   });
 
   const addTool = (tool) => {
-    if (!tool || !tool.id) return;
+    if (!tool?.id) return;
     setItems((prev) => {
       const found = prev.find((p) => p.id === tool.id);
       if (found) {
@@ -136,22 +136,23 @@ const OrderBuilder = ({ onClose, onCreated }) => {
   };
 
   return (
-    <div className="tool-overlay" onClick={onClose}>
-      <div className="tool-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1200 }}>
+    <div className="tool-overlay" >
+      <button type="button" onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+      <div className="tool-content" style={{ maxWidth: 1200 }}>
         <button className="close-btn" onClick={onClose}>✕</button>
 
         <h3>Crear Pedido</h3>
 
         <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
           <div style={{ width: 320 }}>
-            <label>Buscar cliente</label>
-            <input placeholder="Escribe nombre, usuario o email" value={clientQuery} onChange={(e) => setClientQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6 }} />
+            <label htmlFor="ob-client-search">Buscar cliente</label>
+            <input id="ob-client-search" placeholder="Escribe nombre, usuario o email" value={clientQuery} onChange={(e) => setClientQuery(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6 }} />
             <div style={{ marginTop: 8, maxHeight: 240, overflow: 'auto', border: '1px solid #eee', borderRadius: 6 }}>
               {filteredClients.map((c) => (
-                <div key={c.id} style={{ padding: 8, cursor: 'pointer', background: selectedClient?.id === c.id ? '#eef6ff' : 'transparent' }} onClick={() => setSelectedClient(c)}>
-                  <div style={{ fontWeight: 700 }}>{c.username} {c.name ? `- ${c.name} ${c.lastName || ''}` : ''}</div>
-                  <div style={{ fontSize: 12, color: '#666' }}>{c.email}</div>
-                </div>
+                <button type="button" key={c.id} style={{ all: 'unset', display: 'block', width: '100%', boxSizing: 'border-box', padding: 8, cursor: 'pointer', background: selectedClient?.id === c.id ? '#eef6ff' : 'transparent', textAlign: 'left' }} onClick={() => setSelectedClient(c)}>
+                  <span style={{ display: 'block', fontWeight: 700 }}>{c.username} {c.name ? `- ${c.name} ${c.lastName || ''}` : ''}</span>
+                  <span style={{ display: 'block', fontSize: 12, color: '#666' }}>{c.email}</span>
+                </button>
               ))}
             </div>
 
@@ -169,8 +170,8 @@ const OrderBuilder = ({ onClose, onCreated }) => {
           </div>
 
           <div style={{ flex: 1 }}>
-            <label>Buscar herramientas</label>
-            <input placeholder="Filtrar por nombre" value={queryTools} onChange={(e) => { setQueryTools(e.target.value); setToolsPage(1); fetchTools(e.target.value); }} style={{ width: '100%', padding: 8, marginTop: 6 }} />
+            <label htmlFor="ob-tools-search">Buscar herramientas</label>
+            <input id="ob-tools-search" placeholder="Filtrar por nombre" value={queryTools} onChange={(e) => { setQueryTools(e.target.value); setToolsPage(1); fetchTools(e.target.value); }} style={{ width: '100%', padding: 8, marginTop: 6 }} />
 
             <div style={{ marginTop: 12 }}>
               {loadingTools ? <div>Cargando herramientas...</div> : (
@@ -191,7 +192,7 @@ const OrderBuilder = ({ onClose, onCreated }) => {
 
             <div style={{ marginTop: 16 }}>
               <h4 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Badge variant={items && items.length > 0 ? 'green' : undefined} ariaLabel={`Pedido tiene ${items.length} items`} />
+                <Badge variant={items?.length > 0 ? 'green' : undefined} ariaLabel={`Pedido tiene ${items.length} items`} />
                 Items del pedido
               </h4>
               {items.length === 0 && <div>No hay items</div>}
@@ -221,6 +222,11 @@ const OrderBuilder = ({ onClose, onCreated }) => {
       </div>
     </div>
   );
+};
+
+OrderBuilder.propTypes = {
+  onClose: PropTypes.func,
+  onCreated: PropTypes.func,
 };
 
 export default OrderBuilder;

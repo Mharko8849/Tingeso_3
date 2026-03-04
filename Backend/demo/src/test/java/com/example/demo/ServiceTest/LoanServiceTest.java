@@ -151,25 +151,25 @@ class LoanServiceTest {
     @Test
     void testCreateLoan_RestrictedUser() {
         client.setStateClient("RESTRINGIDO");
-        assertThrows(RuntimeException.class, () -> {
-            loanService.createLoan(client, user, Date.valueOf("2023-01-01"), Date.valueOf("2023-01-10"));
-        });
+        Date initDate = Date.valueOf("2023-01-01");
+        Date returnDate = Date.valueOf("2023-01-10");
+        assertThrows(RuntimeException.class, () -> loanService.createLoan(client, user, initDate, returnDate));
     }
 
     @Test
     void testCreateLoan_MaxLoans() {
         when(userService.canDoAnotherLoan(client)).thenReturn(false);
-        assertThrows(RuntimeException.class, () -> {
-            loanService.createLoan(client, user, Date.valueOf("2023-01-01"), Date.valueOf("2023-01-10"));
-        });
+        Date initDate = Date.valueOf("2023-01-01");
+        Date returnDate = Date.valueOf("2023-01-10");
+        assertThrows(RuntimeException.class, () -> loanService.createLoan(client, user, initDate, returnDate));
     }
 
     @Test
     void testCreateLoan_InvalidDates() {
         when(userService.canDoAnotherLoan(client)).thenReturn(true);
-        assertThrows(RuntimeException.class, () -> {
-            loanService.createLoan(client, user, Date.valueOf("2023-01-10"), Date.valueOf("2023-01-01"));
-        });
+        Date initDate = Date.valueOf("2023-01-10");
+        Date returnDate = Date.valueOf("2023-01-01");
+        assertThrows(RuntimeException.class, () -> loanService.createLoan(client, user, initDate, returnDate));
     }
 
     @Test
@@ -204,7 +204,7 @@ class LoanServiceTest {
 
     @Test
     void testDeleteLoan_Exception() {
-        when(loanRepository.findById(1L)).thenThrow(new RuntimeException("Not found"));
+        when(loanRepository.findById(1L)).thenThrow(new IllegalStateException("Not found"));
         boolean result = loanService.deleteLoan(1L);
         assertFalse(result);
     }
@@ -255,22 +255,25 @@ class LoanServiceTest {
     @Test
     void testValidateConditions_RestrictedUser() {
         client.setStateClient("RESTRINGIDO");
-        assertThrows(RuntimeException.class,
-                () -> loanService.validateConditions(client, Date.valueOf("2023-01-01"), Date.valueOf("2023-01-10")));
+        Date start = Date.valueOf("2023-01-01");
+        Date end = Date.valueOf("2023-01-10");
+        assertThrows(RuntimeException.class, () -> loanService.validateConditions(client, start, end));
     }
 
     @Test
     void testValidateConditions_MaxLoans() {
         when(userService.canDoAnotherLoan(client)).thenReturn(false);
-        assertThrows(RuntimeException.class,
-                () -> loanService.validateConditions(client, Date.valueOf("2023-01-01"), Date.valueOf("2023-01-10")));
+        Date start = Date.valueOf("2023-01-01");
+        Date end = Date.valueOf("2023-01-10");
+        assertThrows(RuntimeException.class, () -> loanService.validateConditions(client, start, end));
     }
 
     @Test
     void testValidateConditions_InvalidDate() {
         when(userService.canDoAnotherLoan(client)).thenReturn(true);
-        assertThrows(RuntimeException.class,
-                () -> loanService.validateConditions(client, Date.valueOf("2023-01-10"), Date.valueOf("2023-01-01")));
+        Date start = Date.valueOf("2023-01-10");
+        Date end = Date.valueOf("2023-01-01");
+        assertThrows(RuntimeException.class, () -> loanService.validateConditions(client, start, end));
     }
 
     @Test
@@ -296,8 +299,10 @@ class LoanServiceTest {
     @Test
     void testCreateLoanWithTools_ClientNotFound() {
         when(userService.findUserById(99L)).thenReturn(null);
-        assertThrows(RuntimeException.class,
-                () -> loanService.createLoanWithTools(user, 99L, Date.valueOf("2023-01-01"), Date.valueOf("2023-01-10"), List.of(1L)));
+        Date start = Date.valueOf("2023-01-01");
+        Date end = Date.valueOf("2023-01-10");
+        List<Long> tools = List.of(1L);
+        assertThrows(RuntimeException.class, () -> loanService.createLoanWithTools(user, 99L, start, end, tools));
     }
 
     @Test
@@ -305,8 +310,10 @@ class LoanServiceTest {
         when(userService.findUserById(2L)).thenReturn(client);
         when(userService.canDoAnotherLoan(client)).thenReturn(true);
         when(loanRepository.save(any(LoanEntity.class))).thenReturn(loan);
-        assertThrows(RuntimeException.class,
-                () -> loanService.createLoanWithTools(user, 2L, Date.valueOf("2023-01-01"), Date.valueOf("2023-01-10"), Collections.emptyList()));
+        Date start = Date.valueOf("2023-01-01");
+        Date end = Date.valueOf("2023-01-10");
+        List<Long> emptyTools = Collections.emptyList();
+        assertThrows(RuntimeException.class, () -> loanService.createLoanWithTools(user, 2L, start, end, emptyTools));
     }
 
     @Test
@@ -321,9 +328,10 @@ class LoanServiceTest {
         when(toolService.getToolById(1L)).thenReturn(tool);
         when(inventoryService.isAvailableTool(tool)).thenReturn(false);
         when(loanRepository.save(any(LoanEntity.class))).thenReturn(loan);
-
-        assertThrows(RuntimeException.class,
-                () -> loanService.createLoanWithTools(user, 2L, Date.valueOf("2023-01-01"), Date.valueOf("2023-01-10"), List.of(1L)));
+        Date start = Date.valueOf("2023-01-01");
+        Date end = Date.valueOf("2023-01-10");
+        List<Long> tools = List.of(1L);
+        assertThrows(RuntimeException.class, () -> loanService.createLoanWithTools(user, 2L, start, end, tools));
     }
 
     @Test

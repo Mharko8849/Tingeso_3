@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
 import BackButton from '../components/Common/BackButton';
 import PaginationBar from '../components/Common/PaginationBar';
+import { LoanListItem, LoanListHeader } from '../components/Common/LoanListItem';
 import { HelpIcon } from '../components/Common/Tooltip';
 import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import api from '../services/http-common';
-import Badge from '../components/Badges/Badge';
-import { statusToBadgeVariant } from '../components/Badges/statusToBadge';
 import { ReportLoans } from '../components/Reports';
 import { formatDate } from '../utils/validation';
 
@@ -23,7 +22,6 @@ const Loans = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(8);
   const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
 
   const fetchLoans = async () => {
     setLoading(true);
@@ -43,13 +41,11 @@ const Loans = () => {
       // Extract pagination data from PageResponseDTO
       setLoans(Array.isArray(data.content) ? data.content : []);
       setTotalElements(data.totalElements || 0);
-      setTotalPages(data.totalPages || 1);
     } catch (e) {
       console.error('No se pudo cargar préstamos', e?.response ?? e);
       setError('No se pudo cargar la lista de pedidos.');
       setLoans([]);
       setTotalElements(0);
-      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -81,7 +77,6 @@ const Loans = () => {
       return idStr.includes(term) || clientName.toLowerCase().includes(term);
     });
   }, [loans, q]);
-
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -159,55 +154,26 @@ const Loans = () => {
 
               {filtered.length === 0 ? <p style={{ marginTop: 12 }}>No hay pedidos para mostrar.</p> : (
                 <div style={{ marginTop: 12, maxHeight: 520, overflowY: 'auto', width: '100%' }}>
-                  <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '80px 1.2fr 1fr 1fr 1fr 160px 120px', gap: 12, padding: '6px 8px', borderBottom: '1px solid #f1f5f9', marginBottom: 8, alignItems: 'center' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Pedido #</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Cliente</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Fecha inicio</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Fecha devolución</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Fecha Actual</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Estado</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', textAlign: 'right' }}>Acciones</div>
-                  </div>
+                  <LoanListHeader
+                    gridTemplate="80px 1.2fr 1fr 1fr 1fr 160px 120px"
+                    headers={['Pedido #', 'Cliente', 'Fecha inicio', 'Fecha devolución', 'Fecha Actual', 'Estado', 'Acciones']}
+                  />
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                    {filtered.map((l) => {
-                      const clientName = l.clientName || l.username || '—';
-                      
-                      return (
-                        <div
-                          key={l.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => openLoan(l.id)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openLoan(l.id); }}
-                          style={{
-                            padding: 14,
-                            borderRadius: 8,
-                            border: '1px solid #e6e6e6',
-                            background: '#fff',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 24,
-                          }}
-                        >
-                          <div style={{ display: 'grid', gridTemplateColumns: '80px 1.2fr 1fr 1fr 1fr 160px 120px', alignItems: 'center', gap: 12, width: '100%' }}>
-                            <div style={{ fontWeight: 800, fontSize: 16 }}>#{l.id}</div>
-                            <div style={{ fontSize: 14, color: '#374151' }}>{clientName}</div>
-                            <div style={{ fontSize: 14, color: '#374151' }}>{formatDate(l.initDate)}</div>
-                            <div style={{ fontSize: 14, color: '#374151' }}>{formatDate(l.returnDate)}</div>
-                            <div style={{ fontSize: 14, color: '#374151' }}>{formatDate(today)}</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <Badge variant={statusToBadgeVariant(l.status)} title={l.status || ''} />
-                              <div style={{ fontSize: 14, color: '#374151' }}>{l.status}</div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <button className="link" style={{ whiteSpace: 'nowrap' }} onClick={(ev) => { ev.stopPropagation(); openLoan(l.id); }}>Ver pedido</button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {filtered.map((l) => (
+                      <LoanListItem
+                        key={l.id}
+                        loan={l}
+                        gridTemplate="80px 1.2fr 1fr 1fr 1fr 160px 120px"
+                        columns={[
+                          { key: 'clientName', render: (loan) => loan.clientName || loan.username || '—' },
+                          { key: 'initDate', render: (loan) => formatDate(loan.initDate) },
+                          { key: 'returnDate', render: (loan) => formatDate(loan.returnDate) },
+                          { key: 'today', render: () => formatDate(today) },
+                        ]}
+                        onClick={() => openLoan(l.id)}
+                      />
+                    ))}
                   </div>
                 </div>
               )}

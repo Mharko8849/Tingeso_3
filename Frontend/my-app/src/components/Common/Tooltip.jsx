@@ -1,5 +1,40 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import './Tooltip.css';
+
+const GAP = 8;
+
+const calcPositionStyle = (pos, rect, vw, vh) => {
+  const cx = `${rect.left + rect.width / 2}px`;
+  const cy = `${rect.top + rect.height / 2}px`;
+  const topAbove = `${vh - rect.top + GAP}px`;
+  const topBelow = `${rect.bottom + GAP}px`;
+  const leftRight = `${rect.right + GAP}px`;
+  const rightLeft = `${vw - rect.left + GAP}px`;
+  return {
+    right: { top: cy, left: leftRight, transform: 'translateY(-50%)' },
+    left: { top: cy, right: rightLeft, transform: 'translateY(-50%)' },
+    bottom: { top: topBelow, left: cx, transform: 'translateX(-50%)' },
+    top: { bottom: topAbove, left: cx, transform: 'translateX(-50%)' },
+  }[pos];
+};
+
+const shouldFlip = (position, rect, viewportWidth, viewportHeight) => {
+  if (position === 'right') return rect.right > viewportWidth - 250;
+  if (position === 'left') return rect.left < 250;
+  if (position === 'bottom') return rect.bottom > viewportHeight - 100;
+  if (position === 'top') return rect.top < 100;
+  return false;
+};
+
+const OPPOSITE = { right: 'left', left: 'right', bottom: 'top', top: 'bottom' };
+
+const calcTooltipPosition = (position, rect, viewportWidth, viewportHeight) => {
+  const flip = shouldFlip(position, rect, viewportWidth, viewportHeight);
+  const newPosition = flip ? OPPOSITE[position] : position;
+  const style = calcPositionStyle(newPosition, rect, viewportWidth, viewportHeight);
+  return { newPosition, style };
+};
 
 /**
  * Tooltip component for providing contextual help information.
@@ -12,16 +47,10 @@ import './Tooltip.css';
  * @param {string} [props.maxWidth='250px'] - Maximum width of tooltip
  * @returns {JSX.Element}
  */
-const Tooltip = ({ text, children, position = 'top', maxWidth = '250px' }) => {
-  const [visible, setVisible] = useState(false);
-
-  const handleMouseEnter = () => setVisible(true);
-  const handleMouseLeave = () => setVisible(false);
-
-  return (
-    <div className="tooltip-wrapper" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+const Tooltip = ({ text, children, position = 'top', maxWidth = '250px' }) => (
+    <div className="tooltip-wrapper">
       {children}
-      {visible && text && (
+      {text && (
         <div className={`tooltip-content tooltip-${position}`} style={{ maxWidth }}>
           {text}
           <div className={`tooltip-arrow tooltip-arrow-${position}`} />
@@ -29,7 +58,6 @@ const Tooltip = ({ text, children, position = 'top', maxWidth = '250px' }) => {
       )}
     </div>
   );
-};
 
 /**
  * HelpIcon component - A small question mark icon with tooltip
@@ -48,95 +76,22 @@ export const HelpIcon = ({ content, position = 'right' }) => {
 
   const handleMouseEnter = () => {
     setVisible(true);
-    
-    // Smart positioning: adjust based on viewport space
-    if (iconRef.current) {
-      const rect = iconRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      let newPosition = position;
-      let style = {};
-      
-      // Calculate fixed position based on icon location
-      const gap = 8;
-      
-      // Check if there's space on the right
-      if (position === 'right' && rect.right > viewportWidth - 250) {
-        newPosition = 'left';
-        style = {
-          top: `${rect.top + rect.height / 2}px`,
-          right: `${viewportWidth - rect.left + gap}px`,
-          transform: 'translateY(-50%)'
-        };
-      } else if (position === 'right') {
-        style = {
-          top: `${rect.top + rect.height / 2}px`,
-          left: `${rect.right + gap}px`,
-          transform: 'translateY(-50%)'
-        };
-      }
-      
-      // Check if there's space on the left
-      if (position === 'left' && rect.left < 250) {
-        newPosition = 'right';
-        style = {
-          top: `${rect.top + rect.height / 2}px`,
-          left: `${rect.right + gap}px`,
-          transform: 'translateY(-50%)'
-        };
-      } else if (position === 'left') {
-        style = {
-          top: `${rect.top + rect.height / 2}px`,
-          right: `${viewportWidth - rect.left + gap}px`,
-          transform: 'translateY(-50%)'
-        };
-      }
-      
-      // Check if there's space on bottom
-      if (position === 'bottom' && rect.bottom > viewportHeight - 100) {
-        newPosition = 'top';
-        style = {
-          bottom: `${viewportHeight - rect.top + gap}px`,
-          left: `${rect.left + rect.width / 2}px`,
-          transform: 'translateX(-50%)'
-        };
-      } else if (position === 'bottom') {
-        style = {
-          top: `${rect.bottom + gap}px`,
-          left: `${rect.left + rect.width / 2}px`,
-          transform: 'translateX(-50%)'
-        };
-      }
-      
-      // Check if there's space on top
-      if (position === 'top' && rect.top < 100) {
-        newPosition = 'bottom';
-        style = {
-          top: `${rect.bottom + gap}px`,
-          left: `${rect.left + rect.width / 2}px`,
-          transform: 'translateX(-50%)'
-        };
-      } else if (position === 'top') {
-        style = {
-          bottom: `${viewportHeight - rect.top + gap}px`,
-          left: `${rect.left + rect.width / 2}px`,
-          transform: 'translateX(-50%)'
-        };
-      }
-      
-      setActualPosition(newPosition);
-      setTooltipStyle(style);
-    }
+    if (!iconRef.current) return;
+    const rect = iconRef.current.getBoundingClientRect();
+    const { newPosition, style } = calcTooltipPosition(position, rect, globalThis.innerWidth, globalThis.innerHeight);
+    setActualPosition(newPosition);
+    setTooltipStyle(style);
   };
 
   return (
-    <span 
+    <button 
+      type="button"
       ref={iconRef}
       className="help-icon"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setVisible(false)}
       aria-label="Ayuda"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setVisible((v) => !v); }}
     >
       ?
       {visible && content && (
@@ -148,8 +103,20 @@ export const HelpIcon = ({ content, position = 'right' }) => {
           <span className={`tooltip-arrow tooltip-arrow-${actualPosition}`} />
         </span>
       )}
-    </span>
+    </button>
   );
+};
+
+HelpIcon.propTypes = {
+  content: PropTypes.string,
+  position: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+};
+
+Tooltip.propTypes = {
+  text: PropTypes.string,
+  children: PropTypes.node,
+  position: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+  maxWidth: PropTypes.string,
 };
 
 export default Tooltip;

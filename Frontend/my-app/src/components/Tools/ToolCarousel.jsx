@@ -1,7 +1,8 @@
 // src/components/ToolCarousel.jsx
-import React, { useEffect, useState } from "react";
-import ToolCard from "./ToolCard";
-import "./ToolCarousel.css";
+import React, { useEffect, useState, useRef } from 'react';
+import PropTypes from 'prop-types';
+import ToolCard from './ToolCard';
+import './ToolCarousel.css';
 
 /**
  * ToolCarousel component.
@@ -12,8 +13,8 @@ import "./ToolCarousel.css";
  */
 const ToolCarousel = ({
   tools = [],
-  title = "",
-  viewMoreUrl = "",
+  title = '',
+  viewMoreUrl = '',
   onViewMore = null,
   autoplay = true,
   autoplayDelay = 3500,
@@ -42,7 +43,7 @@ const ToolCarousel = ({
   // Responsive adjustment for visibleCount
   useEffect(() => {
     const compute = () => {
-      const w = window.innerWidth;
+      const w = globalThis.innerWidth;
       if (w >= 1200) setVisibleCount(5);
       else if (w >= 992) setVisibleCount(4);
       else if (w >= 768) setVisibleCount(3);
@@ -50,8 +51,8 @@ const ToolCarousel = ({
       else setVisibleCount(1);
     };
     compute();
-    window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
+    globalThis.addEventListener('resize', compute);
+    return () => globalThis.removeEventListener('resize', compute);
   }, []);
 
   const pages = Math.max(1, Math.ceil((tools.length || 0) / visibleCount));
@@ -59,6 +60,7 @@ const ToolCarousel = ({
   // Reset page if it exceeds total pages (e.g. on resize)
   useEffect(() => {
     if (page >= pages) setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleCount, pages]);
 
   const gap = 12; // Must match CSS gap
@@ -74,6 +76,20 @@ const ToolCarousel = ({
   // Autoplay logic
   const [paused, setPaused] = useState(false);
   const AUTOPLAY_MS = autoplayDelay;
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const enter = () => setPaused(true);
+    const leave = () => setPaused(false);
+    el.addEventListener('mouseenter', enter);
+    el.addEventListener('mouseleave', leave);
+    return () => {
+      el.removeEventListener('mouseenter', enter);
+      el.removeEventListener('mouseleave', leave);
+    };
+  }, []);
 
   useEffect(() => {
     if (!autoplay) return;
@@ -87,9 +103,8 @@ const ToolCarousel = ({
 
   return (
     <div
+      ref={containerRef}
       className="tool-carousel container-fluid p-3 bg-light rounded shadow-sm position-relative"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
     >
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="mb-0">{title}</h3>
@@ -117,13 +132,16 @@ const ToolCarousel = ({
           className="carousel-track d-flex"
           style={{ width: `${pages * 100}%`, transform: `translateX(-${page * (100 / pages)}%)` }}
         >
-          {pagesArr.map((pageTools, pIdx) => (
-            <div className="carousel-page d-flex" key={pIdx} style={{ width: `${100 / pages}%` }}>
-              {pageTools.map((tool, idx) => (
-                <ToolCard key={`${tool?.id ?? idx}-${idx}`} tool={tool} layout="vertical" style={{ flex: `0 0 ${cardFlexBasis}` }} />
+          {pagesArr.map((pageTools) => {
+            const pageKey = pageTools.map(t => t?.id).filter(Boolean).join('-') || 'empty';
+            return (
+            <div className="carousel-page d-flex" key={pageKey} style={{ width: `${100 / pages}%` }}>
+              {pageTools.map((tool) => (
+                <ToolCard key={String(tool?.id ?? tool?.toolName)} tool={tool} layout="vertical" style={{ flex: `0 0 ${cardFlexBasis}` }} />
               ))}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -134,17 +152,26 @@ const ToolCarousel = ({
 
       {/* Pagination Dots */}
       <div className="d-flex justify-content-center mt-3">
-        {Array.from({ length: pages }).map((_, pIdx) => (
+        {Array.from({ length: pages }, (_, i) => i + 1).map((pageNum) => (
           <button
-            key={pIdx}
-            className={`dot-btn ${pIdx === page ? "active" : ""}`}
-            onClick={() => goToPage(pIdx)}
-            aria-label={`Ir a la página ${pIdx + 1}`}
+            key={`dot-page-${pageNum}`}
+            className={`dot-btn ${pageNum - 1 === page ? 'active' : ''}`}
+            onClick={() => goToPage(pageNum - 1)}
+            aria-label={`Ir a la página ${pageNum}`}
           />
         ))}
       </div>
     </div>
   );
+};
+
+ToolCarousel.propTypes = {
+  autoplay: PropTypes.string,
+  autoplayDelay: PropTypes.string,
+  onViewMore: PropTypes.func,
+  title: PropTypes.string,
+  tools: PropTypes.array,
+  viewMoreUrl: PropTypes.string,
 };
 
 export default ToolCarousel;

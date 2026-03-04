@@ -1,20 +1,18 @@
 const Logo = () => {
   const goHome = () => {
     // use hash routing to go to home
-    window.location.href = '/';
+    globalThis.location.href = '/';
   };
 
   return (
-    <div
+    <button
+      type="button"
       className="logo"
       onClick={goHome}
-      role="button"
-      tabIndex={0}
-      onKeyPress={(e) => { if (e.key === 'Enter') goHome(); }}
-      style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '1.4rem', color: '#2c3e50' }}
+      style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '1.4rem', color: '#2c3e50', background: 'none', border: 'none', padding: 0 }}
     >
       ToolRent
-    </div>
+    </button>
   );
 };
 

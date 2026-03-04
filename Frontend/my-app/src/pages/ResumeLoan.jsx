@@ -12,8 +12,6 @@ const ResumeLoan = () => {
   const [returnDate, setReturnDate] = useState('');
   const [creating, setCreating] = useState(false);
   const [alert, setAlert] = useState(null);
-  const [dateError, setDateError] = useState('');
-  const [total, setTotal] = useState(0);
   const [countdown, setCountdown] = useState(null);
   
     const isDatesValid = () => {
@@ -23,8 +21,7 @@ const ResumeLoan = () => {
           const dRet = new Date(returnDate);
           const minDiff = 24 * 60 * 60 * 1000;
           return (dRet.getTime() - dInit.getTime()) >= minDiff;
-        } catch (e) {
-          return false;
+        } catch (error_) { console.debug(error_); return false;
         }
     };
 
@@ -78,23 +75,22 @@ const ResumeLoan = () => {
   }, []);
 
   const calcTotal = () => {
-    if (total && Number(total) > 0) return Number(total);
     if (!resume || !Array.isArray(resume.items)) return 0;
     return resume.items.reduce((s,it) => s + (Number(it.price || 0) * Number(it.qty || 1)), 0);
   };
 
   const confirmAndCreate = async () => {
-    if (!resume || !resume.client || !resume.items || resume.items.length === 0) {
+    if (!resume?.client || !resume?.items || resume.items.length === 0) {
       setAlert({ 
         severity: 'error', 
-        message: 'Faltan datos del pedido. Verifica que hayas seleccionado un cliente y agregado herramientas. Regresa al paso anterior para completar la información.' 
+        message: 'Faltan datos del pedido. Verifica que hayas seleccionado un cliente y agregado herramientas. Regresa al paso anterior para completar la información.', 
       });
       return;
     }
     if (!initDate || !returnDate) { 
       setAlert({ 
         severity: 'error', 
-        message: 'Debes seleccionar ambas fechas: inicio y devolución. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.'
+        message: 'Debes seleccionar ambas fechas: inicio y devolución. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.',
       }); 
       return; 
     }
@@ -107,7 +103,7 @@ const ResumeLoan = () => {
     if (diffMs < minDiff) {
       setAlert({ 
         severity: 'error', 
-        message: 'La fecha de devolución debe ser al menos 1 día después de la fecha inicial. Ajusta las fechas e intenta nuevamente.'
+        message: 'La fecha de devolución debe ser al menos 1 día después de la fecha inicial. Ajusta las fechas e intenta nuevamente.',
       });
       return;
     }
@@ -116,7 +112,7 @@ const ResumeLoan = () => {
     if (!isDatesValid()) {
       setAlert({ 
         severity: 'error', 
-        message: 'Fechas inválidas. La fecha inicial debe ser hoy y la devolución al menos 1 día después. Verifica las fechas seleccionadas.'
+        message: 'Fechas inválidas. La fecha inicial debe ser hoy y la devolución al menos 1 día después. Verifica las fechas seleccionadas.',
       });
       return;
     }
@@ -134,15 +130,15 @@ const ResumeLoan = () => {
       // Call atomic endpoint to create Loan + LoanXTools in one transaction
       const payload = {
         clientId: resume.client.id,
-        initDate: initDate,
-        returnDate: returnDate,
-        toolIds: toolIds
+        initDate,
+        returnDate,
+        toolIds,
       };
 
       const createResp = await api.post(`/api/loan/create-with-tools/${employeeId}`, payload);
       const createdLoan = createResp.data;
 
-      if (!createdLoan || !createdLoan.id) {
+      if (!createdLoan?.id) {
         throw new Error('No se recibió confirmación del servidor. El préstamo pudo no haberse creado correctamente. Verifica en la lista de préstamos si se registró o intenta nuevamente.');
       }
 
@@ -260,9 +256,9 @@ const ResumeLoan = () => {
               <div style={{ marginTop: 16 }}>
                 <label>Fecha inicio: <input type="date" value={initDate} min={initDate} disabled /></label>
                 <label style={{ marginLeft: 12 }}>Fecha retorno: <input type="date" value={returnDate} min={(() => {
-                    try { const d = new Date(initDate); d.setDate(d.getDate() + 1); return d.toISOString().slice(0,10); } catch(e) { return '' }
+                    try { const d = new Date(initDate); d.setDate(d.getDate() + 1); return d.toISOString().slice(0,10); } catch (error_) { console.debug(error_); return ''; }
                   })()} disabled /></label>
-                {dateError && <div style={{ color: '#b91c1c', marginTop: 6 }}>{dateError}</div>}
+
               </div>
 
               <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

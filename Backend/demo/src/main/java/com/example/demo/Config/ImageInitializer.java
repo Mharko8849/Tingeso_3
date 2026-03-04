@@ -5,6 +5,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +17,8 @@ import java.nio.file.StandardCopyOption;
 
 @Component
 public class ImageInitializer implements CommandLineRunner {
+
+    private static final Logger logger = LoggerFactory.getLogger(ImageInitializer.class);
 
     @Value("${IMAGES_PATH:file:images/}")
     private String imagesPathStr;
@@ -45,43 +49,59 @@ public class ImageInitializer implements CommandLineRunner {
 
             for (Resource resource : resources) {
                 if (resource.exists() && resource.isReadable()) {
-                    String filename = resource.getFilename();
-                    if (filename != null) {
-                        Path targetFile = targetDir.resolve(filename);
-                        // Copy the base image if it doesn't exist
-                        if (!Files.exists(targetFile)) {
-                            try (InputStream inputStream = resource.getInputStream()) {
-                                Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                                System.out.println("Initialized image: " + filename);
-                            } catch (IOException e) {
-                                System.err.println("Failed to copy image " + filename + ": " + e.getMessage());
-                            }
-                        }
-                        
-                        // Also copy with timestamp for existing DB entries
-                        if (filename.equals("Sierra.png")) {
-                            copyWithTimestamp(resource, targetDir, "1771455824130_Sierra.png");
-                        } else if (filename.equals("Pala.png")) {
-                            copyWithTimestamp(resource, targetDir, "1771531179609_Pala.png");
-                        } else if (filename.equals("Martillo.png")) {
-                            copyWithTimestamp(resource, targetDir, "1764735846760_Martillo.png");
-                        }
-                    }
+                    copyResourceIfNeeded(resource, targetDir);
                 }
             }
         } catch (IOException e) {
-            System.err.println("Failed to load initial images from classpath: " + e.getMessage());
+            logger.warn("Failed to load initial images from classpath: {}", e.getMessage());
         }
     }
-    
+
+    private void copyResourceIfNeeded(Resource resource, Path targetDir) {
+        String filename = resource.getFilename();
+        if (filename == null) {
+            return;
+        }
+        Path targetFile = targetDir.resolve(filename);
+        if (!Files.exists(targetFile)) {
+            try (InputStream inputStream = resource.getInputStream()) {
+                Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                logger.debug("Initialized image: {}", filename);
+            } catch (IOException e) {
+                logger.warn("Failed to copy image {}: {}", filename, e.getMessage());
+            }
+        }
+        copyTimestampedVariant(resource, targetDir, filename);
+    }
+
+    private void copyTimestampedVariant(Resource resource, Path targetDir, String filename) {
+        String timestampedName = resolveTimestampedName(filename);
+        if (timestampedName != null) {
+            copyWithTimestamp(resource, targetDir, timestampedName);
+        }
+    }
+
+    private String resolveTimestampedName(String filename) {
+        if ("Sierra.png".equals(filename)) {
+            return "1771455824130_Sierra.png";
+        }
+        if ("Pala.png".equals(filename)) {
+            return "1771531179609_Pala.png";
+        }
+        if ("Martillo.png".equals(filename)) {
+            return "1764735846760_Martillo.png";
+        }
+        return null;
+    }
+
     private void copyWithTimestamp(Resource resource, Path targetDir, String timestampedName) {
         Path targetFile = targetDir.resolve(timestampedName);
         if (!Files.exists(targetFile)) {
             try (InputStream inputStream = resource.getInputStream()) {
                 Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                System.out.println("Initialized timestamped image: " + timestampedName);
+                logger.debug("Initialized timestamped image: {}", timestampedName);
             } catch (IOException e) {
-                System.err.println("Failed to copy timestamped image " + timestampedName + ": " + e.getMessage());
+                logger.warn("Failed to copy timestamped image {}: {}", timestampedName, e.getMessage());
             }
         }
     }

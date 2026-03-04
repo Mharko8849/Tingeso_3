@@ -6,7 +6,7 @@ COPY package*.json ./
 RUN npm install -g npm@11.10.0
 # Clean node_modules to ensure fresh install
 RUN rm -rf node_modules node_modules.nosync
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY . .
 RUN npm run build
 

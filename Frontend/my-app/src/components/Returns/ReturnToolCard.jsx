@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import './returns.css';
 import api from '../../services/http-common';
 
 const formatCurrency = (v) => {
   if (v == null) return '-';
   const n = Number(v);
-  if (isNaN(n)) return v;
+  if (Number.isNaN(n)) return v;
   return `$${n.toLocaleString()}`;
 };
 
@@ -13,12 +14,11 @@ const daysBetween = (start, end) => {
   try {
     const s = new Date(start);
     const e = new Date(end);
-    if (isNaN(s) || isNaN(e)) return 1;
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return 1;
     const ms = e.setHours(0,0,0,0) - s.setHours(0,0,0,0);
     const days = Math.max(1, Math.ceil(ms / (1000 * 60 * 60 * 24)));
     return days;
-  } catch (err) {
-    return 1;
+  } catch (error_) { console.debug(error_); return 1;
   }
 };
 
@@ -37,12 +37,11 @@ const ReturnToolCard = ({ item, onStateChange, disabled = false }) => {
   const [selectedState, setSelectedState] = useState('');
   const [displayFine, setDisplayFine] = useState(initialFine);
 
-  const [loadingFine, setLoadingFine] = useState(false);
-
   useEffect(() => {
     // reset when item changes
     setDisplayFine(initialFine);
     setSelectedState('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item]);
 
   const fetchFineFromBackend = async (state) => {
@@ -55,13 +54,10 @@ const ReturnToolCard = ({ item, onStateChange, disabled = false }) => {
       return;
     }
 
-    setLoadingFine(true);
     try {
       const url = `/api/loantool/fine/${item.id}`;
-      console.debug('[ReturnToolCard] requesting fine', { url, params: { state } });
       // Use query param (state) so GET doesn't require a body
       const res = await api.get(url, { params: { state } });
-      console.debug('[ReturnToolCard] fine response', { status: res.status, data: res.data });
       if (res && (typeof res.data === 'number' || typeof res.data === 'string')) {
         setDisplayFine(Number(res.data));
       } else {
@@ -70,8 +66,6 @@ const ReturnToolCard = ({ item, onStateChange, disabled = false }) => {
     } catch (err) {
       console.error('Failed to fetch fine from backend', err?.response ?? err);
       // keep previous value
-    } finally {
-      setLoadingFine(false);
     }
   };
 
@@ -125,6 +119,12 @@ const ReturnToolCard = ({ item, onStateChange, disabled = false }) => {
       </div>
     </li>
   );
+};
+
+ReturnToolCard.propTypes = {
+  disabled: PropTypes.bool,
+  item: PropTypes.object,
+  onStateChange: PropTypes.func,
 };
 
 export default ReturnToolCard;

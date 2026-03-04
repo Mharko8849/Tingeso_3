@@ -84,18 +84,11 @@ class KardexServiceTest {
 
     @Test
     void testCreateKardexEntity_MissingData() {
-        assertThrows(RuntimeException.class, () -> {
-            kardexService.createKardexEntity(null, "IN", Date.valueOf("2023-01-01"), 10, 100, user, employee);
-        });
-        assertThrows(RuntimeException.class, () -> {
-            kardexService.createKardexEntity(tool, null, Date.valueOf("2023-01-01"), 10, 100, user, employee);
-        });
-        assertThrows(RuntimeException.class, () -> {
-            kardexService.createKardexEntity(tool, "IN", null, 10, 100, user, employee);
-        });
-        assertThrows(RuntimeException.class, () -> {
-            kardexService.createKardexEntity(tool, "IN", Date.valueOf("2023-01-01"), 10, 100, user, null);
-        });
+        Date movementDate = Date.valueOf("2023-01-01");
+        assertThrows(RuntimeException.class, () -> kardexService.createKardexEntity(null, "IN", movementDate, 10, 100, user, employee));
+        assertThrows(RuntimeException.class, () -> kardexService.createKardexEntity(tool, null, movementDate, 10, 100, user, employee));
+        assertThrows(RuntimeException.class, () -> kardexService.createKardexEntity(tool, "IN", null, 10, 100, user, employee));
+        assertThrows(RuntimeException.class, () -> kardexService.createKardexEntity(tool, "IN", movementDate, 10, 100, user, null));
     }
 
     @Test
@@ -110,8 +103,10 @@ class KardexServiceTest {
 
     @Test
     void testGetKardexByDateBetween_NullDates() {
-        assertThrows(RuntimeException.class, () -> kardexService.getKardexByDateBetween(null, Date.valueOf("2023-01-31")));
-        assertThrows(RuntimeException.class, () -> kardexService.getKardexByDateBetween(Date.valueOf("2023-01-01"), null));
+        Date finalDate = Date.valueOf("2023-01-31");
+        Date initDate = Date.valueOf("2023-01-01");
+        assertThrows(RuntimeException.class, () -> kardexService.getKardexByDateBetween(null, finalDate));
+        assertThrows(RuntimeException.class, () -> kardexService.getKardexByDateBetween(initDate, null));
     }
 
     @Test

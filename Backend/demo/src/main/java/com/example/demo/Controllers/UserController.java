@@ -83,18 +83,17 @@ public class UserController {
     // Eliminar usuario por ID
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
-    public ResponseEntity<?> deleteUserById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Object> deleteUserById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         UserEntity requester = userService.getUserFromJwt(jwt);
         UserEntity target = userService.findUserById(id);
         
         // Jerarquía de eliminación:
         // - SUPERADMIN puede eliminar ADMIN o EMPLOYEE
         // - ADMIN solo puede eliminar EMPLOYEE
-        if (target != null) {
-            if (("ADMIN".equals(target.getRol()) || "SUPERADMIN".equals(target.getRol())) 
+        if (target != null
+                && ("ADMIN".equals(target.getRol()) || "SUPERADMIN".equals(target.getRol()))
                 && !"SUPERADMIN".equals(requester.getRol())) {
-                return ResponseEntity.status(403).body("Acceso denegado: Solo un SUPERADMIN puede eliminar administradores.");
-            }
+            return ResponseEntity.status(403).body("Acceso denegado: Solo un SUPERADMIN puede eliminar administradores.");
         }
         
         return ResponseEntity.ok(userService.deleteUser(id));
@@ -105,7 +104,7 @@ public class UserController {
      * La lógica de validación y búsqueda se delega al UserService.
      */
     @GetMapping("/me")
-    public ResponseEntity<?> getMe(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Object> getMe(@AuthenticationPrincipal Jwt jwt) {
         UserEntity user = userService.getUserFromJwt(jwt);
         return ResponseEntity.ok(user);
     }

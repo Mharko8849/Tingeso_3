@@ -59,7 +59,7 @@ public class ToolService {
 
     public ToolEntity getToolById(Long id) {
         return toolRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No se encontró la herramienta."));
+                .orElseThrow(() -> new IllegalStateException("No se encontró la herramienta."));
     }
 
     @Transactional
@@ -84,7 +84,7 @@ public class ToolService {
         }
 
         if (!errors.isEmpty()) {
-            throw new RuntimeException(String.join(" ", errors));
+            throw new IllegalStateException(String.join(" ", errors));
         }
 
         if (toolEntity.getCategory() != null) {
@@ -137,7 +137,7 @@ public class ToolService {
                 try {
                     Files.deleteIfExists(Paths.get("images", tool.getImageUrl()));
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new IllegalStateException(e);
                 }
             }
 

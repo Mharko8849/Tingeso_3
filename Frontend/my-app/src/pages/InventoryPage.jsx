@@ -1,13 +1,14 @@
-import React, { useEffect, useState, useRef } from "react";
-import NavBar from "../components/Layout/NavBar";
-import BackButton from "../components/Common/BackButton";
-import CategoryListing from "../components/Categories/CategoryListing";
-import ModalAddNewTool from "../components/Stock/ModalAddNewTool";
-import LoadingSpinner from "../components/Loading/LoadingSpinner";
-import api from "../services/http-common";
-import { useLocation } from "react-router-dom";
-import { useKeycloak } from "@react-keycloak/web";
-import { getUser } from "../services/auth";
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import NavBar from '../components/Layout/NavBar';
+import BackButton from '../components/Common/BackButton';
+import CategoryListing from '../components/Categories/CategoryListing';
+import ModalAddNewTool from '../components/Stock/ModalAddNewTool';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
+import api from '../services/http-common';
+import { useLocation } from 'react-router-dom';
+import { useKeycloak } from '@react-keycloak/web';
+import { getUser } from '../services/auth';
 
 const InventoryPage = ({ category = null }) => {
   const location = useLocation();
@@ -38,14 +39,14 @@ const InventoryPage = ({ category = null }) => {
   const user = getUser();
   
   let rolesRaw = [];
-  if (initialized && keycloak.authenticated && keycloak.tokenParsed && keycloak.tokenParsed.realm_access) {
+  if (initialized && keycloak.authenticated && keycloak.tokenParsed?.realm_access) {
     rolesRaw = keycloak.tokenParsed.realm_access.roles || [];
-  } else if (user && user.realm_access && Array.isArray(user.realm_access.roles)) {
+  } else if (user?.realm_access && Array.isArray(user.realm_access.roles)) {
     rolesRaw = user.realm_access.roles;
   }
 
-  const roles = rolesRaw.map((r) => String(r).toUpperCase());
-  const canEdit = roles.includes("ADMIN") || roles.includes("SUPERADMIN");
+  const roles = new Set(rolesRaw.map((r) => String(r).toUpperCase()));
+  const canEdit = roles.has('ADMIN') || roles.has('SUPERADMIN');
 
   // Removed redundant definition since we lifted it up
   // const queryParams = new URLSearchParams(location.search);
@@ -68,21 +69,18 @@ const InventoryPage = ({ category = null }) => {
       // Fetch from inventory filter endpoint
       const resp = await api.get('/api/inventory/filter', { params: qs });
       let inv = resp.data;
-      console.debug('[InventoryPage] /inventory/filter response:', inv);
-      console.debug('[InventoryPage] Response type:', typeof inv, 'Is Array:', Array.isArray(inv));
+      // inventory data received
 
       // Fallback to tools endpoint if inventory returns empty
       if (!Array.isArray(inv) || inv.length === 0) {
-        console.warn('[InventoryPage] Inventory filter returned no results, trying /tool/ endpoint');
         const toolsResp = await api.get('/api/tool/');
         const tools = toolsResp.data || [];
-        console.debug('[InventoryPage] /tool/ response:', tools);
         
         // Convert tools to inventory format
         inv = tools.map(tool => ({
           idTool: tool,
           toolState: { state: 'DISPONIBLE' },
-          stockTool: 0
+          stockTool: 0,
         }));
       }
 
@@ -112,7 +110,7 @@ const InventoryPage = ({ category = null }) => {
         }
       });
 
-      let data = Array.from(map.values());
+      const data = Array.from(map.values());
 
       // Backend already applied category/minPrice/maxPrice/sort. Keep
       // the insertion order coming from the backend and only display
@@ -122,13 +120,13 @@ const InventoryPage = ({ category = null }) => {
       if (appliedFilters?.popular) {
         try {
           // Fetch ranking data to know which tools are popular
-          const rankingResp = await api.get("/api/kardex/ranking/paginated?page=0&size=100");
+          const rankingResp = await api.get('/api/kardex/ranking/paginated?page=0&size=100');
           const rankingList = rankingResp.data.content || []; // PageResponseDTO — list is in .content
           
           // Create a map of toolId -> totalLoans for quick lookup
           const popularityMap = new Map();
           rankingList.forEach(item => {
-            if (item.tool && item.tool.id) {
+            if (item.tool?.id) {
               popularityMap.set(item.tool.id, item.totalLoans);
             }
           });
@@ -140,13 +138,13 @@ const InventoryPage = ({ category = null }) => {
             return popB - popA;
           });
         } catch (error) {
-          console.error("Error fetching ranking for sorting:", error);
+          console.error('Error fetching ranking for sorting:', error);
         }
       }
 
       setProducts(data || []);
     } catch (err) {
-      console.warn("Could not fetch products", err);
+      console.warn('Could not fetch products', err);
       setProducts([]);
     } finally {
       setLoading(false);
@@ -169,7 +167,7 @@ const InventoryPage = ({ category = null }) => {
     String(s)
       .split(/[-_\s]+/)
       .map((w) => (w[0] ? w[0].toUpperCase() + w.slice(1) : w))
-      .join(" ");
+      .join(' ');
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -181,7 +179,7 @@ const InventoryPage = ({ category = null }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h2 style={{ margin: '0 0 0 20px', fontSize: '1.5rem', fontWeight: 700 }}>{formatTitle(category || 'inventario')}</h2>
             <div style={{ marginRight: 8 }}>
-              <BackButton onClick={() => window.history.back()} />
+              <BackButton onClick={() => globalThis.history.back()} />
             </div>
           </div>
 
@@ -213,6 +211,10 @@ const InventoryPage = ({ category = null }) => {
       />
     </div>
   );
+};
+
+InventoryPage.propTypes = {
+  category: PropTypes.string,
 };
 
 export default InventoryPage;

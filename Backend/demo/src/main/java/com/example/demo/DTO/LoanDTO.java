@@ -24,19 +24,4 @@ public class LoanDTO {
     private Date returnDate;
     private Date realReturnDate;
     private String status;
-    
-    /**
-     * Constructor para facilitar la conversión desde LoanEntity
-     */
-    public LoanDTO(Long id, Long userId, String username, String clientName, 
-                   Date initDate, Date returnDate, Date realReturnDate, String status) {
-        this.id = id;
-        this.userId = userId;
-        this.username = username;
-        this.clientName = clientName;
-        this.initDate = initDate;
-        this.returnDate = returnDate;
-        this.realReturnDate = realReturnDate;
-        this.status = status;
-    }
 }

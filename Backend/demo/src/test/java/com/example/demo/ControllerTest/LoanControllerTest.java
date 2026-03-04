@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,16 +38,16 @@ class LoanControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private LoanService loanService;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private ToolService toolService;
 
-    @MockBean
+    @MockitoBean
     private org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
 
     @Autowired
@@ -176,7 +176,7 @@ class LoanControllerTest {
         loanDTO.setId(1L);
         PageResponseDTO<LoanDTO> page = new PageResponseDTO<>(List.of(loanDTO), 0, 8, 1L, 1, true, true);
         when(userService.findUserById(1L)).thenReturn(user);
-        when(loanService.getLoansByUserPaginated(eq(user), eq(0), eq(8))).thenReturn(page);
+        when(loanService.getLoansByUserPaginated(user, 0, 8)).thenReturn(page);
 
         mockMvc.perform(get("/loan/user/1/paginated"))
                 .andExpect(status().isOk())
@@ -188,7 +188,7 @@ class LoanControllerTest {
         LoanDTO loanDTO = new LoanDTO();
         loanDTO.setId(1L);
         PageResponseDTO<LoanDTO> page = new PageResponseDTO<>(List.of(loanDTO), 0, 8, 1L, 1, true, true);
-        when(loanService.getLoansByStatePaginated(eq("ACTIVO"), eq(0), eq(8))).thenReturn(page);
+        when(loanService.getLoansByStatePaginated("ACTIVO", 0, 8)).thenReturn(page);
 
         mockMvc.perform(get("/loan/filter/paginated").param("state", "ACTIVO"))
                 .andExpect(status().isOk())
@@ -228,7 +228,7 @@ class LoanControllerTest {
     void testCreateLoanWithTools_RuntimeException() throws Exception {
         when(userService.findUserById(1L)).thenReturn(user);
         when(loanService.createLoanWithTools(any(), any(), any(), any(), any()))
-                .thenThrow(new RuntimeException("Client not found"));
+                .thenThrow(new IllegalStateException("Client not found"));
 
         java.util.Map<String, Object> body = new java.util.HashMap<>();
         body.put("clientId", 2);

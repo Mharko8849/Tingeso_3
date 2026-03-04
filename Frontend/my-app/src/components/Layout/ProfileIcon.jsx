@@ -1,5 +1,4 @@
-const ProfileIcon = () => {
-  return (
+const ProfileIcon = () => (
     <div
       style={{
         width: '35px',
@@ -16,6 +15,5 @@ const ProfileIcon = () => {
       <span style={{ fontSize: '1.2rem' }}>👤</span>
     </div>
   );
-};
 
 export default ProfileIcon;

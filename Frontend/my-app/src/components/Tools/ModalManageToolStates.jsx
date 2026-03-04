@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import { useAlert } from '../Alerts/useAlert';
 import ModalAddToolState from './ModalAddToolState';
@@ -19,6 +20,7 @@ const ModalManageToolStates = ({ open, onClose }) => {
     if (open) {
       fetchStates();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const fetchStates = async () => {
@@ -34,7 +36,7 @@ const ModalManageToolStates = ({ open, onClose }) => {
       if (error.request && !error.response) {
         // La petición se hizo pero no hubo respuesta - problema de conexión
         show({ message: 'No se pudo conectar con el servidor', severity: 'error' });
-      } else if (error.response && error.response.status >= 500) {
+      } else if (error.response?.status >= 500) {
         // Error del servidor (5xx) - problema real del backend
         show({ message: 'Error interno del servidor', severity: 'error' });
       }
@@ -79,7 +81,7 @@ const ModalManageToolStates = ({ open, onClose }) => {
   };
 
   const handleDelete = async (id, stateName) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el estado "${stateName}"?`)) {
+    if (!globalThis.confirm(`¿Estás seguro de eliminar el estado "${stateName}"?`)) {
       return;
     }
 
@@ -106,19 +108,18 @@ const ModalManageToolStates = ({ open, onClose }) => {
 
   return (
     <>
-      <div className="mas-backdrop" onClick={onClose} style={{ zIndex: 10001 }}>
-        <div className="mas-modal" style={{ width: '80%', maxWidth: '900px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+      <div className="mas-backdrop" style={{ zIndex: 10001 }}>
+    <button type="button" onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+        <div className="mas-modal" style={{ width: '80%', maxWidth: '900px', position: 'relative' }}>
           <button className="mas-close" onClick={onClose} aria-label="Cerrar">
             ×
           </button>
           <h3 className="mas-title">Estados de Herramientas</h3>
           
           <div className="mas-content" style={{ maxHeight: '60vh', overflowY: 'auto', marginBottom: '20px' }}>
-            {loading ? (
-              <div className="states-loading">Cargando estados...</div>
-            ) : states.length === 0 ? (
-              <div className="states-empty">No hay estados creados</div>
-            ) : (
+            {loading && <div className="states-loading">Cargando estados...</div>}
+            {!loading && states.length === 0 && <div className="states-empty">No hay estados creados</div>}
+            {!loading && states.length > 0 && (
               <div className="states-list">
                 {states.map((state) => (
                   <div key={state.id} className="state-item-row">
@@ -175,7 +176,7 @@ const ModalManageToolStates = ({ open, onClose }) => {
                               borderRadius: '50%', 
                               backgroundColor: state.color || '#6b7280',
                               boxShadow: `0 0 6px ${state.color || '#6b7280'}80`,
-                              flexShrink: 0
+                              flexShrink: 0,
                             }}
                           />
                           <span className="state-name">{state.state}</span>
@@ -224,6 +225,11 @@ const ModalManageToolStates = ({ open, onClose }) => {
       />
     </>
   );
+};
+
+ModalManageToolStates.propTypes = {
+  onClose: PropTypes.func,
+  open: PropTypes.bool,
 };
 
 export default ModalManageToolStates;

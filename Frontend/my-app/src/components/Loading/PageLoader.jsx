@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import NavBar from '../Layout/NavBar';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -11,8 +12,7 @@ import LoadingSpinner from './LoadingSpinner';
  * @param {string} [props.message='Cargando página...'] - Loading message
  * @returns {JSX.Element}
  */
-const PageLoader = ({ message = 'Cargando página...' }) => {
-  return (
+const PageLoader = ({ message = 'Cargando página...' }) => (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
       <main className="px-6" style={{ paddingTop: '90px', paddingBottom: '24px' }}>
@@ -22,6 +22,9 @@ const PageLoader = ({ message = 'Cargando página...' }) => {
       </main>
     </div>
   );
+
+PageLoader.propTypes = {
+  message: PropTypes.string,
 };
 
 export default PageLoader;

@@ -12,6 +12,42 @@ import DebtPaymentModal from '../components/Returns/DebtPaymentModal';
 import { formatDate } from '../utils/validation';
 import PaginationBar from '../components/Common/PaginationBar';
 
+const parseLoanIdFromPath = (pathname) => {
+  const parts = pathname.split('/').filter(Boolean);
+  const str = parts[parts.length - 1];
+  if (!str) { return null; }
+  const num = Number(str);
+  if (!Number.isFinite(num) || num <= 0) { return null; }
+  return str;
+};
+
+const getClientDisplayName = (user) => {
+  if (!user) { return ''; }
+  if (user.name) { return `${user.name} ${user.lastName || ''}`; }
+  return user.username || user.email || '';
+};
+
+const showValidationError = (alertFn, count) => {
+  try { alertFn?.show?.({ severity: 'warning', message: `Falta seleccionar estado para ${count} herramienta(s)`, autoHideMs: 4000 }); } catch (error_) { console.debug(error_); }
+};
+
+const showSuccessAlert = (alertFn) => {
+  try { alertFn?.show?.({ severity: 'success', message: 'Devolución completada correctamente.', autoHideMs: 3000 }); } catch (error_) { console.debug(error_); }
+};
+
+const showReturnError = (alertFn, err) => {
+  const resp = err?.response?.data;
+  try {
+    let msg;
+    if (resp) {
+      msg = typeof resp === 'string' ? resp : JSON.stringify(resp);
+    } else {
+      msg = err?.message || 'Error desconocido';
+    }
+    alertFn?.show?.({ severity: 'error', message: msg, autoHideMs: 8000 });
+  } catch (error_) { console.debug(error_); }
+};
+
 const ReturnsLoanSummary = () => {
   const [loan, setLoan] = useState(null);
   const [items, setItems] = useState([]);
@@ -19,10 +55,9 @@ const ReturnsLoanSummary = () => {
   const [returning, setReturning] = useState(false);
   const alert = useAlert();
   const statusUpper = String(loan?.status || '').toUpperCase();
-  const isFinalized = statusUpper === 'FINALIZADO';
   const isActive = statusUpper === 'ACTIVO' || statusUpper === 'ACTIVE';
   const [totalFine, setTotalFine] = useState(0);
-  const [payingDebt, setPayingDebt] = useState(false);
+  const payingDebt = false;
   const [showRepairModal, setShowRepairModal] = useState(false);
   const [showDebtModal, setShowDebtModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -30,37 +65,23 @@ const ReturnsLoanSummary = () => {
   const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
-    const parts = window.location.pathname.split('/').filter(Boolean);
-    const loanIdStr = parts[parts.length - 1];
-    if (!loanIdStr) {
-      console.error('Could not parse loanId from path', window.location.pathname);
-      try { alert?.show?.({ severity: 'error', message: 'ID de pedido inválido en la URL', autoHideMs: 4000 }); } catch (e) {}
+    const loanId = parseLoanIdFromPath(globalThis.location.pathname);
+    if (!loanId) {
+      try { alert?.show?.({ severity: 'error', message: 'ID de pedido inválido en la URL', autoHideMs: 4000 }); } catch (error_) { console.debug(error_); }
       setLoading(false);
       return;
     }
-    const loanIdNum = Number(loanIdStr);
-    if (!Number.isFinite(loanIdNum) || loanIdNum <= 0) {
-      console.error('Parsed invalid loanId', loanIdStr);
-      try { alert?.show?.({ severity: 'error', message: `ID de pedido inválido: ${loanIdStr}`, autoHideMs: 4000 }); } catch (e) {}
-      setLoading(false);
-      return;
-    }
-    const loanId = loanIdStr;
-    console.debug('Loading ReturnsLoanSummary for loanId=', loanId);
-
-    // fetch loan and loanxtools with extra logging
     api.get(`/api/loan/${loanId}`)
-      .then(res => { console.debug('/api/loan response', res); setLoan(res.data); })
-      .catch((e) => { console.error('/api/loan error', e); setLoan(null); });
-    // fetch total fine for this loan
+      .then(res => setLoan(res.data))
+      .catch(() => setLoan(null));
     api.get(`/api/loantool/total/fine/${loanId}`)
-      .then(res => { console.debug('/api/loantool/total/fine response', res); setTotalFine(Number(res.data || 0)); })
-      .catch((e) => { console.warn('/api/loantool/total/fine error', e); setTotalFine(0); });
-
+      .then(res => setTotalFine(Number(res.data || 0)))
+      .catch(() => setTotalFine(0));
     api.get(`/api/loantool/loan/${loanId}`)
-      .then(res => { console.debug('/api/loantool/loan response', res); setItems(res.data || []); })
-      .catch((e) => { console.error('/api/loantool/loan error', e); setItems([]); })
+      .then(res => setItems(res.data || []))
+      .catch(() => setItems([]))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const total = items.length;
@@ -69,6 +90,33 @@ const ReturnsLoanSummary = () => {
   const start = (safePage - 1) * pageSize;
   const end = start + pageSize;
   const pagedItems = items.slice(start, end);
+
+  const handleReturn = async () => {
+    if (!loan) { return; }
+    setReturning(true);
+    try {
+      const missing = items.filter(it => !stateToolMap[it.id]);
+      if (missing.length > 0) {
+        showValidationError(alert, missing.length);
+        setReturning(false);
+        return;
+      }
+      const payload = {};
+      items.forEach(it => { payload[it.id] = stateToolMap[it.id]; });
+      const meResp = await api.get('/api/user/me');
+      const employeeId = meResp?.data?.id;
+      if (!employeeId) { throw new Error('No pude obtener tu id de usuario (employee)'); }
+      await api.post(`/api/loantool/receive/all/loan/${loan.id}/user/${employeeId}`, payload);
+      showSuccessAlert(alert);
+      await api.get(`/api/loantool/loan/${loan.id}`).then(r => setItems(r.data || []));
+      await api.get(`/api/loan/${loan.id}`).then(r => setLoan(r.data)).catch(() => {});
+      try { const tf = await api.get(`/api/loantool/total/fine/${loan.id}`); setTotalFine(Number(tf.data || 0)); } catch (error_) { console.debug(error_); setTotalFine(0); }
+      setStateToolMap({});
+    } catch (err) {
+      console.error('Error al devolver herramientas', err?.response ?? err);
+      showReturnError(alert, err);
+    } finally { setReturning(false); }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -91,7 +139,7 @@ const ReturnsLoanSummary = () => {
                   <section style={{ flex: '0 0 320px', background: '#fff', padding: 14, borderRadius: 8, border: '1px solid #e5e7eb' }}>
                     <h4 style={{ margin: 0, fontSize: 15 }}>Cliente</h4>
                     <div style={{ marginTop: 10 }}>
-                      <div style={{ fontWeight: 800 }}>{loan.idUser ? (loan.idUser.name ? `${loan.idUser.name} ${loan.idUser.lastName || ''}` : (loan.idUser.username || loan.idUser.email)) : ''}</div>
+                      <div style={{ fontWeight: 800 }}>{getClientDisplayName(loan.idUser)}</div>
                       <div style={{ marginTop: 4, fontSize: 16, color: '#374151' }}>{loan.idUser?.username || loan.idUser?.email}</div>
                       {loan.idUser?.email && <div style={{ marginTop: 2, fontSize: 14, color: '#4b5563' }}>{loan.idUser.email}</div>}
                       {loan.idUser?.rut && <div style={{ marginTop: 6, fontSize: 16 }}>RUT: {loan.idUser.rut}</div>}
@@ -140,38 +188,7 @@ const ReturnsLoanSummary = () => {
                               className="primary-cta"
                               disabled={returning}
                               style={{ padding: '8px 16px' }}
-                              onClick={async () => {
-                                if (!loan) return;
-                                setReturning(true);
-                                try {
-                                  const missing = items.filter(it => !stateToolMap[it.id]);
-                                  if (missing.length > 0) {
-                                    try { alert?.show?.({ severity: 'warning', message: `Falta seleccionar estado para ${missing.length} herramienta(s)`, autoHideMs: 4000 }); } catch (e) {}
-                                    setReturning(false);
-                                    return;
-                                  }
-                                  const payload = {};
-                                  items.forEach(it => { payload[it.id] = stateToolMap[it.id]; });
-                                  console.debug('[Devolver] payload a enviar:', payload);
-                                  const meResp = await api.get('/api/user/me');
-                                  const employeeId = meResp?.data?.id;
-                                  if (!employeeId) throw new Error('No pude obtener tu id de usuario (employee)');
-                                  const url = `/api/loantool/receive/all/loan/${loan.id}/user/${employeeId}`;
-                                  await api.post(url, payload);
-                                  try { alert?.show?.({ severity: 'success', message: 'Devolución completada correctamente.', autoHideMs: 3000 }); } catch (e) {}
-                                  await api.get(`/api/loantool/loan/${loan.id}`).then(r => setItems(r.data || []));
-                                  await api.get(`/api/loan/${loan.id}`).then(r => setLoan(r.data)).catch(() => {});
-                                  try { const tf = await api.get(`/api/loantool/total/fine/${loan.id}`); setTotalFine(Number(tf.data || 0)); } catch (e) { setTotalFine(0); }
-                                  setStateToolMap({});
-                                } catch (err) {
-                                  console.error('Error al devolver herramientas', err?.response ?? err);
-                                  const resp = err?.response?.data;
-                                  try {
-                                    if (resp) { alert?.show?.({ severity: 'error', message: typeof resp === 'string' ? resp : JSON.stringify(resp), autoHideMs: 8000 }); }
-                                    else { alert?.show?.({ severity: 'error', message: err?.message || 'Error desconocido', autoHideMs: 8000 }); }
-                                  } catch (e) {}
-                                } finally { setReturning(false); }
-                              }}
+                              onClick={handleReturn}
                             >
                               {returning ? 'Devolviendo...' : 'Devolver Herramientas'}
                             </button>
@@ -211,7 +228,7 @@ const ReturnsLoanSummary = () => {
               if (!loan) return;
               await api.get(`/api/loantool/loan/${loan.id}`).then(r => setItems(r.data || []));
               await api.get(`/api/loan/${loan.id}`).then(r => setLoan(r.data)).catch(() => {});
-              try { const tf = await api.get(`/api/loantool/total/fine/${loan.id}`); setTotalFine(Number(tf.data || 0)); } catch (e) { setTotalFine(0); }
+              try { const tf = await api.get(`/api/loantool/total/fine/${loan.id}`); setTotalFine(Number(tf.data || 0)); } catch (error_) { console.debug(error_); setTotalFine(0); }
             }}
           />
 
@@ -224,7 +241,7 @@ const ReturnsLoanSummary = () => {
               if (!loan) return;
               await api.get(`/api/loantool/loan/${loan.id}`).then(r => setItems(r.data || []));
               await api.get(`/api/loan/${loan.id}`).then(r => setLoan(r.data)).catch(() => {});
-              try { const tf = await api.get(`/api/loantool/total/fine/${loan.id}`); setTotalFine(Number(tf.data || 0)); } catch (e) { setTotalFine(0); }
+              try { const tf = await api.get(`/api/loantool/total/fine/${loan.id}`); setTotalFine(Number(tf.data || 0)); } catch (error_) { console.debug(error_); setTotalFine(0); }
             }}
           />
         </div>

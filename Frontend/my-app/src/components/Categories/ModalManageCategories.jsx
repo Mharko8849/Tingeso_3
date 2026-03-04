@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import { useAlert } from '../Alerts/useAlert';
 import { useEscapeKey } from '../../hooks/useKeyboardShortcuts';
@@ -21,6 +22,7 @@ const ModalManageCategories = ({ open, onClose }) => {
     if (open) {
       fetchCategories();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const fetchCategories = async () => {
@@ -36,7 +38,7 @@ const ModalManageCategories = ({ open, onClose }) => {
       if (error.request && !error.response) {
         // La petición se hizo pero no hubo respuesta - problema de conexión
         show({ message: 'No se pudo conectar con el servidor', severity: 'error' });
-      } else if (error.response && error.response.status >= 500) {
+      } else if (error.response?.status >= 500) {
         // Error del servidor (5xx) - problema real del backend
         show({ message: 'Error interno del servidor', severity: 'error' });
       }
@@ -78,7 +80,7 @@ const ModalManageCategories = ({ open, onClose }) => {
   };
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`¿Estás seguro de eliminar la categoría "${name}"?\n\nEsta acción no se puede deshacer. Las herramientas asociadas a esta categoría quedarán sin categoría.`)) {
+    if (!globalThis.confirm(`¿Estás seguro de eliminar la categoría "${name}"?\n\nEsta acción no se puede deshacer. Las herramientas asociadas a esta categoría quedarán sin categoría.`)) {
       return;
     }
 
@@ -105,19 +107,18 @@ const ModalManageCategories = ({ open, onClose }) => {
 
   return (
     <>
-      <div className="mas-backdrop" onClick={onClose} style={{ zIndex: 10001 }}>
-        <div className="mas-modal" style={{ width: '80%', maxWidth: '900px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+      <div className="mas-backdrop" style={{ zIndex: 10001 }}>
+    <button type="button" onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+        <div className="mas-modal" style={{ width: '80%', maxWidth: '900px', position: 'relative' }}>
           <button className="mas-close" onClick={onClose} aria-label="Cerrar">
             ×
           </button>
           <h3 className="mas-title">Categorías de Herramientas</h3>
           
           <div className="mas-content" style={{ maxHeight: '60vh', overflowY: 'auto', marginBottom: '20px' }}>
-            {loading ? (
-              <div className="categories-loading">Cargando categorías...</div>
-            ) : categories.length === 0 ? (
-              <div className="categories-empty">No hay categorías creadas</div>
-            ) : (
+            {loading && <div className="categories-loading">Cargando categorías...</div>}
+            {!loading && categories.length === 0 && <div className="categories-empty">No hay categorías creadas</div>}
+            {!loading && categories.length > 0 && (
               <div className="categories-list">
                 {categories.map((category) => (
                   <div key={category.id} className="category-item-row">
@@ -197,6 +198,11 @@ const ModalManageCategories = ({ open, onClose }) => {
       />
     </>
   );
+};
+
+ModalManageCategories.propTypes = {
+  onClose: PropTypes.func,
+  open: PropTypes.bool,
 };
 
 export default ModalManageCategories;

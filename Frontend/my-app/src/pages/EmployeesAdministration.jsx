@@ -16,7 +16,7 @@ const EmployeesAdministration = () => {
     try {
       const payload = token.split('.')[1];
       return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-    } catch (e) { return null; }
+    } catch (error_) { console.debug(error_); return null; }
   };
   let roles = [];
   if (keycloak?.tokenParsed?.realm_access?.roles) {
@@ -25,12 +25,12 @@ const EmployeesAdministration = () => {
     const localToken = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || localStorage.getItem('app_token')) : null;
     if (localToken) {
       const p = parseJwt(localToken);
-      if (p && p.realm_access && Array.isArray(p.realm_access.roles)) roles = p.realm_access.roles;
+      if (p?.realm_access && Array.isArray(p.realm_access.roles)) roles = p.realm_access.roles;
     }
   }
   roles = roles.map((r) => String(r).toUpperCase());
   const isAdminOrSuper = roles.includes('ADMIN') || roles.includes('SUPERADMIN');
-  console.debug('EmployeesAdministration roles:', roles, 'isAdminOrSuper:', isAdminOrSuper);
+  // roles resolved for admin/super check
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -92,60 +92,7 @@ const EmployeesAdministration = () => {
 
   const [showRegister, setShowRegister] = useState(false);
 
-  const resolveAdminId = async () => {
-    let idAdmin = null;
-    try {
-      const localToken = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || localStorage.getItem('app_token')) : null;
-      const token = keycloak?.token || localToken;
-
-      if (token) {
-        try {
-          const meResp = await fetch('/api/user/me', { headers: { Authorization: `Bearer ${token}` } });
-          if (meResp.ok) {
-            const me = await meResp.json();
-            idAdmin = me.id;
-          }
-        } catch (err) {
-          console.warn('Failed to call /api/user/me', err);
-        }
-      }
-
-      if (!idAdmin) {
-        const kcSub = keycloak?.tokenParsed?.sub || keycloak?.subject || null;
-        const preferred = keycloak?.tokenParsed?.preferred_username || keycloak?.tokenParsed?.username || null;
-        const emailClaim = keycloak?.tokenParsed?.email || null;
-
-        const findIn = Array.isArray(employees) && employees.length > 0 ? employees : null;
-        const tryMatch = (list) => {
-          if (!list) return null;
-          const found = list.find((u) => {
-            if (kcSub && u.keycloakId && String(u.keycloakId) === String(kcSub)) return true;
-            if (preferred && (u.username === preferred || u.username === String(preferred))) return true;
-            if (emailClaim && (u.email === emailClaim || u.email === String(emailClaim))) return true;
-            return false;
-          });
-          return found ? found.id : null;
-        };
-
-        idAdmin = tryMatch(findIn);
-
-        if (!idAdmin) {
-          const allResp = await api.get('/api/user/');
-          const allUsers = allResp.data || [];
-          idAdmin = tryMatch(allUsers);
-        }
-
-        if (!idAdmin) {
-          throw new Error('No pude determinar tu ID de administrador automáticamente. Asegúrate que tu cuenta Keycloak esté mapeada a la BD (campo keycloakId) o que el backend exponga /api/user/me.');
-        }
-      }
-
-      return idAdmin;
-    } catch (e) {
-      console.warn('Error intentando resolver idAdmin automáticamente', e);
-      throw e;
-    }
-  };
+;
 
   const createEmployee = async (payload) => {
     try {
@@ -163,18 +110,18 @@ const EmployeesAdministration = () => {
         resp = await api.post('/api/auth/register/employee', payload);
       }
       setEmployees((s) => [resp.data, ...s]);
-      try { show({ severity: 'success', message: 'Empleado creado correctamente' }); } catch (e) { alert('Empleado creado correctamente'); }
-    } catch (e) {
-      console.error('create employee failed', e);
-      const status = e?.response?.status;
-      const data = e?.response?.data;
+      try { show({ severity: 'success', message: 'Empleado creado correctamente' }); } catch (error_) { console.debug(error_); }
+    } catch (error_) {
+      console.error('create employee failed', error_);
+      const status = error_?.response?.status;
+      const data = error_?.response?.data;
       let serverMessage = null;
       if (data) {
         if (typeof data === 'string') serverMessage = data;
         else if (data.message) serverMessage = data.message;
         else serverMessage = JSON.stringify(data);
       }
-      const msg = serverMessage || e?.message || 'Error al crear empleado';
+      const msg = serverMessage || error_?.message || 'Error al crear empleado';
       const userMsg = status ? `Error ${status}: ${msg}` : msg;
       throw new Error(userMsg);
     }
@@ -193,16 +140,16 @@ const EmployeesAdministration = () => {
   };
 
   const removeEmployee = async (employee) => {
-    if (!employee || !employee.id) return closeConfirm();
+    if (!employee?.id) return closeConfirm();
     try {
       await api.delete(`/api/user/${employee.id}`);
       setEmployees((s) => s.filter((u) => u.id !== employee.id));
-      try { show({ severity: 'success', message: 'Empleado eliminado' }); } catch (e) { alert('Empleado eliminado'); }
-    } catch (e) {
-      console.error('delete failed', e);
+      try { show({ severity: 'success', message: 'Empleado eliminado' }); } catch (error_) { console.debug(error_); }
+    } catch (error_) {
+      console.error('delete failed', error_);
       try {
-        const status = e?.response?.status;
-        const data = e?.response?.data;
+        const status = error_?.response?.status;
+        const data = error_?.response?.data;
         let serverMessage = null;
         if (data) {
           if (typeof data === 'string') serverMessage = data;
@@ -210,9 +157,7 @@ const EmployeesAdministration = () => {
           else serverMessage = JSON.stringify(data);
         }
         show({ severity: 'error', message: serverMessage || `Error ${status || ''}: No se pudo eliminar empleado` });
-      } catch (ee) {
-        alert('Error al eliminar empleado');
-      }
+      } catch (error_) { console.debug(error_); }
     } finally {
       closeConfirm();
     }
@@ -293,9 +238,9 @@ const EmployeesAdministration = () => {
 
           {showRegister && (
             <EmployeeRegister
-              title={roles.includes('SUPERADMIN') ? 'Añadir Empleado' : 'Añadir Empleado'}
+              title="Añadir Empleado"
               defaultRole="EMPLOYEE"
-              allowedRoles={roles.includes('SUPERADMIN') ? ["EMPLOYEE", "ADMIN"] : ["EMPLOYEE"]}
+              allowedRoles={roles.includes('SUPERADMIN') ? ['EMPLOYEE', 'ADMIN'] : ['EMPLOYEE']}
               hideRoleField={false}
               isSuper={roles.includes('SUPERADMIN')}
               isAdmin={roles.includes('ADMIN')}
@@ -303,9 +248,9 @@ const EmployeesAdministration = () => {
                 try {
                   await createEmployee(payload);
                   setShowRegister(false);
-                } catch (e) {
-                  try { show({ severity: 'error', message: e?.message || 'Error al crear empleado' }); } catch (ee) { alert(e?.message || 'Error al crear empleado'); }
-                  throw e;
+                } catch (createError) {
+                  try { show({ severity: 'error', message: createError?.message || 'Error al crear empleado' }); } catch (error_) { console.debug(error_); }
+                  throw createError;
                 }
               }}
               onCancel={() => setShowRegister(false)}
@@ -364,7 +309,7 @@ const EmployeesAdministration = () => {
                               border: 'none',
                               padding: '6px 10px',
                               borderRadius: 4,
-                              cursor: 'pointer'
+                              cursor: 'pointer',
                             }}
                           >
                             Eliminar

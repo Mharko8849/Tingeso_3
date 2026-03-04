@@ -169,8 +169,10 @@ button.link:focus-visible {
   align-items: center;
   flex-wrap: wrap;
   width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
-.filters-row { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
 .filter-item {
   flex: 0 1 140px; /* a bit smaller so more items fit horizontally */
   min-width: 120px;

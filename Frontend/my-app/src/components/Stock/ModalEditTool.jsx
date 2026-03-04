@@ -1,17 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import { useAlert } from '../Alerts/AlertContext';
 import './ModalAddStockTool.css';
+import useDragAndDrop from '../../hooks/useDragAndDrop';
+import { handleNumericInput } from '../../utils/numericInput';
+import { classifyError } from '../../utils/classifyError';
 
 const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
   const [form, setForm] = useState({ toolName: '', category: '', repoCost: '', priceRent: '', priceFineAtDate: '' });
   const [file, setFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
   const { show } = useAlert();
   const alert = useAlert();
+
+  const onFileDrop = useCallback((droppedFile, dataURL) => {
+    setImagePreview(dataURL);
+    setFile(droppedFile);
+  }, []);
+  const { dropRef, isDragging } = useDragAndDrop({ onFileDrop });
 
   useEffect(() => {
     if (open) {
@@ -33,7 +42,11 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
         toolName: tool.toolName || tool.name || '',
         category: (typeof tool.category === 'string' ? tool.category : tool.category?.name) || '',
         repoCost: tool.repoCost != null ? String(tool.repoCost) : '',
-        priceRent: tool.priceRent != null ? String(tool.priceRent) : (tool.price != null ? String(tool.price) : ''),
+        priceRent: (() => {
+          if (tool.priceRent != null) return String(tool.priceRent);
+          if (tool.price != null) return String(tool.price);
+          return '';
+        })(),
         priceFineAtDate: tool.priceFineAtDate != null ? String(tool.priceFineAtDate) : '',
       });
       setFile(null);
@@ -42,30 +55,6 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
   }, [tool]);
 
   if (!open || !tool) return null;
-
-  // Classify errors for user-friendly messages
-  const classifyError = (e) => {
-    if (!e) return 'Ocurrió un error desconocido. Contacte al administrador.';
-    if (e.code === 'ERR_NETWORK' || e.message === 'Network Error' || !e.response) {
-      return 'Error de conexión. Verifique su conexión a internet e intente nuevamente.';
-    }
-    const status = e.response?.status;
-    if (status === 401 || status === 403) {
-      return 'No tiene permisos para realizar esta acción. Inicie sesión nuevamente.';
-    }
-    if (status === 400) {
-      const data = e.response?.data;
-      return typeof data === 'string' ? data : 'Datos inválidos. Revise los campos e intente nuevamente.';
-    }
-    if (status === 409) {
-      return 'Ya existe una herramienta con ese nombre. Use un nombre diferente.';
-    }
-    if (status >= 500) {
-      return 'Error interno del servidor. Contacte al administrador del sistema.';
-    }
-    if (e.message) return e.message;
-    return 'No se pudo actualizar la herramienta. Contacte al administrador.';
-  };
 
   // Validate numeric fields: must be integers >= 0
   const validateNumericFields = () => {
@@ -77,19 +66,11 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
     for (const field of fields) {
       if (field.value === '' || field.value === undefined || field.value === null) continue;
       const num = Number(field.value);
-      if (isNaN(num) || !Number.isInteger(num) || num < 0) {
+      if (Number.isNaN(num) || !Number.isInteger(num) || num < 0) {
         return `${field.label}: Ingrese un valor válido, entero mayor o igual a 0.`;
       }
     }
     return null;
-  };
-
-  const handleNumericInput = (field, value) => {
-    if (value === '' || /^\d+$/.test(value)) {
-      setForm((s) => ({ ...s, [field]: value }));
-    } else {
-      alert.show({ severity: 'warning', message: 'Debe ingresar valores enteros positivos', autoHideMs: 3500 });
-    }
   };
 
   const handleConfirm = async () => {
@@ -154,44 +135,24 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
     reader.readAsDataURL(fileObj);
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const droppedFile = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type.startsWith('image/')) {
-      handleFileSelect(droppedFile);
-    }
-  };
-
   return (
-    <div className="mas-backdrop" onClick={onClose}>
-      <div className="mas-modal mas-modal-large" style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+    <div className="mas-backdrop">
+    <button type="button" onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+      <div className="mas-modal mas-modal-large" style={{ position: 'relative' }}>
         <button className="mas-close" onClick={onClose} aria-label="Cerrar">
           ×
         </button>
         <h3 className="mas-title">Editar herramienta</h3>
         <div className="mas-content">
           <div className="mas-row">
-            <label>Nombre</label>
-            <input value={form.toolName} onChange={(e) => setForm((s) => ({ ...s, toolName: e.target.value }))} />
+            <label htmlFor="met-name">Nombre</label>
+            <input id="met-name" value={form.toolName} onChange={(e) => setForm((s) => ({ ...s, toolName: e.target.value }))} />
           </div>
 
           <div className="mas-row">
-            <label>Categoría</label>
+            <label htmlFor="met-category">Categoría</label>
             <select
+              id="met-category"
               value={form.category}
               onChange={(e) => setForm((s) => ({ ...s, category: e.target.value }))}
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
@@ -204,52 +165,54 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
           </div>
 
           <div className="mas-row">
-            <label>Precio reposición</label>
+            <label htmlFor="met-repo-cost">Precio reposición</label>
             <input
+              id="met-repo-cost"
               type="number"
               min="0"
               step="1"
               placeholder="0"
               value={form.repoCost}
-              onChange={(e) => handleNumericInput('repoCost', e.target.value)}
+              onChange={(e) => handleNumericInput('repoCost', e.target.value, setForm, alert)}
             />
           </div>
 
           <div className="mas-row">
-            <label>Precio arriendo</label>
+            <label htmlFor="met-price-rent">Precio arriendo</label>
             <input
+              id="met-price-rent"
               type="number"
               min="0"
               step="1"
               placeholder="0"
               value={form.priceRent}
-              onChange={(e) => handleNumericInput('priceRent', e.target.value)}
+              onChange={(e) => handleNumericInput('priceRent', e.target.value, setForm, alert)}
             />
           </div>
 
           <div className="mas-row">
-            <label>Tarifa multa por día</label>
+            <label htmlFor="met-price-fine">Tarifa multa por día</label>
             <input
+              id="met-price-fine"
               type="number"
               min="0"
               step="1"
               placeholder="0"
               value={form.priceFineAtDate}
-              onChange={(e) => handleNumericInput('priceFineAtDate', e.target.value)}
+              onChange={(e) => handleNumericInput('priceFineAtDate', e.target.value, setForm, alert)}
             />
           </div>
 
           <div className="mas-row">
-            <label>Imagen (opcional)</label>
+            <label htmlFor="met-image">Imagen (opcional)</label>
             <div
+              ref={dropRef}
               className={`mas-file-wrapper ${isDragging ? 'mas-file-wrapper-dragging' : ''}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
             >
               <label className="mas-file-button">
-                Seleccionar archivo
+                <span>Seleccionar archivo</span>
                 <input
+                  id="met-image"
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
@@ -286,6 +249,13 @@ const ModalEditTool = ({ open, onClose, tool, onUpdated }) => {
       </div>
     </div>
   );
+};
+
+ModalEditTool.propTypes = {
+  onClose: PropTypes.func,
+  onUpdated: PropTypes.func,
+  open: PropTypes.bool,
+  tool: PropTypes.object,
 };
 
 export default ModalEditTool;

@@ -42,7 +42,7 @@ class KeycloakAdminServiceTest {
         user.setPassword("password");
     }
 
-    private void mockAdminToken() {
+    private void mockAdminToken() throws Exception {
         Map<String, Object> tokenResponse = new HashMap<>();
         tokenResponse.put("access_token", "admin-token");
         when(restTemplate.exchange(
@@ -54,7 +54,7 @@ class KeycloakAdminServiceTest {
     }
 
     @SuppressWarnings("unchecked")
-    private void mockRolesList(String roleName) {
+    private void mockRolesList(String roleName) throws Exception {
         Map<String, Object> role = new HashMap<>();
         role.put("id", "role-id-" + roleName);
         role.put("name", roleName);
@@ -68,22 +68,22 @@ class KeycloakAdminServiceTest {
     }
 
     @Test
-    void testObtainAdminAccessToken_Success() {
+    void testObtainAdminAccessToken_Success() throws Exception {
         mockAdminToken();
         String token = keycloakAdminService.obtainAdminAccessToken();
         assertEquals("admin-token", token);
     }
 
     @Test
-    void testObtainAdminAccessToken_Failure() {
+    void testObtainAdminAccessToken_Failure() throws Exception {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenThrow(new RuntimeException("Error"));
+                .thenThrow(new IllegalStateException("Error"));
         assertThrows(RuntimeException.class, () -> keycloakAdminService.obtainAdminAccessToken());
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_Success() throws Exception {
+    void testCreateKeycloakUser_Success() throws Exception {
         mockAdminToken();
         mockRolesList("CLIENT");
         HttpHeaders createHeaders = new HttpHeaders();
@@ -98,7 +98,7 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_DefaultRole() throws Exception {
+    void testCreateKeycloakUser_DefaultRole() throws Exception {
         mockAdminToken();
         mockRolesList("CLIENT");
         HttpHeaders createHeaders = new HttpHeaders();
@@ -113,7 +113,7 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_SearchFallback() throws Exception {
+    void testCreateKeycloakUser_SearchFallback() throws Exception {
         mockAdminToken();
         mockRolesList("CLIENT");
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
@@ -131,7 +131,7 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_RoleNotFound() {
+    void testCreateKeycloakUser_RoleNotFound() throws Exception {
         mockAdminToken();
         when(restTemplate.exchange(
                 contains("/roles"),
@@ -144,7 +144,7 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_ConflictThrows() {
+    void testCreateKeycloakUser_ConflictThrows() throws Exception {
         mockAdminToken();
         mockRolesList("CLIENT");
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
@@ -154,7 +154,7 @@ class KeycloakAdminServiceTest {
     }
 
     @Test
-    void testDeleteKeycloakUser_Success() {
+    void testDeleteKeycloakUser_Success() throws Exception {
         mockAdminToken();
         when(restTemplate.exchange(contains("/users/user-id"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
@@ -162,15 +162,15 @@ class KeycloakAdminServiceTest {
     }
 
     @Test
-    void testDeleteKeycloakUser_Exception() {
+    void testDeleteKeycloakUser_Exception() throws Exception {
         mockAdminToken();
         when(restTemplate.exchange(contains("/users/user-id"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class)))
-                .thenThrow(new RuntimeException("Delete failed"));
+                .thenThrow(new IllegalStateException("Delete failed"));
         assertThrows(RuntimeException.class, () -> keycloakAdminService.deleteKeycloakUser("user-id"));
     }
 
     @Test
-    void testRequestPasswordGrant_Success() {
+    void testRequestPasswordGrant_Success() throws Exception {
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("access_token", "user-token");
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
@@ -181,7 +181,7 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCheckUserExistsByUsername_Exists() {
+    void testCheckUserExistsByUsername_Exists() throws Exception {
         mockAdminToken();
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("id", "some-id");
@@ -192,7 +192,7 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCheckUserExistsByUsername_NotExists() {
+    void testCheckUserExistsByUsername_NotExists() throws Exception {
         mockAdminToken();
         when(restTemplate.exchange(contains("/users?username="), eq(HttpMethod.GET), any(HttpEntity.class), eq(List.class)))
                 .thenReturn(new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK));
@@ -200,15 +200,15 @@ class KeycloakAdminServiceTest {
     }
 
     @Test
-    void testCheckUserExistsByUsername_Error() {
+    void testCheckUserExistsByUsername_Error() throws Exception {
         mockAdminToken();
         when(restTemplate.exchange(contains("/users?username="), eq(HttpMethod.GET), any(HttpEntity.class), eq(List.class)))
-                .thenThrow(new RuntimeException("Connection error"));
+                .thenThrow(new IllegalStateException("Connection error"));
         assertFalse(keycloakAdminService.checkUserExistsByUsername("testuser"));
     }
 
     @Test
-    void testRefreshToken_Success() {
+    void testRefreshToken_Success() throws Exception {
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("access_token", "new-access-token");
         responseBody.put("refresh_token", "new-refresh-token");
@@ -220,15 +220,15 @@ class KeycloakAdminServiceTest {
     }
 
     @Test
-    void testRefreshToken_Failure() {
+    void testRefreshToken_Failure() throws Exception {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Map.class)))
-                .thenThrow(new RuntimeException("Expired token"));
+                .thenThrow(new IllegalStateException("Expired token"));
         assertThrows(RuntimeException.class, () -> keycloakAdminService.refreshToken("bad-refresh-token"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_OtherClientError() {
+    void testCreateKeycloakUser_OtherClientError() throws Exception {
         mockAdminToken();
         mockRolesList("CLIENT");
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
@@ -239,17 +239,17 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_ConnectionError() {
+    void testCreateKeycloakUser_ConnectionError() throws Exception {
         mockAdminToken();
         mockRolesList("CLIENT");
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
-                .thenThrow(new RuntimeException("Connection refused"));
+                .thenThrow(new IllegalStateException("Connection refused"));
         assertThrows(RuntimeException.class, () -> keycloakAdminService.createKeycloakUser(user, "CLIENT"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_RoleAssignFails() throws Exception {
+    void testCreateKeycloakUser_RoleAssignFails() throws Exception {
         mockAdminToken();
         mockRolesList("CLIENT");
         HttpHeaders createHeaders = new HttpHeaders();
@@ -257,7 +257,7 @@ class KeycloakAdminServiceTest {
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(null, createHeaders, HttpStatus.CREATED));
         when(restTemplate.postForEntity(contains("/role-mappings/realm"), any(HttpEntity.class), eq(Void.class)))
-                .thenThrow(new RuntimeException("Role assign failed"));
+                .thenThrow(new IllegalStateException("Role assign failed"));
         // rollback: delete user
         when(restTemplate.exchange(contains("/users/user-id-789"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
@@ -266,7 +266,7 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_NullRoles() {
+    void testCreateKeycloakUser_NullRoles() throws Exception {
         mockAdminToken();
         // Return null body for roles
         when(restTemplate.exchange(
@@ -280,7 +280,7 @@ class KeycloakAdminServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateKeycloakUser_ConflictWithUsername() {
+    void testCreateKeycloakUser_ConflictWithUsername() throws Exception {
         mockAdminToken();
         mockRolesList("CLIENT");
         when(restTemplate.postForEntity(contains("/users"), any(HttpEntity.class), eq(Void.class)))

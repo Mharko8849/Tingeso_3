@@ -9,21 +9,20 @@ const ReturnsClients = () => {
   const navigate = useNavigate();
   const { show } = useAlert();
   const [selected, setSelected] = useState(null);
-  
 
   const handleNext = () => {
-    if (!selected || !selected.id) {
+    if (!selected?.id) {
       show({ severity: 'error', message: 'Selecciona un cliente antes de continuar.' });
       return;
     }
     try {
       sessionStorage.setItem('return_selected_client', JSON.stringify(selected));
-    } catch (e) { /* ignore */ }
+    } catch (error_) { console.debug(error_); }
     navigate(`/admin/returns/client/${selected.id}`);
   };
 
   const handleCancel = () => {
-    try { sessionStorage.removeItem('return_selected_client'); } catch (e) {}
+    try { sessionStorage.removeItem('return_selected_client'); } catch (error_) { console.debug(error_); }
     navigate('/');
   };
 
@@ -45,7 +44,7 @@ const ReturnsClients = () => {
 
             <div style={{ marginTop: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                <label style={{ fontSize: 16, fontWeight: 700 }}>Buscar cliente</label>
+                <span style={{ fontSize: 16, fontWeight: 700 }}>Buscar cliente</span>
               </div>
 
               <ClientSearch selected={selected} onSelect={setSelected} hideHeader={true} />

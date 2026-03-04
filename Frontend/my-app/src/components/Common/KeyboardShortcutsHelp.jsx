@@ -32,7 +32,7 @@ const KeyboardShortcutsHelp = () => {
           gap: '6px', 
           fontSize: '0.875rem',
           padding: '4px 8px',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
         aria-label="Atajos de teclado"
       >
@@ -51,10 +51,11 @@ const KeyboardShortcutsHelp = () => {
       </button>
 
       {isOpen && (
-        <div className="tool-overlay" onClick={() => setIsOpen(false)}>
+        <div className="tool-overlay" >
+      <button type="button" onClick={() => setIsOpen(false)} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
           <div 
             className="tool-content" 
-            onClick={(e) => e.stopPropagation()} 
+            
             style={{ maxWidth: '500px', width: '90%' }}
           >
             <button className="close-btn" onClick={() => setIsOpen(false)} aria-label="Cerrar">
@@ -74,16 +75,16 @@ const KeyboardShortcutsHelp = () => {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {shortcuts.map((shortcut, idx) => (
+              {shortcuts.map((shortcut) => (
                 <div 
-                  key={idx}
+                  key={`${shortcut.key}-${shortcut.description}`}
                   style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center',
                     padding: '12px',
                     background: '#f9fafb',
-                    borderRadius: '6px'
+                    borderRadius: '6px',
                   }}
                 >
                   <span style={{ fontSize: '0.875rem', color: '#374151' }}>
@@ -99,7 +100,7 @@ const KeyboardShortcutsHelp = () => {
                       fontFamily: 'monospace',
                       fontWeight: '600',
                       color: '#1a202c',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                     }}
                   >
                     {shortcut.key}
@@ -114,7 +115,7 @@ const KeyboardShortcutsHelp = () => {
                 padding: '12px', 
                 background: '#eff6ff', 
                 borderLeft: '4px solid #60a5fa',
-                borderRadius: '4px'
+                borderRadius: '4px',
               }}
             >
               <p style={{ margin: 0, fontSize: '0.875rem', color: '#1e40af' }}>

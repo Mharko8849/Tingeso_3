@@ -49,8 +49,13 @@ class LoanXToolsServiceTest {
     private UserEntity employee;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
+
+        // Inject self-reference so @Transactional self-invocations work in unit tests
+        java.lang.reflect.Field selfField = LoanXToolsService.class.getDeclaredField("self");
+        selfField.setAccessible(true);
+        selfField.set(loanXToolsService, loanXToolsService);
         user = new UserEntity();
         user.setId(1L);
         user.setRol("CLIENT");
@@ -296,7 +301,8 @@ class LoanXToolsServiceTest {
 
     @Test
     void testMapAndPayRepairTool_InvalidInput() {
-        assertThrows(IllegalArgumentException.class, () -> loanXToolsService.mapAndPayRepairTool(1L, new java.util.HashMap<>()));
+        java.util.Map<String, Object> emptyBody = new java.util.HashMap<>();
+        assertThrows(IllegalArgumentException.class, () -> loanXToolsService.mapAndPayRepairTool(1L, emptyBody));
         
         java.util.Map<String, Object> body = new java.util.HashMap<>();
         body.put("adminUser", "invalid");

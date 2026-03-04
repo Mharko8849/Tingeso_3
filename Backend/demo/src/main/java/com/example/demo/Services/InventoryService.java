@@ -33,7 +33,7 @@ public class InventoryService {
     public InventoryEntity getAvailableTools(ToolEntity toolEntity) {
         InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(toolEntity, "DISPONIBLE");
         if (inv == null) {
-            throw new RuntimeException("Inventario DISPONIBLE no encontrado para la herramienta");
+            throw new IllegalStateException("Inventario DISPONIBLE no encontrado para la herramienta");
         }
         return inv;
     }
@@ -41,7 +41,7 @@ public class InventoryService {
     public InventoryEntity getLoanTools(ToolEntity toolEntity) {
         InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(toolEntity, "PRESTADA");
         if (inv == null) {
-            throw new RuntimeException("Inventario PRESTADA no encontrado para la herramienta");
+            throw new IllegalStateException("Inventario PRESTADA no encontrado para la herramienta");
         }
         return inv;
     }
@@ -49,7 +49,7 @@ public class InventoryService {
     public InventoryEntity getReparationTools(ToolEntity toolEntity) {
         InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(toolEntity, "EN REPARACION");
         if (inv == null) {
-            throw new RuntimeException("Inventario EN REPARACION no encontrado para la herramienta");
+            throw new IllegalStateException("Inventario EN REPARACION no encontrado para la herramienta");
         }
         return inv;
     }
@@ -57,7 +57,7 @@ public class InventoryService {
     public InventoryEntity getRemovedTools(ToolEntity toolEntity) {
         InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(toolEntity, "DADA DE BAJA");
         if (inv == null) {
-            throw new RuntimeException("Inventario DADA DE BAJA no encontrado para la herramienta");
+            throw new IllegalStateException("Inventario DADA DE BAJA no encontrado para la herramienta");
         }
         return inv;
     }
@@ -81,7 +81,7 @@ public class InventoryService {
     public InventoryEntity getInventoryByIdToolAndToolState(ToolEntity idTool, String toolState) {
         InventoryEntity inv = inventoryRepository.findByIdToolAndToolState_State(idTool, toolState);
         if (inv == null) {
-            throw new RuntimeException("Inventario no encontrado para la herramienta con estado: " + toolState);
+            throw new IllegalStateException("Inventario no encontrado para la herramienta con estado: " + toolState);
         }
         return inv;
     }
@@ -143,7 +143,7 @@ public class InventoryService {
         userService.isAdmin(employee);
 
         if (quantity <= 0) {
-            throw new RuntimeException("La cantidad debe ser mayor que cero.");
+            throw new IllegalStateException("La cantidad debe ser mayor que cero.");
         }
 
         ToolEntity tool = toolService.getToolById(idTool);
@@ -159,91 +159,73 @@ public class InventoryService {
         return available;
     }
 
+    @SuppressWarnings("java:S107")
     public List<InventoryEntity> filterInventory(String state, String category, Long idTool,
                                                  Integer minPrice, Integer maxPrice,
                                                  Boolean asc, Boolean desc, Boolean recent, String search) {
 
         if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
-            throw new RuntimeException("El precio mínimo no puede ser mayor que el precio máximo.");
+            throw new IllegalStateException("El precio mínimo no puede ser mayor que el precio máximo.");
         }
-
-
 
         boolean sortAsc = Boolean.TRUE.equals(asc);
         boolean sortDesc = Boolean.TRUE.equals(desc);
         boolean sortRecent = Boolean.TRUE.equals(recent);
 
-        if (sortAsc && sortDesc) {
-            sortAsc = false;
-            sortDesc = false;
-        }
-        if (sortAsc && sortRecent) {
-            sortAsc = false;
-            sortRecent = false;
-        }
-        if (sortDesc && sortRecent) {
-            sortDesc = false;
-            sortRecent = false;
-        }
+        List<InventoryEntity> inventoryList = getSortedInventory(sortAsc, sortDesc, sortRecent);
+        return applyInventoryFilters(inventoryList, state, category, idTool, minPrice, maxPrice, search);
+    }
 
-        List<InventoryEntity> inventoryList;
+    private List<InventoryEntity> getSortedInventory(boolean sortAsc, boolean sortDesc, boolean sortRecent) {
+        if (sortAsc && sortDesc) { sortAsc = false; sortDesc = false; }
+        if (sortAsc && sortRecent) { sortAsc = false; sortRecent = false; }
+        if (sortDesc && sortRecent) { sortDesc = false; sortRecent = false; }
 
-        if (sortRecent) {
-            inventoryList = getMoreRecents();
-        } else if (sortAsc) {
-            inventoryList = getInventoryAscPrice();
-        } else if (sortDesc) {
-            inventoryList = getInventoryDescPrice();
-        } else {
-            inventoryList = inventoryRepository.findAll();
-        }
+        if (sortRecent) return getMoreRecents();
+        if (sortAsc) return getInventoryAscPrice();
+        if (sortDesc) return getInventoryDescPrice();
+        return inventoryRepository.findAll();
+    }
 
+    private List<InventoryEntity> applyInventoryFilters(List<InventoryEntity> list, String state,
+            String category, Long idTool, Integer minPrice, Integer maxPrice, String search) {
         if (state != null && !state.isBlank()) {
-            inventoryList = inventoryList.stream()
-                    .filter(inventory -> inventory.getToolState() != null &&
-                            inventory.getToolState().getState().equalsIgnoreCase(state))
+            list = list.stream()
+                    .filter(inv -> inv.getToolState() != null &&
+                            inv.getToolState().getState().equalsIgnoreCase(state))
                     .toList();
         }
-
         if (category != null && !category.isBlank()) {
-            inventoryList = inventoryList.stream()
-                    .filter(inventory -> inventory.getIdTool() != null &&
-                            inventory.getIdTool().getCategory() != null &&
-                            inventory.getIdTool().getCategory().getName().equalsIgnoreCase(category))
+            list = list.stream()
+                    .filter(inv -> inv.getIdTool() != null &&
+                            inv.getIdTool().getCategory() != null &&
+                            inv.getIdTool().getCategory().getName().equalsIgnoreCase(category))
                     .toList();
         }
-
         if (idTool != null) {
-            inventoryList = inventoryList.stream()
-                    .filter(inventory -> inventory.getIdTool() != null &&
-                            inventory.getIdTool().getId().equals(idTool))
+            list = list.stream()
+                    .filter(inv -> inv.getIdTool() != null && inv.getIdTool().getId().equals(idTool))
                     .toList();
         }
-
         if (minPrice != null) {
-            inventoryList = inventoryList.stream()
-                    .filter(inventory -> inventory.getIdTool() != null &&
-                            inventory.getIdTool().getPriceRent() >= minPrice)
+            list = list.stream()
+                    .filter(inv -> inv.getIdTool() != null && inv.getIdTool().getPriceRent() >= minPrice)
                     .toList();
         }
-
         if (maxPrice != null) {
-            inventoryList = inventoryList.stream()
-                    .filter(inventory -> inventory.getIdTool() != null &&
-                            inventory.getIdTool().getPriceRent() <= maxPrice)
+            list = list.stream()
+                    .filter(inv -> inv.getIdTool() != null && inv.getIdTool().getPriceRent() <= maxPrice)
                     .toList();
         }
-
         if (search != null && !search.isBlank()) {
             String searchLower = search.toLowerCase();
-            inventoryList = inventoryList.stream()
-                    .filter(inventory -> inventory.getIdTool() != null &&
-                            inventory.getIdTool().getToolName() != null &&
-                            inventory.getIdTool().getToolName().toLowerCase().contains(searchLower))
+            list = list.stream()
+                    .filter(inv -> inv.getIdTool() != null &&
+                            inv.getIdTool().getToolName() != null &&
+                            inv.getIdTool().getToolName().toLowerCase().contains(searchLower))
                     .toList();
         }
-
-        return inventoryList;
+        return list;
     }
 
     // Check if tool has available stock for loan

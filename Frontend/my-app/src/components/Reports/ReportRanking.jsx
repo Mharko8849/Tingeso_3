@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { buildCsv, downloadBlob } from '../Common/csvUtils';
 import api from '../../services/http-common';
 import { useAlert } from '../Alerts/useAlert';
@@ -10,7 +11,7 @@ import { useAlert } from '../Alerts/useAlert';
  * Input: props (rows, filename, dateFrom, dateTo)
  * Output: JSX Element (button)
  */
-const ReportRanking = ({ rows = [], filename, dateFrom, dateTo, label = "Generar reporte (CSV)", className = "primary-cta" }) => {
+const ReportRanking = ({ rows = [], filename, dateFrom, dateTo, label = 'Generar reporte (CSV)', className = 'primary-cta' }) => {
   const { show } = useAlert();
 
   /**
@@ -45,11 +46,11 @@ const ReportRanking = ({ rows = [], filename, dateFrom, dateTo, label = "Generar
                     toolName: t.toolName || t.name || '—',
                     category: categoryName,
                     count: item.totalLoans || 0,
-                    price: t.priceRent || 0
+                    price: t.priceRent || 0,
                 };
             });
         } catch (e) {
-            console.error("Error fetching ranking report", e);
+            console.error('Error fetching ranking report', e);
             show({ severity: 'error', message: 'Error al generar el reporte de ranking' });
             return;
         }
@@ -71,7 +72,7 @@ const ReportRanking = ({ rows = [], filename, dateFrom, dateTo, label = "Generar
         r.toolName || r.name || r.tool || '',
         categoryValue,
         r.count ?? r.times ?? r.totalLoans ?? '',
-        r.price ?? r.priceRent ?? ''
+        r.price ?? r.priceRent ?? '',
       ];
     });
     
@@ -92,6 +93,15 @@ const ReportRanking = ({ rows = [], filename, dateFrom, dateTo, label = "Generar
       {label}
     </button>
   );
+};
+
+ReportRanking.propTypes = {
+  className: PropTypes.string,
+  dateFrom: PropTypes.string,
+  dateTo: PropTypes.string,
+  filename: PropTypes.string,
+  label: PropTypes.string,
+  rows: PropTypes.array,
 };
 
 export default ReportRanking;

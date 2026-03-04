@@ -1,8 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import Badge from '../Badges/Badge';
 // Order items drawer: small horizontal scroller showing selected items
 
-const OrderItemsDrawer = ({ items = [], onChangeQty = () => {}, onRemove = () => {}, onCreate = () => {}, onCancel = () => {}, creating = false }) => {
+const OrderItemsDrawer = ({ items = [], onChangeQty: _onChangeQty = () => {}, onRemove = () => {}, onCreate = () => {}, onCancel = () => {}, creating = false }) => {
   const [open, setOpen] = useState(false);
   const scrollerRef = useRef(null);
 
@@ -48,7 +49,7 @@ const OrderItemsDrawer = ({ items = [], onChangeQty = () => {}, onRemove = () =>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontWeight: 700 }}>Items del pedido</div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="link" onClick={() => { setOpen(false); onCancel && onCancel(); }}>Cancelar</button>
+              <button className="link" onClick={() => { setOpen(false); onCancel?.(); }}>Cancelar</button>
               <button className="primary-cta" onClick={onCreate} disabled={creating}>{creating ? 'Creando...' : 'Crear Pedido'}</button>
             </div>
           </div>
@@ -57,7 +58,7 @@ const OrderItemsDrawer = ({ items = [], onChangeQty = () => {}, onRemove = () =>
             <button className="link" onClick={() => scrollBy(-300)} aria-label="scroll-left">◀</button>
 
             <div ref={scrollerRef} style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6, flex: 1 }}>
-              {items && items.length > 0 ? items.map((it) => (
+              {items?.length > 0 ? items.map((it) => (
                 <div key={it.id} style={{ minWidth: 260, maxWidth: 420, border: '1px solid #eee', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'center', background: '#fafafa' }}>
                   <img src={it.image || DEFAULT_IMAGE} alt={it.name} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, flex: '0 0 64px' }} />
                   <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -81,6 +82,15 @@ const OrderItemsDrawer = ({ items = [], onChangeQty = () => {}, onRemove = () =>
       </div>
     </div>
   );
+};
+
+OrderItemsDrawer.propTypes = {
+  creating: PropTypes.bool,
+  items: PropTypes.array,
+  onCancel: PropTypes.func,
+  onChangeQty: PropTypes.func,
+  onCreate: PropTypes.func,
+  onRemove: PropTypes.func,
 };
 
 export default OrderItemsDrawer;

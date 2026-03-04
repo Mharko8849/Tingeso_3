@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import ToolCard from './ToolCard';
 
 // ToolGrid now accepts `toolCardProps` which are forwarded to each ToolCard.
@@ -15,6 +16,11 @@ const ToolGrid = ({ tools = [], toolCardProps = {} }) => {
       })}
     </div>
   );
+};
+
+ToolGrid.propTypes = {
+  toolCardProps: PropTypes.object,
+  tools: PropTypes.array,
 };
 
 export default ToolGrid;

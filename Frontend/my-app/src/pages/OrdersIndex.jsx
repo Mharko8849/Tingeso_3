@@ -2,8 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import NavBar from '../components/Layout/NavBar';
 
-const OrdersIndex = () => {
-  return (
+const OrdersIndex = () => (
     <div className="bg-gray-50 min-h-screen">
       <NavBar />
       <main className="px-6">
@@ -26,6 +25,5 @@ const OrdersIndex = () => {
       </main>
     </div>
   );
-};
 
 export default OrdersIndex;

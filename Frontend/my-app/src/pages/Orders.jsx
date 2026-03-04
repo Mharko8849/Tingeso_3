@@ -11,7 +11,7 @@ import api from '../services/http-common';
 import TransitionAlert from '../components/Alerts/TransitionAlert';
 
 const Orders = () => {
-  const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 500000 });
+  const [filters] = useState({ minPrice: 0, maxPrice: 500000 });
   const [tools, setTools] = useState([]);
   const [loadingTools, setLoadingTools] = useState(false);
 
@@ -20,6 +20,7 @@ const Orders = () => {
   const [creating, setCreating] = useState(false);
   const [alert, setAlert] = useState(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchTools(filters); }, []);
 
   const fetchTools = async (f) => {
@@ -56,7 +57,7 @@ const Orders = () => {
   };
 
   const addTool = (t) => {
-    if (!t || !t.id) return;
+    if (!t?.id) return;
     // Business rule: only one unit per tool per client/order allowed.
     const exists = items.find(p => p.id === t.id);
     if (exists) {
@@ -67,7 +68,7 @@ const Orders = () => {
   };
 
   // Quantity is capped to 1 per business rules.
-  const changeQty = (id, qty) => {
+  const changeQty = (id, _qty) => {
     setItems(s => s.map(i => i.id === id ? { ...i, qty: 1 } : i));
   };
 
@@ -88,7 +89,7 @@ const Orders = () => {
     const payload = { clientId: selectedClient.id, items: items.map(i => ({ toolId: i.id, quantity: i.qty })) };
     setCreating(true);
     try {
-      const resp = await api.post('/api/orders', payload);
+      await api.post('/api/orders', payload);
       setAlert({ severity: 'success', message: 'Pedido creado correctamente' });
       // reset
       setItems([]);

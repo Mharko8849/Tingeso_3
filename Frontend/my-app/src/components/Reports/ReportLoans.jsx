@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { buildCsv, downloadBlob } from '../Common/csvUtils';
 import { useAlert } from '../Alerts/useAlert';
 
@@ -41,7 +42,7 @@ const ReportLoans = ({ rows = [], filename }) => {
         l.initDate ?? '',
         l.returnDate ?? '',
         today,
-        l.status ?? ''
+        l.status ?? '',
       ];
     });
 
@@ -54,6 +55,11 @@ const ReportLoans = ({ rows = [], filename }) => {
   return (
     <button onClick={downloadCSV} className="primary-cta" type="button">Generar reporte (CSV)</button>
   );
+};
+
+ReportLoans.propTypes = {
+  filename: PropTypes.string,
+  rows: PropTypes.array,
 };
 
 export default ReportLoans;

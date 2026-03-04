@@ -8,6 +8,29 @@ import api from '../services/http-common';
 import { useAlert } from '../components/Alerts/useAlert';
 import { useKeycloak } from '@react-keycloak/web';
 
+const parseJwt = (token) => {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch (error_) { console.debug(error_); return null; }
+};
+
+const resolveRoles = (keycloak) => {
+  if (keycloak?.tokenParsed?.realm_access?.roles) {
+    return keycloak.tokenParsed.realm_access.roles.map((r) => String(r).toUpperCase());
+  }
+  const localToken = globalThis.window === undefined
+    ? null
+    : (localStorage.getItem('access_token') || localStorage.getItem('app_token'));
+  if (localToken) {
+    const p = parseJwt(localToken);
+    if (p?.realm_access && Array.isArray(p.realm_access.roles)) {
+      return p.realm_access.roles.map((r) => String(r).toUpperCase());
+    }
+  }
+  return [];
+};
+
 const OrdersCreateClient = () => {
   const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
@@ -20,23 +43,7 @@ const OrdersCreateClient = () => {
 
   // Lógica basada en Keycloak + token local de respaldo
   const { keycloak } = useKeycloak();
-  const parseJwt = (token) => {
-    try {
-      const payload = token.split('.')[1];
-      return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-    } catch (e) { return null; }
-  };
-  let legacyRoles = [];
-  if (keycloak?.tokenParsed?.realm_access?.roles) {
-    legacyRoles = keycloak.tokenParsed.realm_access.roles;
-  } else {
-    const localToken = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || localStorage.getItem('app_token')) : null;
-    if (localToken) {
-      const p = parseJwt(localToken);
-      if (p && p.realm_access && Array.isArray(p.realm_access.roles)) legacyRoles = p.realm_access.roles;
-    }
-  }
-  legacyRoles = legacyRoles.map((r) => String(r).toUpperCase());
+  const legacyRoles = resolveRoles(keycloak);
   const isSuper = legacyRoles.includes('SUPERADMIN');
   const isAdmin = legacyRoles.includes('ADMIN');
 
@@ -46,11 +53,11 @@ const OrdersCreateClient = () => {
 
   const handleClientSelect = (client) => {
     // Validar si el cliente está restringido
-    if (client && client.stateClient === 'RESTRINGIDO') {
+    if (client?.stateClient === 'RESTRINGIDO') {
       show({ 
         severity: 'error', 
         message: 'El usuario seleccionado se encuentra actualmente restringido.',
-        autoHideMs: 4500 
+        autoHideMs: 4500, 
       });
       return; // No permitir la selección
     }
@@ -91,7 +98,7 @@ const OrdersCreateClient = () => {
     try {
       setInitDate(getTodayString());
       setReturnDate(getTomorrowString());
-    } catch(e) { /* ignore */ }
+    } catch (error_) { console.debug(error_); }
   }, []);
 
   const isDatesValid = () => {
@@ -100,7 +107,7 @@ const OrdersCreateClient = () => {
       const dInit = new Date(initDate);
       const dRet = new Date(returnDate);
       return dRet.getTime() - dInit.getTime() >= 24*60*60*1000;
-    } catch(e) { return false; }
+    } catch (error_) { console.debug(error_); return false; }
   };
 
   // Helper: Get today's date in YYYY-MM-DD format (LOCAL timezone, not UTC)
@@ -136,7 +143,7 @@ const OrdersCreateClient = () => {
       
       // Si la fecha de retorno ahora es anterior o igual a la de inicio, ajustarla
       if (returnDate <= selectedDate) {
-        const newReturn = new Date(selectedDate + 'T00:00:00');
+        const newReturn = new Date(`${selectedDate  }T00:00:00`);
         newReturn.setDate(newReturn.getDate() + 1);
         const year = newReturn.getFullYear();
         const month = String(newReturn.getMonth() + 1).padStart(2, '0');
@@ -163,7 +170,7 @@ const OrdersCreateClient = () => {
     
     // Si selecciona fecha anterior o igual a la de inicio, ajustar a inicio + 1 día
     if (selectedDate <= initDate) {
-      const minReturn = new Date(initDate + 'T00:00:00');
+      const minReturn = new Date(`${initDate  }T00:00:00`);
       minReturn.setDate(minReturn.getDate() + 1);
       const year = minReturn.getFullYear();
       const month = String(minReturn.getMonth() + 1).padStart(2, '0');
@@ -197,7 +204,7 @@ const OrdersCreateClient = () => {
             <div style={{ marginTop: 12 }}>
               {/* Header row: label left, add-client button right (button aligned to the far right) */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                <label style={{ fontSize: 16, fontWeight: 700 }}>Buscar cliente</label>
+                <span style={{ fontSize: 16, fontWeight: 700 }}>Buscar cliente</span>
                 <div>
                   <button onClick={() => setShowRegister((s) => !s)} className="primary-cta" type="button">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5z" fill="#fff"/></svg>
@@ -210,7 +217,7 @@ const OrdersCreateClient = () => {
                 <EmployeeRegister
                   title="Añadir cliente"
                   defaultRole="CLIENT"
-                  allowedRoles={["CLIENT"]}
+                  allowedRoles={['CLIENT']}
                   hideRoleField={true}
                   isSuper={isSuper}
                   isAdmin={isAdmin}
@@ -240,17 +247,17 @@ const OrdersCreateClient = () => {
                         sessionStorage.removeItem('order_items');
                         sessionStorage.removeItem('order_resume');
                         sessionStorage.removeItem('order_loan_id');
-                      } catch (e) {}
+                      } catch (error_) { console.debug(error_); }
                       setShowRegister(false);
                       show({ severity: 'success', message: 'La cuenta ha sido registrada exitosamente.' });
-                    } catch (e) {
+                    } catch (error_) {
                       // Show user-friendly error message instead of HTML
-                      const errorMessage = e?.response?.data?.error 
-                        || e?.response?.data?.message 
-                        || e?.message 
+                      const errorMessage = error_?.response?.data?.error 
+                        || error_?.response?.data?.message 
+                        || error_?.message 
                         || 'No se pudo crear el cliente. Por favor verifica los datos e intenta nuevamente.';
                       
-                      console.error('Error creating client:', e);
+                      console.error('Error creating client:', error_);
                       setShowRegister(true);
                       show({ severity: 'error', message: errorMessage });
                       throw new Error(errorMessage);
@@ -272,8 +279,8 @@ const OrdersCreateClient = () => {
                 <h3 style={{ marginTop: 0, marginBottom: 16 }}>Fechas</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha inicio</label>
-                    <input 
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }} htmlFor="occ-init-date">Fecha inicio</label>
+                    <input id="occ-init-date" 
                       type="date" 
                       value={initDate} 
                       min={getTodayString()}
@@ -283,12 +290,12 @@ const OrdersCreateClient = () => {
                     <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>Mínimo: Hoy</div>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Fecha retorno</label>
-                    <input 
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }} htmlFor="occ-return-date">Fecha retorno</label>
+                    <input id="occ-return-date" 
                       type="date" 
                       value={returnDate} 
                       min={initDate ? (() => {
-                        const minReturn = new Date(initDate + 'T00:00:00');
+                        const minReturn = new Date(`${initDate  }T00:00:00`);
                         minReturn.setDate(minReturn.getDate() + 1);
                         const year = minReturn.getFullYear();
                         const month = String(minReturn.getMonth() + 1).padStart(2, '0');
@@ -325,7 +332,7 @@ const OrdersCreateClient = () => {
                           sessionStorage.removeItem('order_items');
                           sessionStorage.removeItem('order_loan_id');
                           sessionStorage.removeItem('order_resume');
-                        } catch (e) {}
+                        } catch (error_) { console.debug(error_); }
                       }}>Deseleccionar</button>
                       <button className="primary-cta" onClick={handleNext} disabled={!selected || creating || !isDatesValid()}>{creating ? 'Creando...' : 'Siguiente'}</button>
                     </div>

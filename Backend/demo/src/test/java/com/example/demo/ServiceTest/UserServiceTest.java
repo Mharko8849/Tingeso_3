@@ -103,10 +103,10 @@ class UserServiceTest {
     void testGetAllEmployees() {
         UserEntity employee = new UserEntity();
         employee.setRol("EMPLOYEE");
-        UserEntity admin = new UserEntity();
-        admin.setRol("ADMIN");
+        UserEntity adminUser = new UserEntity();
+        adminUser.setRol("ADMIN");
         List<UserEntity> employees = List.of(employee);
-        List<UserEntity> admins = List.of(admin);
+        List<UserEntity> admins = List.of(adminUser);
         when(userRepository.findByRol("EMPLOYEE")).thenReturn(employees);
         when(userRepository.findByRol("ADMIN")).thenReturn(admins);
 
@@ -185,7 +185,7 @@ class UserServiceTest {
     void testDeleteUser_DbException() {
         user.setKeycloakId("keycloak-id");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        doThrow(new RuntimeException("DB Error")).when(userRepository).deleteById(1L);
+        doThrow(new IllegalStateException("DB Error")).when(userRepository).deleteById(1L);
         
         boolean result = userService.deleteUser(1L);
         assertFalse(result);
@@ -195,7 +195,7 @@ class UserServiceTest {
     void testDeleteUser_KeycloakException() {
         user.setKeycloakId("keycloak-id");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        doThrow(new RuntimeException("KC Error")).when(keycloakAdminService).deleteKeycloakUser("keycloak-id");
+        doThrow(new IllegalStateException("KC Error")).when(keycloakAdminService).deleteKeycloakUser("keycloak-id");
         
         boolean result = userService.deleteUser(1L);
         assertTrue(result); // Should continue and delete from DB
@@ -204,9 +204,9 @@ class UserServiceTest {
 
     @Test
     void testIsAdmin() {
-        UserEntity admin = new UserEntity();
-        admin.setRol("ADMIN");
-        assertDoesNotThrow(() -> userService.isAdmin(admin));
+        UserEntity adminUser = new UserEntity();
+        adminUser.setRol("ADMIN");
+        assertDoesNotThrow(() -> userService.isAdmin(adminUser));
         
         UserEntity superAdmin = new UserEntity();
         superAdmin.setRol("SUPERADMIN");
@@ -219,9 +219,9 @@ class UserServiceTest {
 
     @Test
     void testValidateAdminOrEmployee() {
-        UserEntity admin = new UserEntity();
-        admin.setRol("ADMIN");
-        assertDoesNotThrow(() -> userService.validateAdminOrEmployee(admin));
+        UserEntity adminUser = new UserEntity();
+        adminUser.setRol("ADMIN");
+        assertDoesNotThrow(() -> userService.validateAdminOrEmployee(adminUser));
         
         UserEntity employee = new UserEntity();
         employee.setRol("EMPLOYEE");

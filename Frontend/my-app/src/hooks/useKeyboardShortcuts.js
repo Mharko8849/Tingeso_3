@@ -31,7 +31,7 @@ export const useKeyboardShortcuts = (shortcuts) => {
         shortcuts[event.key](event);
       }
     },
-    [shortcuts]
+    [shortcuts],
   );
 
   useEffect(() => {

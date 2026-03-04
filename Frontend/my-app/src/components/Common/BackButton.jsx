@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -21,9 +22,8 @@ const BackButton = ({ label = 'Volver', to = '...', onClick, className = '', sty
     // Use React Router navigation
     try {
       navigate(to);
-    } catch (err) {
-      // fallback
-      if (window) window.location.href = to;
+    } catch (error_) { console.debug(error_);
+      globalThis.location.href = to;
     }
   };
 
@@ -33,6 +33,14 @@ const BackButton = ({ label = 'Volver', to = '...', onClick, className = '', sty
   return (
     <button type="button" className={`link ${className}`.trim()} onClick={handle} style={mergedStyle}>{label}</button>
   );
+};
+
+BackButton.propTypes = {
+  className: PropTypes.string,
+  label: PropTypes.string,
+  onClick: PropTypes.func,
+  style: PropTypes.object,
+  to: PropTypes.string,
 };
 
 export default BackButton;

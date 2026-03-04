@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import { useAlert } from '../Alerts/AlertContext';
+import { classifyError } from '../../utils/classifyError';
 import './ModalAddStockTool.css';
 
 const ModalAddStockTool = ({ open, onClose, toolId, onAdded }) => {
@@ -11,46 +13,9 @@ const ModalAddStockTool = ({ open, onClose, toolId, onAdded }) => {
   const [loadingName, setLoadingName] = useState(false);
   const { show } = useAlert();
 
-  // Classify errors for user-friendly messages
-  const classifyError = (e) => {
-    if (!e) return 'Ocurrió un error desconocido. Contacte al administrador.';
-
-    // Network / connection errors
-    if (e.code === 'ERR_NETWORK' || e.message === 'Network Error' || !e.response) {
-      return 'Error de conexión. Verifique su conexión a internet e intente nuevamente.';
-    }
-
-    // HTTP status-based errors
-    const status = e.response?.status;
-    if (status === 401 || status === 403) {
-      return 'No tiene permisos para realizar esta acción. Inicie sesión nuevamente.';
-    }
-    if (status === 400) {
-      const data = e.response?.data;
-      return typeof data === 'string' ? data : 'Datos inválidos. Revise la cantidad e intente nuevamente.';
-    }
-    if (status >= 500) {
-      return 'Error interno del servidor. Contacte al administrador del sistema.';
-    }
-
-    // Validation error from throw new Error(...)
-    if (e.message) return e.message;
-
-    return 'No se pudo añadir stock. Contacte al administrador.';
-  };
-
-  const handleQuantityChange = (rawValue) => {
-    // Allow empty string for clearing
-    if (rawValue === '') {
-      setQuantity('');
-      return;
-    }
-    // Only allow positive integers (digits only, no negatives, no decimals)
-    if (/^\d+$/.test(rawValue)) {
-      setQuantity(rawValue);
-    } else {
-      show({ severity: 'warning', message: 'Ingrese un valor válido: número entero mayor a 0.', autoHideMs: 3500 });
-    }
+  const handleNumericInput = (val) => {
+    const cleaned = val.replaceAll(/\D/g, '');
+    setQuantity(cleaned);
   };
 
   const handleConfirm = async () => {
@@ -94,7 +59,7 @@ const ModalAddStockTool = ({ open, onClose, toolId, onAdded }) => {
       try {
         const res = await api.get('/api/inventory/filter', { params: { idTool: toolId } });
         const arr = res.data || [];
-        const t = (arr[0] && arr[0].idTool) || {};
+        const t = arr[0]?.idTool || {};
         if (!mounted) return;
         setToolName(t.toolName || t.name || '');
       } catch (e) {
@@ -110,18 +75,20 @@ const ModalAddStockTool = ({ open, onClose, toolId, onAdded }) => {
   if (!open) return null;
 
   return (
-    <div className="mas-backdrop" onClick={onClose}>
-      <div className="mas-modal" style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+    <div className="mas-backdrop">
+    <button type="button" onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+      <div className="mas-modal" style={{ position: 'relative' }}>
         <button className="mas-close" onClick={onClose} aria-label="Cerrar">
           ×
         </button>
         <h3 className="mas-title">Añadir stock</h3>
 
         <p style={{ marginTop: 8 }}>Herramienta ID: <strong>{toolId}</strong></p>
-        {loadingName ? <p style={{ marginTop: 4 }}>Cargando nombre...</p> : (toolName ? <p style={{ marginTop: 4 }}>Nombre: <strong>{toolName}</strong></p> : null)}
+        {(() => { if (loadingName) { return <p style={{ marginTop: 4 }}>Cargando nombre...</p>; } if (toolName) { return <p style={{ marginTop: 4 }}>Nombre: <strong>{toolName}</strong></p>; } return null; })()}
         <div className="mas-row">
-          <label>Cantidad</label>
+          <label htmlFor="mas-stock-quantity">Cantidad</label>
           <input
+            id="mas-stock-quantity"
             type="number"
             min="1"
             step="1"
@@ -141,6 +108,13 @@ const ModalAddStockTool = ({ open, onClose, toolId, onAdded }) => {
       </div>
     </div>
   );
+};
+
+ModalAddStockTool.propTypes = {
+  onAdded: PropTypes.func,
+  onClose: PropTypes.func,
+  open: PropTypes.bool,
+  toolId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default ModalAddStockTool;

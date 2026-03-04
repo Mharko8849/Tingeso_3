@@ -47,17 +47,13 @@
   border-radius: 8px;
   overflow: hidden;
   background: #fff;
-}
-
-/* Make room for a clickable overlay that does not affect layout */
-.tool-card {
   position: relative;
 }
+
 
 .card-link-overlay {
   position: absolute;
   inset: 0;
-  /* top:0; right:0; bottom:0; left:0 */
   z-index: 6;
   /* above content for click capture */
   display: block;
@@ -147,8 +143,7 @@
   padding: 6px 12px;
   cursor: pointer;
   border-radius: 4px;
-  background: #2B7FFF;
-  /* requested initial color */
+  background: #1e40af;
   color: #fff !important;
   border: none;
   font-size: 0.95rem;
@@ -159,9 +154,8 @@
 
 .view-more-btn:hover {
   /* slightly darker */
-  background: #246fe6;
-  color: #e5e7eb !important;
-  /* stay readable, slightly gray */
+  background: #1e3a8a;
+  color: #ffffff !important;
 }
 
 .view-more-btn:visited,

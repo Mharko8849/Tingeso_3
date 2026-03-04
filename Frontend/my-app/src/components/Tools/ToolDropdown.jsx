@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../../services/http-common";
-import "./ToolDropdown.css";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../services/http-common';
+import './ToolDropdown.css';
 
 /**
  * ToolDropdown component.
@@ -47,7 +47,7 @@ const ToolDropdown = () => {
   const closeMenu = () => setOpen(false);
 
   const handleCategoryClick = (category) => {
-    navigate("/inventory", { state: { initialFilters: { category } } });
+    navigate('/inventory', { state: { initialFilters: { category } } });
     closeMenu();
   };
 
@@ -58,10 +58,11 @@ const ToolDropdown = () => {
       </button>
 
       {open && (
-        <div className="tool-overlay" onClick={closeMenu}>
+        <div className="tool-overlay" >
+      <button type="button" onClick={closeMenu} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
           <div
             className="tool-content"
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside content
+            // Prevent closing when clicking inside content
           >
             <button className="close-btn" onClick={closeMenu}>
               ✕
@@ -77,18 +78,18 @@ const ToolDropdown = () => {
                 </div>
               ) : (
                 <div className="tool-categories-grid">
-                  <a href="#" onClick={(e) => { e.preventDefault(); handleCategoryClick(''); }} className="category-item all-categories">
+                  <button type="button" onClick={() => handleCategoryClick('')} className="category-item all-categories">
                     Todas
-                  </a>
+                  </button>
                   {categories.map((cat) => (
-                    <a 
+                    <button 
+                      type="button"
                       key={cat} 
-                      href="#" 
-                      onClick={(e) => { e.preventDefault(); handleCategoryClick(cat); }}
+                      onClick={() => handleCategoryClick(cat)}
                       className="category-item"
                     >
                       {cat}
-                    </a>
+                    </button>
                   ))}
                   {categories.length === 0 && !loading && (
                     <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#999' }}>

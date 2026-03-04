@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import './CategoryListing.css';
 import FiltersSidebar from '../Filters/FiltersSidebar';
 import ToolGrid from '../Tools/ToolGrid';
@@ -52,6 +53,14 @@ const CategoryListing = ({ tools = [], onApplyFilters = () => {}, initialFilters
       </div>
     </div>
   );
+};
+
+CategoryListing.propTypes = {
+  initialFilters: PropTypes.object,
+  onApplyFilters: PropTypes.func,
+  sidebarFooter: PropTypes.node,
+  toolCardProps: PropTypes.object,
+  tools: PropTypes.array,
 };
 
 export default CategoryListing;

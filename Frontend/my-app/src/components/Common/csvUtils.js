@@ -5,7 +5,7 @@
  */
 export const quoteCell = (v) => {
   const s = v == null ? '' : String(v);
-  return '"' + s.replace(/"/g, '""') + '"';
+  return `"${  s.replace(/"/g, '""')  }"`;
 };
 
 /**
@@ -33,6 +33,6 @@ export const downloadBlob = (content, filename, mimeType = 'text/csv;charset=utf
   a.download = filename || 'export.csv';
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  a.remove();
   URL.revokeObjectURL(url);
 };

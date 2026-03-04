@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import { useAlert } from '../Alerts/useAlert';
 import '../Stock/ModalAddStockTool.css'; // Assuming this CSS exists in Tingeso_3, need to check
@@ -19,7 +20,7 @@ const ModalAddCategory = ({ open, onClose, onAdded }) => {
         throw new Error('El nombre de la categoría es requerido');
       }
 
-      await api.post(`/api/categories/`, { name: name.trim() });
+      await api.post('/api/categories/', { name: name.trim() });
 
       show({ message: 'Categoría creada exitosamente', severity: 'success' });
       
@@ -37,16 +38,17 @@ const ModalAddCategory = ({ open, onClose, onAdded }) => {
   };
 
   return (
-    <div className="mas-backdrop" onClick={onClose} style={{ zIndex: 10001 }}>
-      <div className="mas-modal" style={{ width: '400px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+    <div className="mas-backdrop" style={{ zIndex: 10001 }}>
+    <button type="button" onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+      <div className="mas-modal" style={{ width: '400px', position: 'relative' }}>
         <button className="mas-close" onClick={onClose} aria-label="Cerrar">
           ×
         </button>
         <h3 className="mas-title">Crear nueva Categoría</h3>
         <div className="mas-content">
           <div className="mas-row">
-            <label>Nombre de la categoría</label>
-            <input 
+            <label htmlFor="category-name-input">Nombre de la categoría</label>
+            <input id="category-name-input" 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
               placeholder="Ej. Herramientas Manuales"
@@ -68,6 +70,12 @@ const ModalAddCategory = ({ open, onClose, onAdded }) => {
       </div>
     </div>
   );
+};
+
+ModalAddCategory.propTypes = {
+  onAdded: PropTypes.func,
+  onClose: PropTypes.func,
+  open: PropTypes.bool,
 };
 
 export default ModalAddCategory;

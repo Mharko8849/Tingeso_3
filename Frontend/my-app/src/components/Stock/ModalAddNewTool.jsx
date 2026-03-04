@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import Cropper from 'react-easy-crop';
 import './ModalAddStockTool.css';
 import { useAlert } from '../Alerts/AlertContext';
+import useDragAndDrop from '../../hooks/useDragAndDrop';
+import { handleNumericInput } from '../../utils/numericInput';
 
 const ModalAddNewTool = ({ open, onClose, onAdded }) => {
   const [form, setForm] = useState({ toolName: '', category: '', repoCost: '', priceRent: '', priceFineAtDate: '' });
@@ -12,13 +15,19 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
 
   const alert = useAlert();
+
+  const onFileDrop = useCallback((droppedFile, dataURL) => {
+    setImagePreview(dataURL);
+    setShowCrop(true);
+    setFile(droppedFile);
+  }, []);
+  const { dropRef, isDragging: dragActive } = useDragAndDrop({ onFileDrop });
 
   useEffect(() => {
     if (open) {
@@ -52,7 +61,7 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
     new Promise((resolve, reject) => {
       const image = new Image();
       image.addEventListener('load', () => resolve(image));
-      image.addEventListener('error', (error) => reject(error));
+      image.addEventListener('error', () => reject(new Error('Failed to load image')));
       image.src = url;
     });
 
@@ -73,7 +82,7 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
       0,
       0,
       pixelCrop.width,
-      pixelCrop.height
+      pixelCrop.height,
     );
 
     return new Promise((resolve) => {
@@ -168,36 +177,6 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
     reader.readAsDataURL(fileObj);
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const droppedFile = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type.startsWith('image/')) {
-      handleFileSelect(droppedFile);
-    }
-  };
-
-  const handleNumericInput = (field, value) => {
-    if (value === '' || /^\d+$/.test(value)) {
-      setForm((s) => ({ ...s, [field]: value }));
-    } else {
-      alert.show({ severity: 'warning', message: 'Debe ingresar valores enteros positivos', autoHideMs: 3500 });
-    }
-  };
-
   return (
     <div className="mas-backdrop">
       <div className="mas-modal mas-modal-large" style={{ position: 'relative' }}>
@@ -207,13 +186,14 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
         <h3 className="mas-title">Añadir nueva herramienta</h3>
         <div className="mas-content">
         <div className="mas-row">
-          <label>Nombre</label>
-          <input value={form.toolName} onChange={(e) => setForm((s) => ({ ...s, toolName: e.target.value }))} />
+          <label htmlFor="mant-name">Nombre</label>
+          <input id="mant-name" value={form.toolName} onChange={(e) => setForm((s) => ({ ...s, toolName: e.target.value }))} />
         </div>
 
         <div className="mas-row">
-          <label>Categoría</label>
-          <select 
+          <label htmlFor="mant-category">Categoría</label>
+          <select
+            id="mant-category" 
             value={form.category} 
             onChange={(e) => setForm((s) => ({ ...s, category: e.target.value }))}
             style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
@@ -226,31 +206,30 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
         </div>
 
         <div className="mas-row">
-          <label>Precio reposición</label>
-          <input type="number" min="0" step="1" value={form.repoCost} onChange={(e) => handleNumericInput('repoCost', e.target.value)} />
+          <label htmlFor="mas-repo-cost">Precio reposición</label>
+          <input id="mas-repo-cost" type="number" min="0" step="1" value={form.repoCost} onChange={(e) => handleNumericInput('repoCost', e.target.value, setForm, alert)} />
         </div>
 
         <div className="mas-row">
-          <label>Precio arriendo</label>
-          <input type="number" min="0" step="1" value={form.priceRent} onChange={(e) => handleNumericInput('priceRent', e.target.value)} />
+          <label htmlFor="mas-price-rent">Precio arriendo</label>
+          <input id="mas-price-rent" type="number" min="0" step="1" value={form.priceRent} onChange={(e) => handleNumericInput('priceRent', e.target.value, setForm, alert)} />
         </div>
 
         <div className="mas-row">
-          <label>Tarifa multa por día</label>
-          <input type="number" min="0" step="1" value={form.priceFineAtDate} onChange={(e) => handleNumericInput('priceFineAtDate', e.target.value)} />
+          <label htmlFor="mas-price-fine">Tarifa multa por día</label>
+          <input id="mas-price-fine" type="number" min="0" step="1" value={form.priceFineAtDate} onChange={(e) => handleNumericInput('priceFineAtDate', e.target.value, setForm, alert)} />
         </div>
 
         <div className="mas-row">
-          <label>Imagen (opcional)</label>
+          <label htmlFor="mant-image">Imagen (opcional)</label>
           <div
-            className={`mas-file-wrapper ${isDragging ? 'mas-file-wrapper-dragging' : ''}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
+            ref={dropRef}
+            className={`mas-file-wrapper ${dragActive ? 'mas-file-wrapper-dragging' : ''}`}
           >
             <label className="mas-file-button">
-              Seleccionar archivo
+              <span>Seleccionar archivo</span>
               <input
+                id="mant-image"
                 type="file"
                 accept="image/*"
                 onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
@@ -283,7 +262,7 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
                   color: 'white', 
                   border: 'none', 
                   borderRadius: '4px', 
-                  cursor: 'pointer' 
+                  cursor: 'pointer', 
                 }}
               >
                 Recortar imagen
@@ -301,7 +280,7 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
             color: '#155724',
             marginTop: '12px',
             textAlign: 'center',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
           }}>
             ✓ Herramienta creada exitosamente
           </div>
@@ -354,8 +333,9 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
             gap: '12px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <label style={{ color: 'white', minWidth: '60px' }}>Zoom:</label>
+              <label htmlFor="mant-crop-zoom" style={{ color: 'white', minWidth: '60px' }}>Zoom:</label>
               <input
+                id="mant-crop-zoom"
                 type="range"
                 min={1}
                 max={3}
@@ -400,6 +380,12 @@ const ModalAddNewTool = ({ open, onClose, onAdded }) => {
       )}
     </div>
   );
+};
+
+ModalAddNewTool.propTypes = {
+  onAdded: PropTypes.func,
+  onClose: PropTypes.func,
+  open: PropTypes.bool,
 };
 
 export default ModalAddNewTool;

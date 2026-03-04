@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +19,7 @@ public class CategoryService {
         return categoryRepository.findAll()
                 .stream()
                 .sorted(Comparator.comparing(CategoryEntity::getId).reversed())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public CategoryEntity createCategory(CategoryEntity category) {

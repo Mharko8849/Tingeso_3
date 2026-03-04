@@ -130,7 +130,7 @@ public class LoanXToolsController {
 
     @PostMapping({"/receive/all/{loanId}/{userId}", "/receive/all/loan/{loanId}/user/{userId}"})
     @PreAuthorize("hasAnyRole('EMPLOYEE','ADMIN','SUPERADMIN')")
-    public ResponseEntity<?> receiveAllTools(
+    public ResponseEntity<Object> receiveAllTools(
             @PathVariable Long loanId,
             @PathVariable Long userId,
             @RequestBody Map<String, String> state) {
@@ -159,7 +159,7 @@ public class LoanXToolsController {
 
     @PostMapping("/close/loan/{idLoan}")
     @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE', 'SUPERADMIN')")
-    public ResponseEntity<?> closeStrangeLoan(@PathVariable Long idLoan) {
+    public ResponseEntity<Object> closeStrangeLoan(@PathVariable Long idLoan) {
         LoanEntity loan =  loanXToolsService.closeStrangeLoan(idLoan);
         return ResponseEntity.ok(loan);
     }

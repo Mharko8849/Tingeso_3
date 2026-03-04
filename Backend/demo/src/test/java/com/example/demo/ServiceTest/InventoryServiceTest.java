@@ -12,6 +12,8 @@ import com.example.demo.Services.ToolService;
 import com.example.demo.Services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -275,33 +277,18 @@ class InventoryServiceTest {
             inventoryService.filterInventory(null, null, null, 100, 50, null, null, null, null));
     }
 
-    @Test
-    void testFilterInventory_SortLogic_AscAndDesc() {
+    @ParameterizedTest
+    @CsvSource({
+        "true, true, false",
+        "true, false, true",
+        "false, true, true"
+    })
+    void testFilterInventory_SortLogic_ConflictingFlags(boolean asc, boolean desc, boolean recent) {
         List<InventoryEntity> list = new ArrayList<>();
         list.add(inventory);
         when(inventoryRepository.findAll()).thenReturn(list);
-        // Both asc and desc true => both reset to false => normal findAll
-        List<InventoryEntity> result = inventoryService.filterInventory(null, null, null, null, null, true, true, false, null);
-        assertNotNull(result);
-    }
-
-    @Test
-    void testFilterInventory_SortLogic_AscAndRecent() {
-        List<InventoryEntity> list = new ArrayList<>();
-        list.add(inventory);
-        when(inventoryRepository.findAll()).thenReturn(list);
-        // Both asc and recent true => both reset to false => normal findAll
-        List<InventoryEntity> result = inventoryService.filterInventory(null, null, null, null, null, true, false, true, null);
-        assertNotNull(result);
-    }
-
-    @Test
-    void testFilterInventory_SortLogic_DescAndRecent() {
-        List<InventoryEntity> list = new ArrayList<>();
-        list.add(inventory);
-        when(inventoryRepository.findAll()).thenReturn(list);
-        // Both desc and recent true => both reset to false => normal findAll
-        List<InventoryEntity> result = inventoryService.filterInventory(null, null, null, null, null, false, true, true, null);
+        // Two sort flags true => both reset to false => normal findAll
+        List<InventoryEntity> result = inventoryService.filterInventory(null, null, null, null, null, asc, desc, recent, null);
         assertNotNull(result);
     }
 
@@ -407,7 +394,7 @@ class InventoryServiceTest {
 
     @Test
     void testCheckStockAvailable_Exception() {
-        when(toolService.getToolById(1L)).thenThrow(new RuntimeException("Tool not found"));
+        when(toolService.getToolById(1L)).thenThrow(new IllegalStateException("Tool not found"));
         assertFalse(inventoryService.checkStockAvailable(1L));
     }
 }

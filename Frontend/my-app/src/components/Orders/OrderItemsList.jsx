@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Badge from '../Badges/Badge';
 import { useAlert } from '../Alerts/AlertContext';
 
@@ -44,6 +45,15 @@ const OrderItemsList = ({ items = [], onChangeQty = () => { }, onRemove = () => 
       </div>
     </div>
   );
+};
+
+OrderItemsList.propTypes = {
+  creating: PropTypes.bool,
+  items: PropTypes.array,
+  onCancel: PropTypes.func,
+  onChangeQty: PropTypes.func,
+  onCreate: PropTypes.func,
+  onRemove: PropTypes.func,
 };
 
 export default OrderItemsList;

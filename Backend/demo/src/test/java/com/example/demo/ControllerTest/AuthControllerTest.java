@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,10 +29,10 @@ class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private AuthService authService;
 
-    @MockBean
+    @MockitoBean
     private org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
 
     @Autowired
@@ -62,7 +62,7 @@ class AuthControllerTest {
 
     @Test
     void testRegisterClient_Error() throws Exception {
-        when(authService.registerClient(any(UserEntity.class))).thenThrow(new RuntimeException("Error"));
+        when(authService.registerClient(any(UserEntity.class))).thenThrow(new IllegalStateException("Error"));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -84,7 +84,7 @@ class AuthControllerTest {
 
     @Test
     void testRegisterEmployee_Error() throws Exception {
-        when(authService.registerEmployee(any(UserEntity.class))).thenThrow(new RuntimeException("Error"));
+        when(authService.registerEmployee(any(UserEntity.class))).thenThrow(new IllegalStateException("Error"));
 
         mockMvc.perform(post("/api/auth/register/employee")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +106,7 @@ class AuthControllerTest {
 
     @Test
     void testRegisterAdmin_Error() throws Exception {
-        when(authService.registerAdmin(any(UserEntity.class))).thenThrow(new RuntimeException("Error"));
+        when(authService.registerAdmin(any(UserEntity.class))).thenThrow(new IllegalStateException("Error"));
 
         mockMvc.perform(post("/api/auth/register/admin")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -146,7 +146,7 @@ class AuthControllerTest {
 
     @Test
     void testLogin_Error() throws Exception {
-        when(authService.login("testuser", "password")).thenThrow(new RuntimeException("Invalid credentials"));
+        when(authService.login("testuser", "password")).thenThrow(new IllegalStateException("Invalid credentials"));
 
         Map<String, String> body = new HashMap<>();
         body.put("username", "testuser");
@@ -189,7 +189,7 @@ class AuthControllerTest {
 
     @Test
     void testRefreshToken_Error() throws Exception {
-        when(authService.refresh("bad-token")).thenThrow(new RuntimeException("Token expired"));
+        when(authService.refresh("bad-token")).thenThrow(new IllegalStateException("Token expired"));
 
         Map<String, String> body = new HashMap<>();
         body.put("refresh_token", "bad-token");

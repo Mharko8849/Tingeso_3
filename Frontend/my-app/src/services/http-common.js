@@ -1,5 +1,5 @@
-import axios from "axios";
-import keycloak from "./keycloak";
+import axios from 'axios';
+import keycloak from './keycloak';
 import { showGlobalAlert } from '../components/Alerts/AlertContext';
 
 const backendServer = import.meta.env.VITE_BACKEND_SERVER;
@@ -10,9 +10,9 @@ const baseURL = backendServer && backendPort
   : 'https://toolrent.192.168.39.122.nip.io';
 
 const api = axios.create({
-  baseURL: baseURL,
+  baseURL,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
@@ -33,7 +33,7 @@ api.interceptors.request.use(
         await keycloak.updateToken(30);
         config.headers.Authorization = `Bearer ${keycloak.token}`;
       } catch (e) {
-        console.warn("Failed to refresh token", e);
+        console.warn('Failed to refresh token', e);
       }
     }
     else {
@@ -41,17 +41,16 @@ api.interceptors.request.use(
       // token is stored in localStorage under 'access_token' or 'app_token'.
       // Attach it so authenticated endpoints (like /inventory) work.
       try {
-        const localToken = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || localStorage.getItem('app_token')) : null;
+        const localToken = typeof globalThis !== 'undefined' ? (localStorage.getItem('access_token') || localStorage.getItem('app_token')) : null;
         if (localToken) {
           config.headers.Authorization = `Bearer ${localToken}`;
         }
-      } catch (e) {
-        // ignore localStorage errors
+      } catch (error_) { console.debug(error_); // ignore localStorage errors
       }
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => { throw error; },
 );
 
 // Response interceptor to handle expired tokens
@@ -69,6 +68,28 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+const tryKeycloakRefresh = async () => {
+  if (!keycloak?.authenticated) return null;
+  await keycloak.updateToken(-1);
+  return keycloak.token;
+};
+
+const tryLocalRefresh = async () => {
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) return null;
+  const response = await axios.post(`${baseURL}/api/auth/refresh`, {
+    refresh_token: refreshToken,
+  });
+  const newToken = response.data?.token?.access_token;
+  const newRefreshToken = response.data?.token?.refresh_token;
+  if (!newToken) return null;
+  localStorage.setItem('access_token', newToken);
+  if (newRefreshToken) {
+    localStorage.setItem('refresh_token', newRefreshToken);
+  }
+  return newToken;
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -76,13 +97,13 @@ api.interceptors.response.use(
 
     // If error is not 401 or request already retried, reject
     if (error.response?.status !== 401 || originalRequest._retry) {
-      return Promise.reject(error);
+      throw error;
     }
 
     // Don't retry auth endpoints
     const url = originalRequest.url || '';
     if (url.includes('/api/auth/login') || url.includes('/api/auth/register') || url.includes('/api/auth/refresh')) {
-      return Promise.reject(error);
+      throw error;
     }
 
     // Check if user was authenticated (has tokens stored)
@@ -92,7 +113,7 @@ api.interceptors.response.use(
 
     // If no tokens exist, user was never authenticated - just reject without redirect
     if (!hasAccessToken && !hasRefreshToken && !isKeycloakAuth) {
-      return Promise.reject(error);
+      throw error;
     }
 
     // If already refreshing, queue this request
@@ -101,61 +122,38 @@ api.interceptors.response.use(
         failedQueue.push({ resolve, reject });
       })
         .then(token => {
-          originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          originalRequest.headers['Authorization'] = `Bearer ${  token}`;
           return api(originalRequest);
         })
-        .catch(err => Promise.reject(err));
+        .catch(err => { throw err; });
     }
 
     originalRequest._retry = true;
     isRefreshing = true;
 
     try {
-      // Try to refresh using Keycloak first if available
-      if (keycloak?.authenticated) {
-        try {
-          await keycloak.updateToken(-1); // Force refresh
-          const newToken = keycloak.token;
-          processQueue(null, newToken);
-          isRefreshing = false;
-          originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
-          return api(originalRequest);
-        } catch (kcError) {
-          console.warn("Keycloak token refresh failed", kcError);
-        }
+      // Try Keycloak first, then local refresh token
+      let newToken = null;
+      try {
+        newToken = await tryKeycloakRefresh();
+      } catch (kcError) {
+        console.warn('Keycloak token refresh failed', kcError);
       }
 
-      // Try local refresh_token if available
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (refreshToken) {
-        const response = await axios.post(`${baseURL}/api/auth/refresh`, {
-          refresh_token: refreshToken
-        });
-
-        const newToken = response.data?.token?.access_token;
-        const newRefreshToken = response.data?.token?.refresh_token;
-
-        if (newToken) {
-          // Update tokens in localStorage
-          localStorage.setItem('access_token', newToken);
-          if (newRefreshToken) {
-            localStorage.setItem('refresh_token', newRefreshToken);
-          }
-
-          processQueue(null, newToken);
-          isRefreshing = false;
-
-          // Retry original request with new token
-          originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
-          return api(originalRequest);
-        }
+      if (!newToken) {
+        newToken = await tryLocalRefresh();
       }
 
-      // If we get here, refresh failed - clear tokens and redirect to login
-      throw new Error('Token refresh failed');
+      if (!newToken) {
+        throw new Error('Token refresh failed');
+      }
 
+      processQueue(null, newToken);
+      isRefreshing = false;
+      originalRequest.headers['Authorization'] = `Bearer ${  newToken}`;
+      return api(originalRequest);
     } catch (refreshError) {
-      console.warn("Token refresh failed", refreshError);
+      console.warn('Token refresh failed', refreshError);
       
       // Clear all auth data
       processQueue(refreshError, null);
@@ -170,19 +168,19 @@ api.interceptors.response.use(
       showGlobalAlert({
         message: 'Tu sesión ha expirado. Serás redirigido a la página principal.',
         severity: 'warning',
-        autoHideMs: 4000
+        autoHideMs: 4000,
       });
 
       // Redirect to home page after a short delay (not login, just home)
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      if (typeof globalThis !== 'undefined' && !globalThis.location.pathname.includes('/login')) {
         setTimeout(() => {
-          window.location.href = '/';
+          globalThis.location.href = '/';
         }, 1500);
       }
 
-      return Promise.reject(refreshError);
+      throw refreshError;
     }
-  }
+  },
 );
 
 export default api;

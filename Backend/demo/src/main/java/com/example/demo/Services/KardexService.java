@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.stream.Collectors;
 import java.util.Collections;
 
 @Service
@@ -48,17 +47,17 @@ public class KardexService {
         }
 
         if (idTool == null) {
-            throw new RuntimeException("Herramienta no encontrada");
+            throw new IllegalStateException("Herramienta no encontrada");
         }
         kardex.setIdTool(idTool);
 
         if (type == null || type.isBlank()) {
-            throw new RuntimeException("Debe especificar el motivo del movimiento");
+            throw new IllegalStateException("Debe especificar el motivo del movimiento");
         }
         kardex.setType(type);
 
         if (actualDate == null) {
-            throw new RuntimeException("Debe contar con una fecha de movimiento");
+            throw new IllegalStateException("Debe contar con una fecha de movimiento");
         }
         kardex.setDate(actualDate);
 
@@ -67,7 +66,7 @@ public class KardexService {
         kardex.setIdUser(idUser);
 
         if (idEmployee == null) {
-            throw new RuntimeException("Usuario no encontrado");
+            throw new IllegalStateException("Usuario no encontrado");
         }
         kardex.setIdEmployee(idEmployee);
 
@@ -96,6 +95,7 @@ public class KardexService {
      * Este método era llamado desde el controlador pero faltaba en el servicio.
      */
     @Transactional(readOnly = true)
+    @SuppressWarnings("java:S107")
     public PageResponseDTO<KardexEntity> filterKardexPaginated(
             Long idTool, String type, String initDate, String finalDate,
             Long idUser, Long idEmployee, int page, int size) {
@@ -111,16 +111,16 @@ public class KardexService {
 
     @Transactional(readOnly = true)
     public KardexEntity getKardexById(Long id) {
-        return kardexRepository.findById(id).orElseThrow(() -> new RuntimeException("Movimiento de kardex no encontrado"));
+        return kardexRepository.findById(id).orElseThrow(() -> new IllegalStateException("Movimiento de kardex no encontrado"));
     }
 
     @Transactional(readOnly = true)
     public List<KardexEntity> getKardexByDateBetween(Date initDate, Date finalDate) {
         if (initDate == null) {
-            throw new RuntimeException("No se ha proporcionado una fecha de movimiento inicial");
+            throw new IllegalStateException("No se ha proporcionado una fecha de movimiento inicial");
         }
         if (finalDate == null) {
-            throw new RuntimeException("No se ha proporcionado una fecha de movimiento final");
+            throw new IllegalStateException("No se ha proporcionado una fecha de movimiento final");
         }
         return kardexRepository.findByDateBetween(initDate, finalDate);
     }
@@ -237,7 +237,7 @@ public class KardexService {
         if (content.size() < size) {
             List<Long> existingIds = content.stream()
                     .map(m -> ((ToolEntity) m.get(TOOL_KEY)).getId())
-                    .collect(Collectors.toList());
+                    .toList();
             List<ToolEntity> allTools = toolRepository.findAll();
             for (ToolEntity tool : allTools) {
                 if (content.size() >= size) break;
@@ -331,7 +331,7 @@ public class KardexService {
 
             List<Long> existingIds = result.stream()
                     .map(m -> ((ToolEntity) m.get(TOOL_KEY)).getId())
-                    .collect(Collectors.toList());
+                    .toList();
 
             for (ToolEntity tool : allTools) {
                 if (result.size() >= targetSize) break;

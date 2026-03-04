@@ -1,24 +1,25 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import './Badge.css';
 
 // Default styles for different badge variants.
 const VARIANT_DEFAULTS = {
   green: {
     backgroundColor: 'limegreen',
-    boxShadow: '0 0 6px rgba(50,205,50,0.45)'
+    boxShadow: '0 0 6px rgba(50,205,50,0.45)',
   },
   yellow: {
     backgroundColor: '#f0df1cff',
-    boxShadow: '0 0 8px rgba(255, 218, 30, 0.35)'
+    boxShadow: '0 0 8px rgba(255, 218, 30, 0.35)',
   },
   red: {
     backgroundColor: '#ef4444',
-    boxShadow: '0 0 6px rgba(239,68,68,0.7)'
+    boxShadow: '0 0 6px rgba(239,68,68,0.7)',
   },
   blue: {
     backgroundColor: '#60a5fa',
-    boxShadow: '0 0 8px rgba(96,165,250,0.45)'
-  }
+    boxShadow: '0 0 8px rgba(96,165,250,0.45)',
+  },
 };
 
 // Base styles to ensure visibility even if CSS fails to load.
@@ -55,17 +56,31 @@ const Badge = ({ variant = 'red', className = '', title = '', ariaLabel = '', st
   const cls = useClasses ? `badge badge--${variant} ${className}`.trim() : '';
   
   // Determines the aria-label based on props or defaults to a descriptive text.
-  const aLabel = ariaLabel || (title ? title : (variant === 'green' ? 'Activo' : (variant === 'red' ? 'Inactivo' : 'Estado')));
+  let aLabel;
+  if (ariaLabel) { aLabel = ariaLabel; }
+  else if (title) { aLabel = title; }
+  else if (variant === 'green') { aLabel = 'Activo'; }
+  else if (variant === 'red') { aLabel = 'Inactivo'; }
+  else { aLabel = 'Estado'; }
 
   // Cuando useClasses es false, solo usamos FALLBACK_BASE_STYLE + style custom
   // Cuando useClasses es true, usamos el flujo normal
   const mergedStyle = { 
     ...FALLBACK_BASE_STYLE, 
     ...(useClasses ? (VARIANT_DEFAULTS[variant] || VARIANT_DEFAULTS.green) : {}), 
-    ...style 
+    ...style, 
   };
 
   return <span className={cls} title={title} aria-label={aLabel} style={mergedStyle} />;
+};
+
+Badge.propTypes = {
+  ariaLabel: PropTypes.string,
+  className: PropTypes.string,
+  style: PropTypes.object,
+  title: PropTypes.string,
+  useClasses: PropTypes.string,
+  variant: PropTypes.string,
 };
 
 export default Badge;

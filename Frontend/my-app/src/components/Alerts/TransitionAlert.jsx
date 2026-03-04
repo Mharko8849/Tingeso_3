@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
@@ -78,12 +79,18 @@ const TransitionAlert = ({ alert, onClose, autoHideMs = 4000, offsetTop = 72 }) 
 			>
 				{content}
 			</div>,
-			typeof document !== 'undefined' ? document.body : null
+			typeof document !== 'undefined' ? document.body : null,
 		);
-	} catch (e) {
-        // Fallback if portal creation fails (e.g., during server-side rendering).
+	} catch (error_) { console.debug(error_); // Fallback if portal creation fails (e.g., during server-side rendering).
 		return content;
 	}
+};
+
+TransitionAlert.propTypes = {
+  alert: PropTypes.object,
+  autoHideMs: PropTypes.number,
+  offsetTop: PropTypes.string,
+  onClose: PropTypes.func,
 };
 
 export default TransitionAlert;

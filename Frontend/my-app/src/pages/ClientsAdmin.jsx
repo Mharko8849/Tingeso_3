@@ -17,8 +17,7 @@ const ClientsAdmin = () => {
     try {
       const payload = token.split('.')[1];
       return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-    } catch (e) {
-      return null;
+    } catch (error_) { console.debug(error_); return null;
     }
   };
   let roles = [];
@@ -28,7 +27,7 @@ const ClientsAdmin = () => {
     const localToken = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || localStorage.getItem('app_token')) : null;
     if (localToken) {
       const p = parseJwt(localToken);
-      if (p && p.realm_access && Array.isArray(p.realm_access.roles)) roles = p.realm_access.roles;
+      if (p?.realm_access && Array.isArray(p.realm_access.roles)) roles = p.realm_access.roles;
     }
   }
   roles = roles.map((r) => String(r).toUpperCase());
@@ -38,7 +37,7 @@ const ClientsAdmin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
-  const [alert, setAlert] = useState(null); // { severity, message }
+  const [alert, setAlert] = useState(null);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
@@ -123,7 +122,7 @@ const ClientsAdmin = () => {
         lastName: form.lastName, 
         email: form.email, 
         rol: body.rol, 
-        rut: form.rut 
+        rut: form.rut, 
       };
       setClients((s) => [toAppend, ...s]);
     } catch (e) {
@@ -141,14 +140,13 @@ const ClientsAdmin = () => {
   // Normalize various possible server fields for client state/status
   const getClientState = (u) => {
     const candidates = [u.stateClient, u.state, u.state_client, u.status, u.enabled, u.active, u.isActive, u.estado];
-    for (let v of candidates) {
-      if (v !== undefined && v !== null && v !== '') {
-        if (typeof v === 'boolean') return v ? 'ACTIVO' : 'INACTIVO';
-        const vs = String(v).toUpperCase();
-        if (vs === 'TRUE' || vs === 'ACTIVE' || vs === 'ACTIVO' || vs === 'ENABLED') return 'ACTIVO';
-        if (vs === 'FALSE' || vs === 'INACTIVE' || vs === 'INACTIVO' || vs === 'DISABLED') return 'INACTIVO';
-        return String(v);
-      }
+    for (const v of candidates) {
+      if (v === undefined || v === null || v === '') continue;
+      if (typeof v === 'boolean') return v ? 'ACTIVO' : 'INACTIVO';
+      const vs = String(v).toUpperCase();
+      if (['TRUE', 'ACTIVE', 'ACTIVO', 'ENABLED'].includes(vs)) return 'ACTIVO';
+      if (['FALSE', 'INACTIVE', 'INACTIVO', 'DISABLED'].includes(vs)) return 'INACTIVO';
+      return String(v);
     }
     return '—';
   };
@@ -236,7 +234,7 @@ const ClientsAdmin = () => {
                 <EmployeeRegister
                   title="Añadir cliente"
                   defaultRole="CLIENT"
-                  allowedRoles={["CLIENT"]}
+                  allowedRoles={['CLIENT']}
                   hideRoleField={true}
                   isSuper={roles.includes('SUPERADMIN')}
                   isAdmin={roles.includes('ADMIN')}

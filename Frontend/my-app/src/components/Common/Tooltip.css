@@ -20,6 +20,11 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
   pointer-events: none;
   animation: tooltipFadeIn 0.15s ease-out;
+  display: none;
+}
+
+.tooltip-wrapper:hover > .tooltip-content {
+  display: block;
 }
 
 /* Fixed positioning for tooltips in modals */
@@ -147,7 +152,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: #60a5fa;
+  background-color: #1d4ed8;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -155,6 +160,8 @@
   margin-left: 4px;
   transition: background-color 0.15s ease;
   flex-shrink: 0;
+  border: none;
+  padding: 0;
 }
 
 .help-icon:hover {

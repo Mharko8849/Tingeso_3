@@ -184,7 +184,7 @@ class ToolServiceTest {
 
     @Test
     void testDeleteToolById_Exception() {
-        doThrow(new RuntimeException()).when(toolRepository).deleteById(1L);
+        doThrow(new IllegalStateException()).when(toolRepository).deleteById(1L);
         boolean result = toolService.deleteToolById(1L);
         assertFalse(result);
     }

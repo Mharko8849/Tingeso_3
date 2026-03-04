@@ -25,7 +25,7 @@ public class FileStorageService {
         try {
             Files.createDirectories(this.fileStorageLocation);
         } catch (IOException ex) {
-            throw new RuntimeException("No se pudo crear el directorio para subir archivos.", ex);
+            throw new IllegalStateException("No se pudo crear el directorio para subir archivos.", ex);
         }
     }
 
@@ -43,7 +43,7 @@ public class FileStorageService {
             return fileName;
 
         } catch (IOException e) {
-            throw new RuntimeException("Error al guardar la imagen: " + e.getMessage());
+            throw new IllegalStateException("Error al guardar la imagen: " + e.getMessage());
         }
     }
 }

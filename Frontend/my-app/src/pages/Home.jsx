@@ -1,32 +1,32 @@
-import React, { useEffect, useState } from "react";
-import NavBar from "../components/Layout/NavBar";
-import ToolCarousel from "../components/Tools/ToolCarousel";
-import CategoriesGrid from "../components/Categories/CategoriesGrid";
-import LoadingSpinner from "../components/Loading/LoadingSpinner";
-import api from "../services/http-common";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import NavBar from '../components/Layout/NavBar';
+import ToolCarousel from '../components/Tools/ToolCarousel';
+import CategoriesGrid from '../components/Categories/CategoriesGrid';
+import LoadingSpinner from '../components/Loading/LoadingSpinner';
+import api from '../services/http-common';
+import { useNavigate } from 'react-router-dom';
 
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return "/NoImage.png"; // Fallback image
-  if (imagePath.startsWith("http")) return imagePath;
+  if (!imagePath) return '/NoImage.png'; // Fallback image
+  if (imagePath.startsWith('http')) return imagePath;
   return `/images/${imagePath}`; 
 };
 
 const FALLBACK_CATEGORIES = [
   { 
-    title: "Herramientas Eléctricas", 
+    title: 'Herramientas Eléctricas', 
     image: 'Taladro.png', 
   },
   { 
-    title: "Generadores", 
+    title: 'Generadores', 
     image: 'Generador.png', 
   },
   { 
-    title: "Construcción", 
+    title: 'Construcción', 
     image: 'Pala.png', 
   },
   { 
-    title: "Seguridad", 
+    title: 'Seguridad', 
     image: 'SetCascoBotasGuante.png', 
   },
 ];
@@ -39,18 +39,18 @@ const Home = () => {
   useEffect(() => {
     const fetchRanking = async () => {
       try {
-        const response = await api.get("/api/kardex/ranking/paginated?page=0&size=10");
+        const response = await api.get('/api/kardex/ranking/paginated?page=0&size=10');
         // Backend returns PageResponseDTO — the list is in .content
         const tools = (response.data.content || []).map(item => ({
           ...item.tool,
           name: item.tool.toolName || item.tool.name,
           price: item.tool.priceRent || item.tool.price,
           image: getImageUrl(item.tool.imageUrl), // Use helper to resolve URL
-          visits: item.totalLoans // Use visits to show loan count
+          visits: item.totalLoans, // Use visits to show loan count
         }));
         setRankingTools(tools);
       } catch (error) {
-        console.error("Error ranking tools:", error);
+        console.error('Error ranking tools:', error);
       }
     };
 
@@ -73,12 +73,13 @@ const Home = () => {
       });
       // Check if we have a fallback subtitle for this category, otherwise generic
       const fallback = FALLBACK_CATEGORIES.find(fc => fc.title === catName);
+      const catImage = (() => { if (tool) { return tool.image; } if (fallback) { return getImageUrl(fallback.image); } return '/NoImage.png'; })();
       return {
         title: catName,
         subtitle: fallback ? fallback.subtitle : 'Tendencia en alquiler',
-        image: tool ? tool.image : (fallback ? getImageUrl(fallback.image) : '/NoImage.png'),
+        image: catImage,
         categoryName: catName,
-        color: '#2B7FFF'
+        color: '#2B7FFF',
       };
     });
 
@@ -92,7 +93,7 @@ const Home = () => {
             ...fallback,
             image: getImageUrl(fallback.image),
             categoryName: fallback.title,
-            color: '#2B7FFF'
+            color: '#2B7FFF',
           });
         }
       }
@@ -108,7 +109,7 @@ const Home = () => {
   const handleViewMorePopular = (e) => {
     e.preventDefault();
     // Navigate to /inventory with 'popular' sort filter
-    navigate("/inventory", { state: { initialFilters: { sort: 'Popular' } } });
+    navigate('/inventory', { state: { initialFilters: { sort: 'Popular' } } });
   };
 
   return (

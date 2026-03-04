@@ -72,54 +72,54 @@
 
 /* Edit button - blue */
 .state-btn-edit {
-  background: #2B7FFF;
-  color: white;
+  background: #1e40af;
+  color: #ffffff;
 }
 
 .state-btn-edit:hover {
-  background: #1a5fd4;
+  background: #1e3a8a;
   transform: translateY(-1px);
 }
 
 /* Delete button - red */
 .state-btn-delete {
-  background: #e53e3e;
-  color: white;
+  background: #b91c1c;
+  color: #ffffff;
 }
 
 .state-btn-delete:hover {
-  background: #c53030;
+  background: #991b1b;
   transform: translateY(-1px);
 }
 
 /* Save button (inline edit) - green */
 .state-btn-save {
-  background: #38a169;
-  color: white;
+  background: #15803d;
+  color: #ffffff;
   font-size: 18px;
   padding: 6px 14px;
 }
 
 .state-btn-save:hover {
-  background: #2f855a;
+  background: #14532d;
 }
 
 /* Cancel button (inline edit) - red */
 .state-btn-cancel {
-  background: #e53e3e;
-  color: white;
+  background: #b91c1c;
+  color: #ffffff;
   font-size: 18px;
   padding: 6px 14px;
 }
 
 .state-btn-cancel:hover {
-  background: #dc3545;
-  color: white;
+  background: #991b1b;
+  color: #ffffff;
 }
 
 .mas-add-new {
-  background: #2b6cb0;
-  color: white;
+  background: #1e3a5f;
+  color: #ffffff;
   border: none;
   font-weight: 600;
   display: flex;

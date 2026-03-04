@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { buildCsv, downloadBlob } from '../Common/csvUtils';
 import { useAlert } from '../Alerts/useAlert';
 
@@ -22,7 +23,7 @@ const ReportEmployees = ({ rows = [], filename }) => {
       u.name || '',
       u.lastName || '',
       u.email || '',
-      u.rol || u.role || ''
+      u.rol || u.role || '',
     ]);
 
     const csv = buildCsv(headers, mapped);
@@ -34,6 +35,11 @@ const ReportEmployees = ({ rows = [], filename }) => {
   return (
     <button onClick={downloadCSV} className="primary-cta" type="button">Generar reporte (CSV)</button>
   );
+};
+
+ReportEmployees.propTypes = {
+  filename: PropTypes.string,
+  rows: PropTypes.array,
 };
 
 export default ReportEmployees;

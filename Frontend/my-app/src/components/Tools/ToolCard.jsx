@@ -1,7 +1,8 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 // Reusable ToolCard used across carousel and grids
-const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = null, addDisabled = false, layout = 'horizontal' }) => {
+const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = null, addDisabled: _addDisabled = false, layout = 'horizontal' }) => {
   const priceLabel = typeof tool.price === 'number' ? `$${tool.price.toLocaleString()}` : tool.price || '';
   const DEFAULT_IMAGE = '/NoImage.png';
 
@@ -35,7 +36,7 @@ const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = nul
           gap: 0, 
           alignItems: 'stretch', 
           height: '100%',
-          ...style 
+          ...style, 
         }}
       >
         {showAdd && (
@@ -65,7 +66,7 @@ const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = nul
               fontSize: '0.8rem',
               fontWeight: 600,
               zIndex: 2,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             }}>
               {tool.visits === 1 ? '1 Pedido' : `${tool.visits} Pedidos`}
             </div>
@@ -94,6 +95,16 @@ const ToolCard = ({ tool = {}, style = {}, onClick, showAdd = false, onAdd = nul
       </div>
     </a>
   );
+};
+
+ToolCard.propTypes = {
+  addDisabled: PropTypes.string,
+  layout: PropTypes.string,
+  onAdd: PropTypes.func,
+  onClick: PropTypes.func,
+  showAdd: PropTypes.bool,
+  style: PropTypes.object,
+  tool: PropTypes.object,
 };
 
 export default ToolCard;

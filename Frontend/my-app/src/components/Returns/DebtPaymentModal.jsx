@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import { useAlert } from '../../components/Alerts/useAlert';
 
@@ -28,13 +29,14 @@ const DebtPaymentModal = ({ open, onClose, loan, totalFine, onPaid }) => {
         console.error('Error loading debt items', err?.response ?? err);
         try {
           alert?.show?.({ severity: 'error', message: 'No se pudieron cargar las herramientas con multa.', autoHideMs: 7000 });
-        } catch (e) {}
-        onClose && onClose();
+        } catch (error_) { console.debug(error_); }
+        onClose?.();
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, loan]);
 
   const submit = async () => {
@@ -46,16 +48,16 @@ const DebtPaymentModal = ({ open, onClose, loan, totalFine, onPaid }) => {
       if (!employeeId) throw new Error('No pude obtener tu id de usuario (employee)');
       const url = `/api/loantool/paydebt/${loan.id}/user/${employeeId}`;
       await api.post(url);
-      try { alert?.show?.({ severity: 'success', message: 'Deuda pagada correctamente.', autoHideMs: 3000 }); } catch (e) {}
-      onPaid && onPaid();
-      onClose && onClose();
+      try { alert?.show?.({ severity: 'success', message: 'Deuda pagada correctamente.', autoHideMs: 3000 }); } catch (error_) { console.debug(error_); }
+      onPaid?.();
+      onClose?.();
     } catch (err) {
       console.error('Error al pagar deuda', err?.response ?? err);
       const resp = err?.response?.data;
       try {
         if (resp) { alert?.show?.({ severity: 'error', message: typeof resp === 'string' ? resp : JSON.stringify(resp), autoHideMs: 8000 }); }
         else { alert?.show?.({ severity: 'error', message: err?.message || 'Error desconocido', autoHideMs: 8000 }); }
-      } catch (e) {}
+      } catch (error_) { console.debug(error_); }
     } finally { setSubmitting(false); }
   };
 
@@ -66,20 +68,19 @@ const DebtPaymentModal = ({ open, onClose, loan, totalFine, onPaid }) => {
       <div className="repair-modal" style={{ width: '90%', maxWidth: '70%', background: '#fff', padding: 20, borderRadius: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0 }}>Pagar Multa - Pedido #{loan?.id}</h3>
-          <button onClick={() => onClose && onClose()} style={{ background: 'transparent', border: 'none', fontSize: 20 }}>✕</button>
+          <button onClick={() => onClose?.()} style={{ background: 'transparent', border: 'none', fontSize: 20 }}>✕</button>
         </div>
         <div style={{ marginTop: 12 }}>
-          {loading ? (
-            <p>Cargando herramientas con multa...</p>
-          ) : items.length === 0 ? (
-            <p>No hay herramientas con multa para este pedido.</p>
-          ) : (
+          {(() => { if (loading) { return <p>Cargando herramientas con multa...</p>; } if (items.length === 0) { return <p>No hay herramientas con multa para este pedido.</p>; } return (
             <>
               <div style={{ display: 'grid', gap: 12 }}>
                 {items.map(it => {
-                  const name = (it.idTool && (it.idTool.toolName || it.idTool.name)) || it.toolName || it.name || `Herramienta ${it.id}`;
+                  const name = (it.idTool?.toolName || it.idTool?.name) || it.toolName || it.name || `Herramienta ${it.id}`;
                   const imageUrl = it.idTool?.imageUrl || it.idTool?.image || null;
-                  const image = imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `/images/${imageUrl}`) : null;
+                  let image = null;
+                  if (imageUrl) {
+                    image = imageUrl.startsWith('http') ? imageUrl : `/images/${imageUrl}`;
+                  }
                   const fine = Number(it.fine ?? it.debt ?? 0) || 0;
                   return (
                     <div key={it.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6 }}>
@@ -104,16 +105,24 @@ const DebtPaymentModal = ({ open, onClose, loan, totalFine, onPaid }) => {
               <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontWeight: 700 }}>Total a pagar: ${new Intl.NumberFormat().format(Number(totalFine || 0))}</div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                  <button className="secondary-cta" onClick={() => onClose && onClose()} disabled={submitting}>Cancelar</button>
+                  <button className="secondary-cta" onClick={() => onClose?.()} disabled={submitting}>Cancelar</button>
                   <button className="primary-cta" disabled={submitting} onClick={submit}>{submitting ? 'Pagando...' : 'Pagar deuda'}</button>
                 </div>
               </div>
             </>
-          )}
+          ); })()}
         </div>
       </div>
     </div>
   );
+};
+
+DebtPaymentModal.propTypes = {
+  loan: PropTypes.object,
+  onClose: PropTypes.func,
+  onPaid: PropTypes.func,
+  open: PropTypes.bool,
+  totalFine: PropTypes.string,
 };
 
 export default DebtPaymentModal;

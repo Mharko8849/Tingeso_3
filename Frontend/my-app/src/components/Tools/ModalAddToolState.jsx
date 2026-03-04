@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import { useAlert } from '../Alerts/useAlert';
 import Badge from '../Badges/Badge';
@@ -21,7 +22,7 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
         throw new Error('El nombre del estado es requerido');
       }
 
-      await api.post(`/api/tool-states/`, { state: name.trim(), color: color });
+      await api.post('/api/tool-states/', { state: name.trim(), color });
 
       show({ message: 'Estado creado exitosamente', severity: 'success' });
       
@@ -40,8 +41,9 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
   };
 
   return (
-    <div className="mas-backdrop" onClick={onClose} style={{ zIndex: 10001 }}>
-      <div className="mas-modal" style={{ width: '550px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+    <div className="mas-backdrop" style={{ zIndex: 10001 }}>
+    <button type="button" onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+      <div className="mas-modal" style={{ width: '550px', position: 'relative' }}>
         <button className="mas-close" onClick={onClose} aria-label="Cerrar">
           ×
         </button>
@@ -51,11 +53,11 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
           <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '12px' }}>
             {/* Sección de color */}
             <div style={{ flex: '0 0 auto' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500 }}>
+              <label htmlFor="tool-state-color" style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500 }}>
                 Color del estado
               </label>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <input 
+                <input id="tool-state-color"
                   type="color"
                   value={color} 
                   onChange={(e) => setColor(e.target.value)} 
@@ -65,7 +67,7 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
                     border: '2px solid #e2e8f0', 
                     borderRadius: '8px', 
                     cursor: 'pointer',
-                    padding: '4px'
+                    padding: '4px',
                   }}
                 />
                 {/* Badge preview usando el componente Badge real */}
@@ -81,10 +83,10 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
 
             {/* Sección de nombre */}
             <div style={{ flex: '1', minWidth: 0 }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500 }}>
+              <label htmlFor="tool-state-name" style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500 }}>
                 Nombre del estado
               </label>
-              <input 
+              <input id="tool-state-name"
                 value={name} 
                 onChange={(e) => setName(e.target.value.toUpperCase())} 
                 placeholder="Ej. EN_REPARACION"
@@ -96,7 +98,7 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
                   borderRadius: '6px',
                   fontSize: '14px',
                   backgroundColor: '#ffffff',
-                  color: '#000000'
+                  color: '#000000',
                 }}
               />
               <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', fontStyle: 'italic' }}>
@@ -119,6 +121,12 @@ const ModalAddToolState = ({ open, onClose, onAdded }) => {
       </div>
     </div>
   );
+};
+
+ModalAddToolState.propTypes = {
+  onAdded: PropTypes.func,
+  onClose: PropTypes.func,
+  open: PropTypes.bool,
 };
 
 export default ModalAddToolState;

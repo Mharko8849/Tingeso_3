@@ -13,8 +13,7 @@ export const clearOrderDraftLocally = () => {
     sessionStorage.removeItem(ORDER_STORAGE_KEYS.items);
     sessionStorage.removeItem(ORDER_STORAGE_KEYS.resume);
     sessionStorage.removeItem(ORDER_STORAGE_KEYS.loanId);
-  } catch (e) {
-    // ignore storage errors
+  } catch (error_) { console.debug(error_); // ignore storage errors
   }
 };
 
@@ -22,8 +21,7 @@ export const cancelOrderDraft = async () => {
   let loanId = null;
   try {
     loanId = sessionStorage.getItem(ORDER_STORAGE_KEYS.loanId);
-  } catch (e) {
-    loanId = null;
+  } catch (error_) { console.debug(error_); loanId = null;
   }
 
   if (!loanId) {
@@ -33,8 +31,7 @@ export const cancelOrderDraft = async () => {
 
   try {
     await api.delete(`/loan/${loanId}`);
-  } catch (e) {
-    // swallow error: if delete fails we still clear local draft
+  } catch (error_) { console.debug(error_); // swallow error: if delete fails we still clear local draft
   } finally {
     clearOrderDraftLocally();
   }

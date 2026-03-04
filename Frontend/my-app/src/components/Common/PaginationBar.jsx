@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import './PaginationBar.css';
 
 /**
@@ -54,10 +55,10 @@ const PaginationBar = ({
       <div className="cl-footer-right" style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
         {showPageSizeControls && (
           <div className="cl-controls-left" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <label>Mostrar por página:</label>
-            <select
+            <label htmlFor="page-size-select">Mostrar por página:</label>
+            <select id="page-size-select"
               value={pageSize}
-              onChange={(e) => onPageSizeChange && onPageSizeChange(Number(e.target.value) || 10)}
+              onChange={(e) => onPageSizeChange?.(Number(e.target.value) || 10)}
             >
               <option value={8}>8</option>
               <option value={12}>12</option>
@@ -76,6 +77,16 @@ const PaginationBar = ({
       </div>
     </div>
   );
+};
+
+PaginationBar.propTypes = {
+  onPageChange: PropTypes.func,
+  onPageSizeChange: PropTypes.func,
+  page: PropTypes.number,
+  pageSize: PropTypes.number,
+  showPageSizeControls: PropTypes.bool,
+  showSummary: PropTypes.bool,
+  total: PropTypes.number,
 };
 
 export default PaginationBar;

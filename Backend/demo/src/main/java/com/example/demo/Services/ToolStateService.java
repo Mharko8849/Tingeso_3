@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +25,7 @@ public class ToolStateService {
         return toolStateRepository.findAll()
                 .stream()
                 .sorted(Comparator.comparing(ToolStateEntity::getId))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public ToolStateEntity createState(ToolStateEntity toolState) {
@@ -67,7 +66,7 @@ public class ToolStateService {
 
     public ToolStateEntity updateState(Long id, ToolStateEntity updatedState) {
         ToolStateEntity existingState = toolStateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
+                .orElseThrow(() -> new IllegalStateException("Estado no encontrado"));
         existingState.setState(updatedState.getState());
         if (updatedState.getColor() != null) {
             existingState.setColor(updatedState.getColor());

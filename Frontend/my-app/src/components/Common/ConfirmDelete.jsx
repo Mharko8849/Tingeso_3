@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * A modal component to confirm the deletion of an employee.
@@ -18,8 +19,9 @@ const ConfirmDelete = ({ open = false, employee = null, onConfirm = () => {}, on
   const rol = employee ? `${employee.rol || ''}` : '';
 
   return (
-    <div className="tool-overlay" onClick={onCancel}>
-      <div className="tool-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+    <div className="tool-overlay" >
+      <button type="button" onClick={onCancel} aria-label="Cerrar" style={{ position: 'absolute', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 0, padding: 0 }} />
+      <div className="tool-content" style={{ maxWidth: 520 }}>
         <button className="close-btn" onClick={onCancel} aria-label="Cerrar">✕</button>
         <h3 style={{ marginTop: 0 }}>Confirmar eliminación</h3>
         <p>Estás a punto de eliminar a:</p>
@@ -46,6 +48,13 @@ const ConfirmDelete = ({ open = false, employee = null, onConfirm = () => {}, on
       </div>
     </div>
   );
+};
+
+ConfirmDelete.propTypes = {
+  employee: PropTypes.object,
+  onCancel: PropTypes.func,
+  onConfirm: PropTypes.func,
+  open: PropTypes.bool,
 };
 
 export default ConfirmDelete;

@@ -28,7 +28,7 @@ export const validateEmail = (email) => {
   if (!emailPattern.test(trimmedEmail)) {
     return { 
       isValid: false, 
-      message: 'Formato de email inválido. Ejemplo: usuario@ejemplo.com' 
+      message: 'Formato de email inválido. Ejemplo: usuario@ejemplo.com', 
     };
   }
 
@@ -65,7 +65,7 @@ export const validatePassword = (password) => {
     return { 
       isValid: false, 
       message: 'Contraseña debe tener al menos 6 caracteres',
-      strength: 'weak'
+      strength: 'weak',
     };
   }
 
@@ -73,7 +73,7 @@ export const validatePassword = (password) => {
     return { 
       isValid: true, 
       message: 'Contraseña aceptable. Recomendado: al menos 8 caracteres',
-      strength: 'fair'
+      strength: 'fair',
     };
   }
 
@@ -86,14 +86,14 @@ export const validatePassword = (password) => {
     return { 
       isValid: true, 
       message: 'Contraseña fuerte',
-      strength: 'strong'
+      strength: 'strong',
     };
   }
 
   return { 
     isValid: true, 
     message: 'Contraseña aceptable',
-    strength: 'fair'
+    strength: 'fair',
   };
 };
 
@@ -113,14 +113,14 @@ export const validateUsername = (username) => {
   if (trimmed.length < 3) {
     return { 
       isValid: false, 
-      message: 'Nombre de usuario debe tener al menos 3 caracteres' 
+      message: 'Nombre de usuario debe tener al menos 3 caracteres', 
     };
   }
 
   if (trimmed.length > 30) {
     return { 
       isValid: false, 
-      message: 'Nombre de usuario no puede exceder 30 caracteres' 
+      message: 'Nombre de usuario no puede exceder 30 caracteres', 
     };
   }
 
@@ -128,7 +128,7 @@ export const validateUsername = (username) => {
   if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
     return { 
       isValid: false, 
-      message: 'Solo letras, números, guiones y guiones bajos permitidos' 
+      message: 'Solo letras, números, guiones y guiones bajos permitidos', 
     };
   }
 
@@ -145,12 +145,13 @@ export const validateUsername = (username) => {
  */
 export const validateField = (fieldType, value) => {
   switch (fieldType.toLowerCase()) {
-    case 'rut':
+    case 'rut': {
       const isValid = validateRutLib(value);
       return { 
         isValid, 
-        message: isValid ? 'RUT válido' : 'RUT inválido' 
+        message: isValid ? 'RUT válido' : 'RUT inválido', 
       };
+    }
     case 'email':
       return validateEmail(value);
     case 'password':
@@ -175,9 +176,9 @@ export const formatDate = (dateString) => {
   
   try {
     // Handle both YYYY-MM-DD and ISO date formats
-    const date = new Date(dateString + 'T00:00:00');
+    const date = new Date(`${dateString  }T00:00:00`);
     
-    if (isNaN(date.getTime())) {
+    if (Number.isNaN(date.getTime())) {
       return dateString; // Return original if invalid
     }
     
@@ -186,8 +187,7 @@ export const formatDate = (dateString) => {
     const year = date.getFullYear();
     
     return `${day}/${month}/${year}`;
-  } catch (error) {
-    return dateString; // Return original on error
+  } catch (error_) { console.debug(error_); return dateString; // Return original on error
   }
 };
 
@@ -204,7 +204,7 @@ export const formatDateTime = (dateString) => {
   try {
     const date = new Date(dateString);
     
-    if (isNaN(date.getTime())) {
+    if (Number.isNaN(date.getTime())) {
       return dateString;
     }
     
@@ -215,7 +215,6 @@ export const formatDateTime = (dateString) => {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     
     return `${day}/${month}/${year} ${hours}:${minutes}`;
-  } catch (error) {
-    return dateString;
+  } catch (error_) { console.debug(error_); return dateString;
   }
 };

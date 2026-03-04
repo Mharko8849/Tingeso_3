@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/http-common';
 import './FiltersSidebar.css';
 
@@ -64,7 +65,7 @@ const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
     setSort(initial.sort ?? '');
     setCategory(initial.category ?? '');
     setSearch(initial.search ?? '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [initial.minPrice, initial.maxPrice, initial.sort, initial.category, initial.search]);
 
   // Applies the selected filters and sorting options.
@@ -96,11 +97,11 @@ const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
       </div>
 
       <div className="filter-row">
-        <label>Buscar herramienta</label>
+        <label htmlFor="filter-search-input">Buscar herramienta</label>
         <div className="search-input-wrap" style={{ position: 'relative' }}>
           <input
             type="text"
-            placeholder="Buscar herramienta..."
+            id="filter-search-input" placeholder="Buscar herramienta..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => {
@@ -113,7 +114,7 @@ const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
               border: '1px solid #e1e3e8',
               marginTop: '4px',
               backgroundColor: '#ffffff',
-              color: '#000000'
+              color: '#000000',
             }}
           />
           {search && (
@@ -131,7 +132,7 @@ const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
                 color: '#9ca3af',
                 fontSize: '18px',
                 lineHeight: 1,
-                padding: 0
+                padding: 0,
               }}
               title="Borrar búsqueda"
             >
@@ -142,7 +143,7 @@ const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
       </div>
 
       <div className="filter-row">
-        <label>Rango de precio</label>
+        <label htmlFor="filter-price-min">Rango de precio</label>
         <div className="range-values">
           <span>${minPrice.toLocaleString()}</span>
           <span>${maxPrice.toLocaleString()}</span>
@@ -178,8 +179,8 @@ const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
       </div>
 
       <div className="filter-row">
-        <label>Ordenar por</label>
-        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+        <label htmlFor="filter-sort-select">Ordenar por</label>
+        <select id="filter-sort-select" value={sort} onChange={(e) => setSort(e.target.value)}>
           <option value="">Por defecto</option>
           <option value="price_asc">Precio: menor a mayor</option>
           <option value="price_desc">Precio: mayor a menor</option>
@@ -189,8 +190,8 @@ const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
       </div>
 
       <div className="filter-row">
-        <label>Filtrar por Categoría</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+        <label htmlFor="filter-category-select">Filtrar por Categoría</label>
+        <select id="filter-category-select" value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="">Todas las categorías</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
@@ -203,6 +204,11 @@ const FiltersSidebar = ({ onApply = () => { }, initial = {} }) => {
       </div>
     </div>
   );
+};
+
+FiltersSidebar.propTypes = {
+  initial: PropTypes.object,
+  onApply: PropTypes.func,
 };
 
 export default FiltersSidebar;

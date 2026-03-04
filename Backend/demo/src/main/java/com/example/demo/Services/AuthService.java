@@ -41,13 +41,13 @@ public class AuthService {
             } else {
                 msg += "El nombre de usuario '" + user.getUsername() + "' ya está en uso.";
             }
-            throw new RuntimeException(msg);
+            throw new IllegalStateException(msg);
         }
         
         UserEntity existingByEmail = userService.getUserByEmail(user.getEmail());
         if (existingByEmail != null) {
             logger.warn("❌ Intento de registro duplicado: email '{}' ya existe en DB local", user.getEmail());
-            throw new RuntimeException("El correo electrónico '" + user.getEmail() + "' ya está registrado.");
+            throw new IllegalStateException("El correo electrónico '" + user.getEmail() + "' ya está registrado.");
         }
         
         // ========== VALIDACIÓN PREVENTIVA: Verificar existencia en Keycloak ==========
@@ -56,7 +56,7 @@ public class AuthService {
             logger.error("🚨 INCONSISTENCIA DETECTADA: Usuario '{}' existe en Keycloak pero NO en DB local. Estado huérfano.", user.getUsername());
             String msg = "El usuario existe en el sistema de autenticación pero no en la base de datos. ";
             msg += "Contacta al administrador para resolver esta inconsistencia.";
-            throw new RuntimeException(msg);
+            throw new IllegalStateException(msg);
         }
         
         // ========== CREAR EN KEYCLOAK ==========
@@ -66,8 +66,7 @@ public class AuthService {
             kcId = keycloakAdminService.createKeycloakUser(user, rol);
             logger.info("✅ Usuario '{}' creado en Keycloak con ID: {}", user.getUsername(), kcId);
         } catch (Exception ex) {
-            logger.error("❌ Keycloak: error creando usuario '{}': {}", user.getUsername(), ex.getMessage());
-            throw new RuntimeException("Error creando usuario en sistema de autenticación: " + ex.getMessage());
+            throw new IllegalStateException("Error creando usuario en sistema de autenticación: " + ex.getMessage(), ex);
         }
 
         user.setKeycloakId(kcId);
@@ -86,7 +85,6 @@ public class AuthService {
             return savedUser;
             
         } catch (Exception ex) {
-            logger.error("❌ DB ERROR: Falló guardado en DB local para usuario '{}': {}", user.getUsername(), ex.getMessage());
             logger.warn("🔄 INICIANDO ROLLBACK: Eliminando usuario {} de Keycloak", kcId);
 
             // ========== ROLLBACK: ELIMINAR DE KEYCLOAK ==========
@@ -97,14 +95,14 @@ public class AuthService {
                 logger.error("❌❌❌ ROLLBACK FALLÓ: Usuario '{}' (ID: {}) queda HUÉRFANO en Keycloak", user.getUsername(), kcId);
                 logger.error("❌ Error del rollback: {}", delEx.getMessage());
                 // Este es un caso CRÍTICO que requiere intervención manual
-                throw new RuntimeException(
+                throw new IllegalStateException(
                     "ERROR CRÍTICO: Usuario creado en Keycloak pero no en DB. " +
                     "Contacta al administrador (Usuario huérfano: " + kcId + ")"
                 );
             }
 
             // Rollback exitoso, propagar el error original
-            throw new RuntimeException("No se pudo guardar el usuario en la base de datos: " + ex.getMessage());
+            throw new IllegalStateException("No se pudo guardar el usuario en la base de datos: " + ex.getMessage());
         }
     }
 
@@ -136,7 +134,7 @@ public class AuthService {
         }
 
         if (!errors.isEmpty()) {
-            throw new RuntimeException(String.join(" ", errors));
+            throw new IllegalStateException(String.join(" ", errors));
         }
     }
 
@@ -163,52 +161,16 @@ public class AuthService {
      */
     public Map<String, Object> login(String identifier, String password) {
 
-        // 1. Buscar usuario local primero: probar email/username directos y también en minúsculas
-        UserEntity localUser = null;
-        if (identifier != null) {
-            localUser = userService.getUserByEmail(identifier);
-            if (localUser == null) {
-                localUser = userService.getUserByEmail(identifier.toLowerCase());
-            }
-            if (localUser == null) {
-                localUser = userService.getUserByUsername(identifier);
-            }
-            if (localUser == null) {
-                localUser = userService.getUserByUsername(identifier.toLowerCase());
-            }
-        }
+        UserEntity localUser = findLocalUserByIdentifier(identifier);
 
         if (localUser == null) {
-            // Este mensaje será detectado por el Controller para retornar 404
-            throw new RuntimeException("Usuario no registrado");
+            throw new IllegalStateException("Usuario no registrado");
         }
 
-        // 2. Validar credenciales en Keycloak
-        Map token = null;
+        Map<String, Object> token = resolveToken(identifier, localUser, password);
 
-        // Intentar loguear preferentemente con el email o username que encontró el sistema
-        // Primero intentamos con lo que el usuario escribió
-        try {
-            token = keycloakAdminService.requestPasswordGrant(identifier, password);
-        } catch (Exception ex) {
-            // Si falla, intentamos con las propiedades del usuario encontrado (email o username)
-            // Esto ayuda si Keycloak espera email pero el usuario puso username, o viceversa,
-            // o si hay temas de case-sensitivity.
-            try {
-                if (localUser.getEmail() != null)
-                   token = keycloakAdminService.requestPasswordGrant(localUser.getEmail(), password);
-            } catch (Exception ignored) {}
-
-            if (token == null) {
-                try {
-                    if (localUser.getUsername() != null)
-                        token = keycloakAdminService.requestPasswordGrant(localUser.getUsername(), password);
-                } catch (Exception ignored) {}
-            }
-        }
-
-        if (token == null) {
-            throw new RuntimeException("Credenciales inválidas.");
+        if (token == null || token.isEmpty()) {
+            throw new IllegalStateException("Credenciales inválidas.");
         }
 
         return Map.of(
@@ -223,20 +185,62 @@ public class AuthService {
         );
     }
 
+    private UserEntity findLocalUserByIdentifier(String identifier) {
+        if (identifier == null) {
+            return null;
+        }
+        UserEntity user = userService.getUserByEmail(identifier);
+        if (user == null) {
+            user = userService.getUserByEmail(identifier.toLowerCase());
+        }
+        if (user == null) {
+            user = userService.getUserByUsername(identifier);
+        }
+        if (user == null) {
+            user = userService.getUserByUsername(identifier.toLowerCase());
+        }
+        return user;
+    }
+
+    private Map<String, Object> resolveToken(String identifier, UserEntity localUser, String password) {
+        try {
+            return keycloakAdminService.requestPasswordGrant(identifier, password);
+        } catch (Exception ex) {
+            return resolveTokenFallback(localUser, password);
+        }
+    }
+
+    private Map<String, Object> resolveTokenFallback(UserEntity localUser, String password) {
+        if (localUser.getEmail() != null) {
+            try {
+                return keycloakAdminService.requestPasswordGrant(localUser.getEmail(), password);
+            } catch (Exception ignored) {
+                // fall through to username attempt
+            }
+        }
+        if (localUser.getUsername() != null) {
+            try {
+                return keycloakAdminService.requestPasswordGrant(localUser.getUsername(), password);
+            } catch (Exception ignored) {
+                // fall through, will return null
+            }
+        }
+        return java.util.Collections.emptyMap();
+    }
+
     /**
      * Refresh: usa el refresh_token para obtener un nuevo access_token.
      */
     public Map<String, Object> refresh(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
-            throw new RuntimeException("Refresh token requerido");
+            throw new IllegalStateException("Refresh token requerido");
         }
 
         try {
-            Map token = keycloakAdminService.refreshToken(refreshToken);
+            Map<String, Object> token = keycloakAdminService.refreshToken(refreshToken);
             return Map.of("token", token);
         } catch (Exception ex) {
-            logger.error("Error refrescando token: {}", ex.getMessage());
-            throw new RuntimeException("No se pudo refrescar el token");
+            throw new IllegalStateException("No se pudo refrescar el token", ex);
         }
     }
 }

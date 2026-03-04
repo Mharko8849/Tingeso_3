@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import ProfileIcon from "./ProfileIcon";
-import "./ProfileMenu.css";
-import { useKeycloak } from "@react-keycloak/web";
-import { getUser, setToken } from "../../services/auth";
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import ProfileIcon from './ProfileIcon';
+import './ProfileMenu.css';
+import { useKeycloak } from '@react-keycloak/web';
+import { getUser, setToken } from '../../services/auth';
 
 const ProfileMenu = () => {
   const navigate = useNavigate();
@@ -20,8 +20,8 @@ const ProfileMenu = () => {
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const user = getUser();
@@ -50,18 +50,18 @@ const ProfileMenu = () => {
   }
 
   // Mostrar solo el primer nombre si viene un nombre completo
-  const firstName = username ? username.split(" ")[0] : null;
+  const firstName = username ? username.split(' ')[0] : null;
 
   return (
     <div className="profile-menu-container" ref={menuRef}>
       <button className="profile-button" onClick={toggleMenu}>
     	  <ProfileIcon />
-    	  <span>{logged ? firstName || username || "Perfil" : "Perfil"}</span>
+    	  <span>{logged ? firstName || username || 'Perfil' : 'Perfil'}</span>
       </button>
 
       {/* Menú desplegable animado */}
       {!logged && (
-        <div className={`profile-menu ${open ? "open" : ""}`}>
+        <div className={`profile-menu ${open ? 'open' : ''}`}>
           <button className="profile-item" onClick={() => navigate('/login')}>
             Iniciar Sesión
           </button>
@@ -72,7 +72,7 @@ const ProfileMenu = () => {
       )}
 
       {logged && (
-        <div className={`profile-menu ${open ? "open" : ""}`}>
+        <div className={`profile-menu ${open ? 'open' : ''}`}>
           <div className="profile-item">Cuenta: {email || firstName || username}</div>
           <button
             className="profile-item"
@@ -88,15 +88,15 @@ const ProfileMenu = () => {
             onClick={() => {
               // clear local tokens
               setToken(null);
-              localStorage.removeItem("access_token");
-              localStorage.removeItem("refresh_token");
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('refresh_token');
               
               if (initialized && keycloak.authenticated) {
                 keycloak.logout();
               } else {
                 // Navigate to home and reload to reflect logout state
                 navigate('/');
-                window.location.reload();
+                globalThis.location.reload();
               }
             }}
           >

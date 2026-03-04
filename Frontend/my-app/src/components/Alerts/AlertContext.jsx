@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useState, useContext } from 'react';
+import PropTypes from 'prop-types';
 import TransitionAlert from './TransitionAlert';
 
 /**
@@ -6,7 +7,7 @@ import TransitionAlert from './TransitionAlert';
  * Provides methods to show and hide alerts.
  */
 export const AlertContext = createContext({
-  show: (a) => {},
+  show: (_a) => {},
   hide: () => {},
 });
 
@@ -46,8 +47,10 @@ export const AlertProvider = ({ children }) => {
     return () => setGlobalShowAlert(null);
   }, [show]);
 
+  const contextValue = React.useMemo(() => ({ show, hide }), [show, hide]);
+
   return (
-    <AlertContext.Provider value={{ show, hide }}>
+    <AlertContext.Provider value={contextValue}>
       {children}
       <TransitionAlert
         alert={alert}
@@ -57,4 +60,8 @@ export const AlertProvider = ({ children }) => {
       />
     </AlertContext.Provider>
   );
+};
+
+AlertProvider.propTypes = {
+  children: PropTypes.node,
 };

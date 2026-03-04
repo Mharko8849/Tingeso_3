@@ -180,9 +180,15 @@ class EntityMapperTest {
 
     @Test
     void testLoanDTO_PartialConstructor() {
-        LoanDTO dto = new LoanDTO(1L, 2L, "user", "Client Name",
-                Date.valueOf("2024-01-01"), Date.valueOf("2024-01-10"),
-                null, "ACTIVO");
+        LoanDTO dto = new LoanDTO();
+        dto.setId(1L);
+        dto.setUserId(2L);
+        dto.setUsername("user");
+        dto.setClientName("Client Name");
+        dto.setInitDate(Date.valueOf("2024-01-01"));
+        dto.setReturnDate(Date.valueOf("2024-01-10"));
+        dto.setRealReturnDate(null);
+        dto.setStatus("ACTIVO");
         assertEquals(1L, dto.getId());
         assertEquals("Client Name", dto.getClientName());
     }

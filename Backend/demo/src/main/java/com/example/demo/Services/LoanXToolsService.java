@@ -4,6 +4,8 @@ import com.example.demo.Entities.*;
 import com.example.demo.Repositories.LoanRepository;
 import com.example.demo.Repositories.LoanXToolsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,8 @@ public class LoanXToolsService {
 
     private static final String STATUS_ACTIVO = "ACTIVO";
     private static final String STATE_CLIENT_ACTIVO = "ACTIVO";
+    private static final String STATUS_FINALIZADO = "FINALIZADO";
+    private static final String DAMAGE_DAMAGE = "DA\u00d1O";
 
     private final LoanXToolsRepository loanXToolsRepository;
     private final UserService userService;
@@ -30,13 +34,20 @@ public class LoanXToolsService {
     private final ToolService toolService;
     private final LoanService loanService;
 
+    private LoanXToolsService self;
+
+    @Autowired
+    public void setSelf(@Lazy LoanXToolsService self) {
+        this.self = self;
+    }
+
     public LoanXToolsEntity saveLoanXToolsEntity(LoanXToolsEntity loanXToolsEntity) {
         return loanXToolsRepository.save(loanXToolsEntity);
     }
 
     public LoanXToolsEntity findLoanXToolsEntityById(Long id) {
         return loanXToolsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Relacion no encontrada."));
+                .orElseThrow(() -> new IllegalStateException("Relacion no encontrada."));
     }
 
     public int getTotalDebt(LoanEntity loan){
@@ -72,7 +83,7 @@ public class LoanXToolsService {
 
         LoanXToolsEntity lxt = findLoanXToolsEntityById(idLoanXTools);
         if (lxt.getToolActivity() != null && !lxt.getToolActivity().isBlank()) {
-            throw new RuntimeException("No se puede eliminar una relation que ya tiene actividad.");
+            throw new IllegalStateException("No se puede eliminar una relation que ya tiene actividad.");
         }
 
         loanXToolsRepository.deleteById(idLoanXTools);
@@ -113,21 +124,21 @@ public class LoanXToolsService {
         UserEntity user = getUserEntityByIdLoanXTool(idLoanXTool);
 
         if (!loanXToolsEntity.getIdLoan().getStatus().equals(STATUS_ACTIVO)) {
-            throw new RuntimeException("El pedido ya se encuentra finalizado.");
+            throw new IllegalStateException("El pedido ya se encuentra finalizado.");
         }
 
         if (loanXToolsEntity.getToolActivity() != null && !loanXToolsEntity.getToolActivity().isBlank()) {
-            throw new RuntimeException("El pedido ya cuenta con actividades previas, por lo tanto no puede ser entregado.");
+            throw new IllegalStateException("El pedido ya cuenta con actividades previas, por lo tanto no puede ser entregado.");
         }
 
         if (loanXToolsEntity.getIdLoan() == null) {
-            throw new RuntimeException("No se encuentra el pedido solicitado");
+            throw new IllegalStateException("No se encuentra el pedido solicitado");
         }
         if (loanXToolsEntity.getIdTool() == null) {
-            throw new RuntimeException("No se encuentra la herramienta del pedido");
+            throw new IllegalStateException("No se encuentra la herramienta del pedido");
         }
         if (!inventoryService.isAvailableTool(loanXToolsEntity.getIdTool())) {
-            throw new RuntimeException("No se encuentra stock disponible para ese producto");
+            throw new IllegalStateException("No se encuentra stock disponible para ese producto");
         }
 
         Date actualDate = new Date(System.currentTimeMillis());
@@ -174,7 +185,7 @@ public class LoanXToolsService {
     public LoanXToolsEntity createLoanXTool(Long loanId, Long toolId) {
         // Fetch loan
         LoanEntity loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new RuntimeException("No se encontró el pedido solicitado"));
+                .orElseThrow(() -> new IllegalStateException("No se encontró el pedido solicitado"));
 
         // Fetch tool
         ToolEntity tool = toolService.getToolById(toolId);
@@ -182,29 +193,29 @@ public class LoanXToolsService {
         // Validate user restriction
         UserEntity client = loan.getIdUser();
         if (loanService.isUserRestringed(client)) {
-            throw new RuntimeException("El usuario se encuentra restringido y no puede solicitar préstamos.");
+            throw new IllegalStateException("El usuario se encuentra restringido y no puede solicitar préstamos.");
         }
 
         // Validate dates
         Date initDate = loan.getInitDate();
         Date returnDate = loan.getReturnDate();
         if (initDate == null || returnDate == null) {
-            throw new RuntimeException("Las fechas del pedido son inválidas.");
+            throw new IllegalStateException("Las fechas del pedido son inválidas.");
         }
         java.time.LocalDate init = initDate.toLocalDate();
         java.time.LocalDate ret = returnDate.toLocalDate();
         if (!ret.isAfter(init)) {
-            throw new RuntimeException("La fecha ingresada es inválida. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
+            throw new IllegalStateException("La fecha ingresada es inválida. La fecha de devolución debe ser al menos 1 día después de la fecha inicial.");
         }
 
         // Availability
         if (!inventoryService.isAvailableTool(tool)) {
-            throw new RuntimeException("La herramienta solicitada no se encuentra disponible.");
+            throw new IllegalStateException("La herramienta solicitada no se encuentra disponible.");
         }
 
         // Duplicate tool for user
         if (isToolLoanedToUser(tool, client)) {
-            throw new RuntimeException("El usuario ya cuenta con un préstamo de dicha herramienta activo.");
+            throw new IllegalStateException("El usuario ya cuenta con un préstamo de dicha herramienta activo.");
         }
 
         // Create LoanXToolsEntity
@@ -240,14 +251,14 @@ public class LoanXToolsService {
 
     public int calculateFineByStateToolReturn(LoanXToolsEntity lxt, String state) {
         switch (state) {
-            case "SIN DAÑO", "DAÑO" -> {
+            case "SIN DAÑO", DAMAGE_DAMAGE -> {
                 return 0;
             }
             case "IRREPARABLE" -> {
                 int fine = lxt.getIdTool().getRepoCost();
                 return fine;
             }
-            default -> throw new RuntimeException("Tipo de daño inválido");
+            default -> throw new IllegalStateException("Tipo de daño inválido");
         }
     }
 
@@ -281,10 +292,10 @@ public class LoanXToolsService {
         UserEntity user = getUserEntityByIdLoanXTool(idLoanXTool);
 
         if (loanXToolsEntity.getToolActivity() == null || loanXToolsEntity.getToolActivity().isBlank()) {
-            throw new RuntimeException("Error en la actividad del pedido");
+            throw new IllegalStateException("Error en la actividad del pedido");
         }
         if (loanXToolsEntity.getIdLoan() == null || loanXToolsEntity.getIdTool() == null) {
-            throw new RuntimeException("No se encuentra la herramienta del pedido");
+            throw new IllegalStateException("No se encuentra la herramienta del pedido");
         }
 
         String stateTool;
@@ -294,7 +305,7 @@ public class LoanXToolsService {
                 inventoryService.receiveTool(loanXToolsEntity.getIdTool().getId(), "DISPONIBLE");
                 stateTool = "DEVOLUCION";
             }
-            case "DAÑO" -> {
+            case DAMAGE_DAMAGE -> {
                 loanXToolsEntity.setNeedRepair(true);
                 inventoryService.receiveTool(loanXToolsEntity.getIdTool().getId(), "EN REPARACION");
                 stateTool = "REPARACION";
@@ -303,7 +314,7 @@ public class LoanXToolsService {
                 inventoryService.receiveTool(loanXToolsEntity.getIdTool().getId(), "DADA DE BAJA");
                 stateTool = "BAJA";
             }
-            case null, default -> throw new RuntimeException("Tipo de daño inválido");
+            case null, default -> throw new IllegalStateException("Tipo de daño inválido");
         }
 
         Date actualDate = new Date(System.currentTimeMillis());
@@ -349,72 +360,59 @@ public class LoanXToolsService {
         List<LoanXToolsEntity> lxtList = getAllLoanXToolsByIdLoan(loan);
 
         // Delegar a la verdadera lógica de negocio
-        return receiveAllLoanTools(idEmployee, lxtList, stateTool);
+        return self.receiveAllLoanTools(idEmployee, lxtList, stateTool);
     }
 
 
     @Transactional
     public List<LoanXToolsEntity> receiveAllLoanTools(Long idEmployee, List<LoanXToolsEntity> lxtList, Map<Long, String> states) {
 
-        LoanEntity loan = lxtList.get(0).getIdLoan();
-
-        UserEntity client = loan.getIdUser();
-
-        List<LoanXToolsEntity> results = new ArrayList<>();
-        int totalFine = 0;
-        boolean anyNeedRepair = false;
-
         if (lxtList.size() != states.size()) {
             throw new IllegalArgumentException("Cantidad de estados no coincide con cantidad de herramientas");
         }
 
+        LoanEntity loan = lxtList.get(0).getIdLoan();
+        UserEntity client = loan.getIdUser();
+
+        int totalFine = 0;
+        boolean anyNeedRepair = false;
+        List<LoanXToolsEntity> results = new ArrayList<>();
+
         int i = 0;
         while (i < lxtList.size()) {
             LoanXToolsEntity lxt = lxtList.get(i);
-
             if (!states.containsKey(lxt.getId())) {
-                 throw new IllegalArgumentException("Falta el estado para la herramienta con id: " + lxt.getId());
-             }
-
+                throw new IllegalArgumentException("Falta el estado para la herramienta con id: " + lxt.getId());
+            }
             String state = states.get(lxt.getId());
-
-            LoanXToolsEntity updated = receiveLoanTool(idEmployee, lxt.getId(), state);
+            LoanXToolsEntity updated = self.receiveLoanTool(idEmployee, lxt.getId(), state);
             results.add(updated);
-
-            if (updated.getFine() != 0) {
-                totalFine += updated.getFine();
-            }
-            if ("DAÑO".equals(state)) {
-                anyNeedRepair = true;
-            }
-
+            if (updated.getFine() != 0) { totalFine += updated.getFine(); }
+            if (DAMAGE_DAMAGE.equals(state)) { anyNeedRepair = true; }
             i += 1;
         }
 
         if (allToolsReturned(loan)) {
-            Date actualDate = new Date(System.currentTimeMillis());
-            loan.setRealReturnDate(actualDate);
-
-            client.setLoans(client.getLoans() - 1);
-
-            // Un pedido solo está FINALIZADO cuando no hay multas pendientes NI reparaciones pendientes
-            if (totalFine == 0 && !anyNeedRepair) {
-                loan.setStatus("FINALIZADO");
-                if(!userHaveDebt(client)){
-                    client.setStateClient(STATE_CLIENT_ACTIVO);
-                }
-            }
-            else {
-                // Si hay multa O necesita reparación, el pedido está PENDIENTE hasta que se pague/repare
-                loan.setStatus("PENDIENTE");
-                client.setStateClient("RESTRINGIDO");
-            }
-
-            loanService.saveLoan(loan);
-            userService.saveUser(client);
+            finalizeLoan(loan, client, totalFine, anyNeedRepair);
         }
 
         return results;
+    }
+
+    private void finalizeLoan(LoanEntity loan, UserEntity client, int totalFine, boolean anyNeedRepair) {
+        loan.setRealReturnDate(new Date(System.currentTimeMillis()));
+        client.setLoans(client.getLoans() - 1);
+        if (totalFine == 0 && !anyNeedRepair) {
+            loan.setStatus(STATUS_FINALIZADO);
+            if (!userHaveDebt(client)) {
+                client.setStateClient(STATE_CLIENT_ACTIVO);
+            }
+        } else {
+            loan.setStatus("PENDIENTE");
+            client.setStateClient("RESTRINGIDO");
+        }
+        loanService.saveLoan(loan);
+        userService.saveUser(client);
     }
 
 
@@ -468,7 +466,7 @@ public class LoanXToolsService {
         int cost = ((Number) costObj).intValue();
 
         // Delegar a la lógica real
-        return payRepairTool(loanId, adminUser, cost);
+        return self.payRepairTool(loanId, adminUser, cost);
     }
 
 
@@ -496,7 +494,7 @@ public class LoanXToolsService {
             userService.saveUser(user);
 
             if (!needRepairToolByLoan(loanId)) {
-                loan.setStatus("FINALIZADO");
+                loan.setStatus(STATUS_FINALIZADO);
             }
             loanRepository.save(loan);
             return true;
@@ -545,7 +543,7 @@ public class LoanXToolsService {
 
             // Solo marcar el préstamo como FINALIZADO si no hay multas pendientes
             if (getTotalFine(loan) == 0) {
-                loan.setStatus("FINALIZADO");
+                loan.setStatus(STATUS_FINALIZADO);
             }
             loanService.saveLoan(loan);
 
@@ -559,7 +557,7 @@ public class LoanXToolsService {
         LoanEntity loan = loanService.getLoanById(loanId);
         List<LoanXToolsEntity> lxt =  getAllLoanXToolsByIdLoan(loan);
         if (loan.getStatus().equals(STATUS_ACTIVO) && lxt.isEmpty()) {
-            loan.setStatus("FINALIZADO");
+            loan.setStatus(STATUS_FINALIZADO);
         }
         return loanService.saveLoan(loan);
     }
